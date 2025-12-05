@@ -90,41 +90,44 @@ create trigger user_roles_set_updated_at
 
 alter table public.user_roles enable row level security;
 
--- allow authenticated users to read their record or, if admin, any record
-create policy user_roles_select_self_or_admin
-    on public.user_roles
-    for select
-    to authenticated
-    using (
-        user_id = auth.uid()
-        or exists (
-            select 1
-            from public.user_roles admin_roles
-            where admin_roles.user_id = auth.uid()
-              and admin_roles.role = 'admin'
-        )
-    );
+-- POLICIES DISABLED FOR LOCAL DEVELOPMENT
+-- uncomment below to enable row-level security policies in production
 
--- permit authenticated users to create their own role row as standard users
-create policy user_roles_insert_self
-    on public.user_roles
-    for insert
-    to authenticated
-    with check (
-        user_id = auth.uid()
-        and role = 'user'
-    );
+-- -- allow authenticated users to read their record or, if admin, any record
+-- create policy user_roles_select_self_or_admin
+--     on public.user_roles
+--     for select
+--     to authenticated
+--     using (
+--         user_id = auth.uid()
+--         or exists (
+--             select 1
+--             from public.user_roles admin_roles
+--             where admin_roles.user_id = auth.uid()
+--               and admin_roles.role = 'admin'
+--         )
+--     );
 
--- permit authenticated users to update their own row while preserving standard role
-create policy user_roles_update_self
-    on public.user_roles
-    for update
-    to authenticated
-    using (user_id = auth.uid())
-    with check (
-        user_id = auth.uid()
-        and role = 'user'
-    );
+-- -- permit authenticated users to create their own role row as standard users
+-- create policy user_roles_insert_self
+--     on public.user_roles
+--     for insert
+--     to authenticated
+--     with check (
+--         user_id = auth.uid()
+--         and role = 'user'
+--     );
+
+-- -- permit authenticated users to update their own row while preserving standard role
+-- create policy user_roles_update_self
+--     on public.user_roles
+--     for update
+--     to authenticated
+--     using (user_id = auth.uid())
+--     with check (
+--         user_id = auth.uid()
+--         and role = 'user'
+--     );
 
 -- -----------------------------------------------------------------------------
 -- table: user_preferences
@@ -149,46 +152,49 @@ create trigger user_preferences_set_updated_at
 
 alter table public.user_preferences enable row level security;
 
-create policy user_preferences_select_self_or_admin
-    on public.user_preferences
-    for select
-    to authenticated
-    using (
-        user_id = auth.uid()
-        or exists (
-            select 1
-            from public.user_roles admin_roles
-            where admin_roles.user_id = auth.uid()
-              and admin_roles.role = 'admin'
-        )
-    );
+-- POLICIES DISABLED FOR LOCAL DEVELOPMENT
+-- uncomment below to enable row-level security policies in production
 
-create policy user_preferences_insert_self
-    on public.user_preferences
-    for insert
-    to authenticated
-    with check (user_id = auth.uid());
+-- create policy user_preferences_select_self_or_admin
+--     on public.user_preferences
+--     for select
+--     to authenticated
+--     using (
+--         user_id = auth.uid()
+--         or exists (
+--             select 1
+--             from public.user_roles admin_roles
+--             where admin_roles.user_id = auth.uid()
+--               and admin_roles.role = 'admin'
+--         )
+--     );
 
-create policy user_preferences_update_self
-    on public.user_preferences
-    for update
-    to authenticated
-    using (
-        user_id = auth.uid()
-        or exists (
-            select 1
-            from public.user_roles admin_roles
-            where admin_roles.user_id = auth.uid()
-              and admin_roles.role = 'admin'
-        )
-    )
-    with check (user_id = auth.uid());
+-- create policy user_preferences_insert_self
+--     on public.user_preferences
+--     for insert
+--     to authenticated
+--     with check (user_id = auth.uid());
 
-create policy user_preferences_delete_self
-    on public.user_preferences
-    for delete
-    to authenticated
-    using (user_id = auth.uid());
+-- create policy user_preferences_update_self
+--     on public.user_preferences
+--     for update
+--     to authenticated
+--     using (
+--         user_id = auth.uid()
+--         or exists (
+--             select 1
+--             from public.user_roles admin_roles
+--             where admin_roles.user_id = auth.uid()
+--               and admin_roles.role = 'admin'
+--         )
+--     )
+--     with check (user_id = auth.uid());
+
+-- create policy user_preferences_delete_self
+--     on public.user_preferences
+--     for delete
+--     to authenticated
+--     using (user_id = auth.uid());
 
 -- -----------------------------------------------------------------------------
 -- table: plans
@@ -221,38 +227,41 @@ create index if not exists plans_owner_created_idx
 
 alter table public.plans enable row level security;
 
-create policy plans_select_owner_or_admin
-    on public.plans
-    for select
-    to authenticated
-    using (
-        owner_id = auth.uid()
-        or exists (
-            select 1
-            from public.user_roles admin_roles
-            where admin_roles.user_id = auth.uid()
-              and admin_roles.role = 'admin'
-        )
-    );
+-- POLICIES DISABLED FOR LOCAL DEVELOPMENT
+-- uncomment below to enable row-level security policies in production
 
-create policy plans_insert_owner
-    on public.plans
-    for insert
-    to authenticated
-    with check (owner_id = auth.uid());
+-- create policy plans_select_owner_or_admin
+--     on public.plans
+--     for select
+--     to authenticated
+--     using (
+--         owner_id = auth.uid()
+--         or exists (
+--             select 1
+--             from public.user_roles admin_roles
+--             where admin_roles.user_id = auth.uid()
+--               and admin_roles.role = 'admin'
+--         )
+--     );
 
-create policy plans_update_owner
-    on public.plans
-    for update
-    to authenticated
-    using (owner_id = auth.uid())
-    with check (owner_id = auth.uid());
+-- create policy plans_insert_owner
+--     on public.plans
+--     for insert
+--     to authenticated
+--     with check (owner_id = auth.uid());
 
-create policy plans_delete_owner
-    on public.plans
-    for delete
-    to authenticated
-    using (owner_id = auth.uid());
+-- create policy plans_update_owner
+--     on public.plans
+--     for update
+--     to authenticated
+--     using (owner_id = auth.uid())
+--     with check (owner_id = auth.uid());
+
+-- create policy plans_delete_owner
+--     on public.plans
+--     for delete
+--     to authenticated
+--     using (owner_id = auth.uid());
 
 -- -----------------------------------------------------------------------------
 -- table: plan_days
@@ -276,71 +285,74 @@ create trigger plan_days_set_updated_at
 
 alter table public.plan_days enable row level security;
 
-create policy plan_days_select_owner
-    on public.plan_days
-    for select
-    to authenticated
-    using (
-        exists (
-            select 1
-            from public.plans p
-            where p.id = plan_days.plan_id
-              and p.owner_id = auth.uid()
-        )
-        or exists (
-            select 1
-            from public.user_roles admin_roles
-            where admin_roles.user_id = auth.uid()
-              and admin_roles.role = 'admin'
-        )
-    );
+-- POLICIES DISABLED FOR LOCAL DEVELOPMENT
+-- uncomment below to enable row-level security policies in production
 
-create policy plan_days_insert_owner
-    on public.plan_days
-    for insert
-    to authenticated
-    with check (
-        exists (
-            select 1
-            from public.plans p
-            where p.id = plan_days.plan_id
-              and p.owner_id = auth.uid()
-        )
-    );
+-- create policy plan_days_select_owner
+--     on public.plan_days
+--     for select
+--     to authenticated
+--     using (
+--         exists (
+--             select 1
+--             from public.plans p
+--             where p.id = plan_days.plan_id
+--               and p.owner_id = auth.uid()
+--         )
+--         or exists (
+--             select 1
+--             from public.user_roles admin_roles
+--             where admin_roles.user_id = auth.uid()
+--               and admin_roles.role = 'admin'
+--         )
+--     );
 
-create policy plan_days_update_owner
-    on public.plan_days
-    for update
-    to authenticated
-    using (
-        exists (
-            select 1
-            from public.plans p
-            where p.id = plan_days.plan_id
-              and p.owner_id = auth.uid()
-        )
-    )
-    with check (
-        exists (
-            select 1
-            from public.plans p
-            where p.id = plan_days.plan_id
-              and p.owner_id = auth.uid()
-        )
-    );
+-- create policy plan_days_insert_owner
+--     on public.plan_days
+--     for insert
+--     to authenticated
+--     with check (
+--         exists (
+--             select 1
+--             from public.plans p
+--             where p.id = plan_days.plan_id
+--               and p.owner_id = auth.uid()
+--         )
+--     );
 
-create policy plan_days_delete_owner
-    on public.plan_days
-    for delete
-    to authenticated
-    using (
-        exists (
-            select 1
-            from public.plans p
-            where p.id = plan_days.plan_id
-              and p.owner_id = auth.uid()
-        )
-    );
+-- create policy plan_days_update_owner
+--     on public.plan_days
+--     for update
+--     to authenticated
+--     using (
+--         exists (
+--             select 1
+--             from public.plans p
+--             where p.id = plan_days.plan_id
+--               and p.owner_id = auth.uid()
+--         )
+--     )
+--     with check (
+--         exists (
+--             select 1
+--             from public.plans p
+--             where p.id = plan_days.plan_id
+--               and p.owner_id = auth.uid()
+--         )
+--     );
+
+-- create policy plan_days_delete_owner
+--     on public.plan_days
+--     for delete
+--     to authenticated
+--     using (
+--         exists (
+--             select 1
+--             from public.plans p
+--             where p.id = plan_days.plan_id
+--               and p.owner_id = auth.uid()
+--         )
+--     );
 
 create unique index if not exists plan_days_plan_day_index_idx
     on public.plan_days (plan_id, day_index);
@@ -362,76 +374,79 @@ create table if not exists public.plan_blocks (
 
 alter table public.plan_blocks enable row level security;
 
-create policy plan_blocks_select_owner
-    on public.plan_blocks
-    for select
-    to authenticated
-    using (
-        exists (
-            select 1
-            from public.plan_days pd
-            join public.plans p on p.id = pd.plan_id
-            where pd.id = plan_blocks.day_id
-              and p.owner_id = auth.uid()
-        )
-        or exists (
-            select 1
-            from public.user_roles admin_roles
-            where admin_roles.user_id = auth.uid()
-              and admin_roles.role = 'admin'
-        )
-    );
+-- POLICIES DISABLED FOR LOCAL DEVELOPMENT
+-- uncomment below to enable row-level security policies in production
 
-create policy plan_blocks_insert_owner
-    on public.plan_blocks
-    for insert
-    to authenticated
-    with check (
-        exists (
-            select 1
-            from public.plan_days pd
-            join public.plans p on p.id = pd.plan_id
-            where pd.id = plan_blocks.day_id
-              and p.owner_id = auth.uid()
-        )
-    );
+-- create policy plan_blocks_select_owner
+--     on public.plan_blocks
+--     for select
+--     to authenticated
+--     using (
+--         exists (
+--             select 1
+--             from public.plan_days pd
+--             join public.plans p on p.id = pd.plan_id
+--             where pd.id = plan_blocks.day_id
+--               and p.owner_id = auth.uid()
+--         )
+--         or exists (
+--             select 1
+--             from public.user_roles admin_roles
+--             where admin_roles.user_id = auth.uid()
+--               and admin_roles.role = 'admin'
+--         )
+--     );
 
-create policy plan_blocks_update_owner
-    on public.plan_blocks
-    for update
-    to authenticated
-    using (
-        exists (
-            select 1
-            from public.plan_days pd
-            join public.plans p on p.id = pd.plan_id
-            where pd.id = plan_blocks.day_id
-              and p.owner_id = auth.uid()
-        )
-    )
-    with check (
-        exists (
-            select 1
-            from public.plan_days pd
-            join public.plans p on p.id = pd.plan_id
-            where pd.id = plan_blocks.day_id
-              and p.owner_id = auth.uid()
-        )
-    );
+-- create policy plan_blocks_insert_owner
+--     on public.plan_blocks
+--     for insert
+--     to authenticated
+--     with check (
+--         exists (
+--             select 1
+--             from public.plan_days pd
+--             join public.plans p on p.id = pd.plan_id
+--             where pd.id = plan_blocks.day_id
+--               and p.owner_id = auth.uid()
+--         )
+--     );
 
-create policy plan_blocks_delete_owner
-    on public.plan_blocks
-    for delete
-    to authenticated
-    using (
-        exists (
-            select 1
-            from public.plan_days pd
-            join public.plans p on p.id = pd.plan_id
-            where pd.id = plan_blocks.day_id
-              and p.owner_id = auth.uid()
-        )
-    );
+-- create policy plan_blocks_update_owner
+--     on public.plan_blocks
+--     for update
+--     to authenticated
+--     using (
+--         exists (
+--             select 1
+--             from public.plan_days pd
+--             join public.plans p on p.id = pd.plan_id
+--             where pd.id = plan_blocks.day_id
+--               and p.owner_id = auth.uid()
+--         )
+--     )
+--     with check (
+--         exists (
+--             select 1
+--             from public.plan_days pd
+--             join public.plans p on p.id = pd.plan_id
+--             where pd.id = plan_blocks.day_id
+--               and p.owner_id = auth.uid()
+--         )
+--     );
+
+-- create policy plan_blocks_delete_owner
+--     on public.plan_blocks
+--     for delete
+--     to authenticated
+--     using (
+--         exists (
+--             select 1
+--             from public.plan_days pd
+--             join public.plans p on p.id = pd.plan_id
+--             where pd.id = plan_blocks.day_id
+--               and p.owner_id = auth.uid()
+--         )
+--     );
 
 create unique index if not exists plan_blocks_day_type_idx
     on public.plan_blocks (day_id, block_type);
@@ -459,81 +474,84 @@ create trigger plan_activities_set_updated_at
 
 alter table public.plan_activities enable row level security;
 
-create policy plan_activities_select_owner
-    on public.plan_activities
-    for select
-    to authenticated
-    using (
-        exists (
-            select 1
-            from public.plan_blocks pb
-            join public.plan_days pd on pd.id = pb.day_id
-            join public.plans p on p.id = pd.plan_id
-            where pb.id = plan_activities.block_id
-              and p.owner_id = auth.uid()
-        )
-        or exists (
-            select 1
-            from public.user_roles admin_roles
-            where admin_roles.user_id = auth.uid()
-              and admin_roles.role = 'admin'
-        )
-    );
+-- POLICIES DISABLED FOR LOCAL DEVELOPMENT
+-- uncomment below to enable row-level security policies in production
 
-create policy plan_activities_insert_owner
-    on public.plan_activities
-    for insert
-    to authenticated
-    with check (
-        exists (
-            select 1
-            from public.plan_blocks pb
-            join public.plan_days pd on pd.id = pb.day_id
-            join public.plans p on p.id = pd.plan_id
-            where pb.id = plan_activities.block_id
-              and p.owner_id = auth.uid()
-        )
-    );
+-- create policy plan_activities_select_owner
+--     on public.plan_activities
+--     for select
+--     to authenticated
+--     using (
+--         exists (
+--             select 1
+--             from public.plan_blocks pb
+--             join public.plan_days pd on pd.id = pb.day_id
+--             join public.plans p on p.id = pd.plan_id
+--             where pb.id = plan_activities.block_id
+--               and p.owner_id = auth.uid()
+--         )
+--         or exists (
+--             select 1
+--             from public.user_roles admin_roles
+--             where admin_roles.user_id = auth.uid()
+--               and admin_roles.role = 'admin'
+--         )
+--     );
 
-create policy plan_activities_update_owner
-    on public.plan_activities
-    for update
-    to authenticated
-    using (
-        exists (
-            select 1
-            from public.plan_blocks pb
-            join public.plan_days pd on pd.id = pb.day_id
-            join public.plans p on p.id = pd.plan_id
-            where pb.id = plan_activities.block_id
-              and p.owner_id = auth.uid()
-        )
-    )
-    with check (
-        exists (
-            select 1
-            from public.plan_blocks pb
-            join public.plan_days pd on pd.id = pb.day_id
-            join public.plans p on p.id = pd.plan_id
-            where pb.id = plan_activities.block_id
-              and p.owner_id = auth.uid()
-        )
-    );
+-- create policy plan_activities_insert_owner
+--     on public.plan_activities
+--     for insert
+--     to authenticated
+--     with check (
+--         exists (
+--             select 1
+--             from public.plan_blocks pb
+--             join public.plan_days pd on pd.id = pb.day_id
+--             join public.plans p on p.id = pd.plan_id
+--             where pb.id = plan_activities.block_id
+--               and p.owner_id = auth.uid()
+--         )
+--     );
 
-create policy plan_activities_delete_owner
-    on public.plan_activities
-    for delete
-    to authenticated
-    using (
-        exists (
-            select 1
-            from public.plan_blocks pb
-            join public.plan_days pd on pd.id = pb.day_id
-            join public.plans p on p.id = pd.plan_id
-            where pb.id = plan_activities.block_id
-              and p.owner_id = auth.uid()
-        )
-    );
+-- create policy plan_activities_update_owner
+--     on public.plan_activities
+--     for update
+--     to authenticated
+--     using (
+--         exists (
+--             select 1
+--             from public.plan_blocks pb
+--             join public.plan_days pd on pd.id = pb.day_id
+--             join public.plans p on p.id = pd.plan_id
+--             where pb.id = plan_activities.block_id
+--               and p.owner_id = auth.uid()
+--         )
+--     )
+--     with check (
+--         exists (
+--             select 1
+--             from public.plan_blocks pb
+--             join public.plan_days pd on pd.id = pb.day_id
+--             join public.plans p on p.id = pd.plan_id
+--             where pb.id = plan_activities.block_id
+--               and p.owner_id = auth.uid()
+--         )
+--     );
+
+-- create policy plan_activities_delete_owner
+--     on public.plan_activities
+--     for delete
+--     to authenticated
+--     using (
+--         exists (
+--             select 1
+--             from public.plan_blocks pb
+--             join public.plan_days pd on pd.id = pb.day_id
+--             join public.plans p on p.id = pd.plan_id
+--             where pb.id = plan_activities.block_id
+--               and p.owner_id = auth.uid()
+--         )
+--     );
 
 create unique index if not exists plan_activities_block_order_idx
     on public.plan_activities (block_id, order_index);
@@ -561,31 +579,34 @@ create index if not exists events_type_created_idx
 
 alter table public.events enable row level security;
 
-create policy events_select_self_or_admin
-    on public.events
-    for select
-    to authenticated
-    using (
-        user_id = auth.uid()
-        or exists (
-            select 1
-            from public.user_roles admin_roles
-            where admin_roles.user_id = auth.uid()
-              and admin_roles.role = 'admin'
-        )
-    );
+-- POLICIES DISABLED FOR LOCAL DEVELOPMENT
+-- uncomment below to enable row-level security policies in production
 
-create policy events_insert_self
-    on public.events
-    for insert
-    to authenticated
-    with check (user_id = auth.uid());
+-- create policy events_select_self_or_admin
+--     on public.events
+--     for select
+--     to authenticated
+--     using (
+--         user_id = auth.uid()
+--         or exists (
+--             select 1
+--             from public.user_roles admin_roles
+--             where admin_roles.user_id = auth.uid()
+--               and admin_roles.role = 'admin'
+--         )
+--     );
 
-create policy events_delete_self
-    on public.events
-    for delete
-    to authenticated
-    using (user_id = auth.uid());
+-- create policy events_insert_self
+--     on public.events
+--     for insert
+--     to authenticated
+--     with check (user_id = auth.uid());
+
+-- create policy events_delete_self
+--     on public.events
+--     for delete
+--     to authenticated
+--     using (user_id = auth.uid());
 
 -- -----------------------------------------------------------------------------
 -- end of migration
