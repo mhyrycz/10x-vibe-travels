@@ -1,7 +1,6 @@
-# AI Rules for {{project-name}}
+# AI Rules for VibeTravels
 
-{{project-description}}
-
+Welcome to the VibeTravels project! This document outlines the coding practices, tech stack, and project structure to ensure consistency and maintainability across the codebase. Please adhere to these guidelines when contributing to the project.
 ## Tech Stack
 
 - Astro 5
