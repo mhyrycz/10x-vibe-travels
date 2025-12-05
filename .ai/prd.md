@@ -83,19 +83,21 @@ Formularz zawiera:
   - walidacje:
     - data startu i data końca nie mogą być w przeszłości względem dnia tworzenia,
     - różnica między datą końca a datą startu nie może przekraczać 30 dni.
-- sekcja „Preferencje podróży dla tego planu”
+ - sekcja „Preferencje podróży dla tego planu”
   - pola domyślnie wypełnione wartościami z profilu użytkownika:
     - liczba osób,
     - typ podróży,
     - komfort zwiedzania,
     - budżet,
   - użytkownik może zmienić wartości na potrzeby danego planu.
-- sekcja „Preferowany transport w tej podróży”
-  - wybór jednej z opcji:
-    - samochód,
-    - pieszo,
-    - transport publiczny.
-  - opcja piesza jest ignorowana między dużymi odległościami (np. między miastami/krajami)
+  - w ramach transportu użytkownik może zaznaczyć wiele akceptowanych środków (samochód/pieszo/transport publiczny), aby AI dobrało optymalny sposób przemieszczania między atrakcjami.
+ - sekcja „Preferowany transport w tej podróży”
+   - preferencje środków transportu na poziomie planu (wielo‑wybór):
+     - samochód,
+     - pieszo,
+     - transport publiczny.
+   - zaznaczenie wielu opcji sygnalizuje AI, że może dobrać najbardziej rozsądny środek transportu między atrakcjami.
+   - pieszo jest ignorowane między dużymi odległościami (np. między miastami/krajami), ale może być stosowane lokalnie.
 
 3.2.2. Generowanie planu
 - Po wypełnieniu formularza użytkownik klika przycisk „Generuj plan”.
@@ -140,7 +142,7 @@ Formularz zawiera:
   - nazwę planu (z możliwością edycji),
   - destynację,
   - zakres dat,
-  - wybrany tryb transportu,
+   - preferencje środków transportu (wybrane opcje),
   - parametry podróży użyte dla planu (liczba osób, typ, komfort, budżet),
   - plan dzienny:
     - każdy dzień wyświetlony w osobnej sekcji,
