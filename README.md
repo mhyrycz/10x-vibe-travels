@@ -1,93 +1,133 @@
-# 10x Astro Starter
+# VibeTravels
 
-A modern, opinionated starter template for building fast, accessible, and AI-friendly web applications.
+![version](https://img.shields.io/badge/version-0.0.1-blue.svg) ![license](https://img.shields.io/badge/license-none-lightgrey.svg)
 
-## Tech Stack
+## Project description
 
-- [Astro](https://astro.build/) v5.5.5 - Modern web framework for building fast, content-focused websites
-- [React](https://react.dev/) v19.0.0 - UI library for building interactive components
-- [TypeScript](https://www.typescriptlang.org/) v5 - Type-safe JavaScript
-- [Tailwind CSS](https://tailwindcss.com/) v4.0.17 - Utility-first CSS framework
+VibeTravels is an MVP web application that converts a user's simple travel note and basic parameters into a detailed, day-by-day itinerary using AI. The project is intended as a small, focused MVP (Polish-language UI) prioritizing quick generation of travel plans from a single input note and user preferences.
 
-## Prerequisites
+Core goals:
+- Turn one user note + destination + dates + preferences into a detailed daily schedule
+- Provide account management (register/login, preferences, change password, delete account)
+- Allow saving, viewing, editing and deleting up to 10 plans per user
+- Include a basic admin view and minimal analytics/event logging
 
-- Node.js v22.14.0 (as specified in `.nvmrc`)
-- npm (comes with Node.js)
+For full product requirements and scope see `.ai/prd.md`.
 
-## Getting Started
+## Table of Contents
 
-1. Clone the repository:
+- [Tech stack](#tech-stack)
+- [Getting started locally](#getting-started-locally)
+- [Available scripts](#available-scripts)
+- [Project scope](#project-scope)
+- [Project status](#project-status)
+- [License](#license)
 
-```bash
-git clone https://github.com/przeprogramowani/10x-astro-starter.git
-cd 10x-astro-starter
+## Tech stack
+
+- Frontend: Astro 5 with React 19 for client interactivity
+- Language: TypeScript 5
+- Styling: Tailwind CSS 4
+- UI primitives: shadcn/ui, Radix where needed
+- Backend: Supabase (Postgres + Auth + SDK)
+- AI: Integration via OpenRouter.ai (model gateway)
+- CI / Hosting: GitHub Actions (planned), DigitalOcean (Docker image target)
+
+Key dependencies (see `package.json`):
+
+- `astro` ^5.13.x
+- `react` ^19.x
+- `@astrojs/react`, `@astrojs/node`, `@astrojs/sitemap`
+- `tailwindcss` ^4.x
+- `lucide-react`, `clsx`, `class-variance-authority`, `tw-animate-css`
+
+Dev tooling:
+
+- ESLint + TypeScript ESLint, Prettier (with `prettier-plugin-astro`), Husky, lint-staged
+
+## Getting started locally
+
+Prerequisites
+- Node: the project uses Node `22.14.0` (see `.nvmrc`). Use `nvm` to switch: `nvm use`.
+- npm or another package manager (instructions below use `npm`).
+
+Environment variables
+
+You will need to provide credentials for Supabase and OpenRouter (or your AI provider). Example env vars to set in a `.env` file (these names are suggestions — update according to your implementation):
+
+```
+SUPABASE_URL=your-supabase-url
+SUPABASE_ANON_KEY=your-supabase-anon-key
+OPENROUTER_API_KEY=your-openrouter-api-key
 ```
 
-2. Install dependencies:
+Install and run locally
 
 ```bash
+# Install dependencies
 npm install
-```
 
-3. Run the development server:
-
-```bash
+# Start dev server
 npm run dev
-```
 
-4. Build for production:
-
-```bash
+# Build for production
 npm run build
+
+# Preview production build locally
+npm run preview
 ```
 
-## Available Scripts
+Notes
+- The repository includes lint and format scripts. Run `npm run lint` and `npm run format` to keep code consistent.
+- See `.ai/prd.md` and `.ai/tech-stack.md` for product and architecture context.
 
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run preview` - Preview production build
-- `npm run lint` - Run ESLint
-- `npm run lint:fix` - Fix ESLint issues
+## Available scripts
 
-## Project Structure
+All scripts are defined in `package.json`.
 
-```md
-.
-├── src/
-│   ├── layouts/    # Astro layouts
-│   ├── pages/      # Astro pages
-│   │   └── api/    # API endpoints
-│   ├── components/ # UI components (Astro & React)
-│   └── assets/     # Static assets
-├── public/         # Public assets
-```
+- `npm run dev` — Start Astro development server (hot reload).
+- `npm run build` — Build the production site.
+- `npm run preview` — Preview the production build locally.
+- `npm run astro` — Run the `astro` CLI.
+- `npm run lint` — Run ESLint across the project.
+- `npm run lint:fix` — Run ESLint with `--fix` to auto-fix problems.
+- `npm run format` — Run Prettier to format files (uses `prettier-plugin-astro`).
 
-## AI Development Support
+Lint-staged hooks are configured to run ESLint and Prettier on staged files.
 
-This project is configured with AI development tools to enhance the development experience, providing guidelines for:
+## Project scope
 
-- Project structure
-- Coding practices
-- Frontend development
-- Styling with Tailwind
-- Accessibility best practices
-- Astro and React guidelines
+In-scope for the MVP (from PRD):
 
-### Cursor IDE
+- User accounts: register, login, change password, delete account
+- User onboarding for travel preferences and a profile screen
+- Create travel plans from a single free-text note + destination + dates + per-plan preferences
+- AI-generated daily schedules (up to 30 days), with named attractions and approximate durations
+- Save, list, edit, and delete plans (limit 10 plans per user)
+- Basic admin panel with simple metrics (all-time totals)
+- Basic event logging/analytics for key actions (e.g., `account_created`, `plan_created`, `plan_deleted`)
 
-The project includes AI rules in `.cursor/rules/` directory that help Cursor IDE understand the project structure and provide better code suggestions.
+Out-of-scope for the MVP:
 
-### GitHub Copilot
+- Plan sharing between accounts and advanced collaboration
+- Deep logistics (maps, route optimization, real-time routing)
+- Rich media management (photos, video) and complex content analysis
+- Multi-language UI (MVP is Polish-only)
+- Advanced roles and permissions beyond a simple admin role
+- Full BI dashboards and advanced analytics
 
-AI instructions for GitHub Copilot are available in `.github/copilot-instructions.md`
+## Project status
 
-### Windsurf
+- Current version: `0.0.1` (see `package.json`).
+- Branch: `master` (active development). 
+- Target: MVP buildable by one developer within ~4 weeks (PRD constraint).
+- CI / Deploy: GitHub Actions and Docker deployment to DigitalOcean are planned (no workflow files included yet).
 
-The `.windsurfrules` file contains AI configuration for Windsurf.
+If you want to help:
 
-## Contributing
-
-Please follow the AI guidelines and coding practices defined in the AI configuration files when contributing to this project.
+- Open issues for missing infra (Supabase setup, CI, deployment), or
+- Add environment variable documentation (specific names and example `.env`), or
+- Add a license (see next section).
 
 ## License
 
