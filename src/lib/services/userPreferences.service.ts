@@ -8,7 +8,7 @@
 import { z } from "zod";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "../../db/database.types";
-import type { CreateUserPreferencesDto, UserPreferencesDto } from "../../types";
+import type { CreateUserPreferencesDto, UpdateUserPreferencesDto, UserPreferencesDto } from "../../types";
 import { logPreferencesCompleted } from "./events.service";
 
 /**
@@ -23,6 +23,12 @@ export const createUserPreferencesSchema = z.object({
   comfort: z.enum(["relax", "balanced", "intense"]),
   budget: z.enum(["budget", "moderate", "luxury"]),
 });
+
+/**
+ * Zod schema for validating partial user preferences updates
+ * All fields are optional - validates only the fields provided in the request
+ */
+export const updateUserPreferencesSchema = createUserPreferencesSchema.partial();
 
 /**
  * Service result type for standardized error handling
@@ -177,6 +183,105 @@ export async function getUserPreferences(
     };
   } catch (error) {
     console.error("Unexpected error in getUserPreferences:", error);
+    return {
+      success: false,
+      error: {
+        code: "INTERNAL_ERROR",
+        message: "An unexpected error occurred",
+      },
+    };
+  }
+}
+
+/**
+ * Updates existing user travel preferences with partial data
+ *
+ * @param supabase - Authenticated Supabase client instance
+ * @param userId - ID of the authenticated user from JWT token
+ * @param data - Partial preferences data to update (validated by Zod schema)
+ * @returns ServiceResult containing either the updated preferences or an error
+ *
+ * Business Logic:
+ * 1. Check if preferences exist for this user (404 Not Found if missing)
+ * 2. Update only the provided fields in the preferences record
+ * 3. Return the complete updated record
+ * 4. No event logging (only initial creation is tracked)
+ *
+ * Error Codes:
+ * - NOT_FOUND: User preferences don't exist
+ * - INTERNAL_ERROR: Unexpected database error
+ */
+export async function updateUserPreferences(
+  supabase: SupabaseClient<Database>,
+  userId: string,
+  data: UpdateUserPreferencesDto
+): Promise<ServiceResult<UserPreferencesDto>> {
+  try {
+    // Step 1: Retrieve existing preferences (also serves as existence check)
+    const { data: existing, error: fetchError } = await supabase
+      .from("user_preferences")
+      .select("*")
+      .eq("user_id", userId)
+      .single();
+
+    if (fetchError) {
+      // PGRST116 = no rows returned (preferences don't exist)
+      if (fetchError.code === "PGRST116") {
+        return {
+          success: false,
+          error: {
+            code: "NOT_FOUND",
+            message: "User preferences not found. Please complete onboarding first.",
+          },
+        };
+      }
+
+      // Other database errors
+      console.error("Error fetching user preferences:", fetchError);
+      return {
+        success: false,
+        error: {
+          code: "INTERNAL_ERROR",
+          message: "Failed to check user preferences",
+        },
+      };
+    }
+
+    // Step 2: If no fields to update, return existing preferences
+    // This handles the empty body {} case without hitting the database
+    if (Object.keys(data).length === 0) {
+      return {
+        success: true,
+        data: existing,
+      };
+    }
+
+    // Step 3: Update only the provided fields
+    const { data: updated, error: updateError } = await supabase
+      .from("user_preferences")
+      .update(data)
+      .eq("user_id", userId)
+      .select()
+      .single();
+
+    if (updateError) {
+      console.error("Error updating user preferences:", updateError);
+      return {
+        success: false,
+        error: {
+          code: "INTERNAL_ERROR",
+          message: "Failed to update user preferences",
+        },
+      };
+    }
+
+    // Step 4: Return the complete updated record
+    return {
+      success: true,
+      data: updated,
+    };
+  } catch (error) {
+    console.error("Unexpected error in updateUserPreferences:", error);
     return {
       success: false,
       error: {

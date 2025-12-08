@@ -13,6 +13,8 @@ import {
   createUserPreferences,
   createUserPreferencesSchema,
   getUserPreferences,
+  updateUserPreferences,
+  updateUserPreferencesSchema,
 } from "../../../../lib/services/userPreferences.service";
 import type { ErrorDto } from "../../../../types";
 
@@ -155,6 +157,85 @@ export const GET: APIRoute = async ({ locals }) => {
   } catch (error) {
     // Catch any unexpected errors
     console.error("Unexpected error in GET /api/users/me/preferences:", error);
+
+    const errorResponse: ErrorDto = {
+      error: {
+        code: "INTERNAL_ERROR",
+        message: "An unexpected error occurred",
+      },
+    };
+    return new Response(JSON.stringify(errorResponse), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+};
+
+/**
+ * PATCH /api/users/me/preferences
+ * Updates one or more travel preference fields for the authenticated user
+ *
+ * @returns 200 OK with complete updated user preferences data
+ * @returns 400 Bad Request if validation fails for any provided field
+ * @returns 404 Not Found if preferences don't exist (user hasn't completed onboarding)
+ * @returns 500 Internal Server Error on unexpected errors
+ */
+export const PATCH: APIRoute = async ({ request, locals }) => {
+  try {
+    // Step 1: Extract Supabase client from context
+    const supabase = locals.supabase;
+
+    // Step 2: Use DEFAULT_USER_ID for development (TODO: implement real JWT auth)
+    const userId = DEFAULT_USER_ID;
+
+    // Step 3: Parse request body
+    const body = await request.json();
+
+    // Step 4: Validate partial update data with Zod schema
+    const validation = updateUserPreferencesSchema.safeParse(body);
+
+    if (!validation.success) {
+      const errorResponse: ErrorDto = {
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Invalid preferences data",
+          details: {
+            issues: validation.error.issues,
+          },
+        },
+      };
+      return new Response(JSON.stringify(errorResponse), {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    // Step 5: Call service function to update preferences
+    const result = await updateUserPreferences(supabase, userId, validation.data);
+
+    // Step 6: Handle service result and return appropriate response
+    if (!result.success) {
+      const statusCode = result.error.code === "NOT_FOUND" ? 404 : 500;
+      const errorResponse: ErrorDto = {
+        error: {
+          code: result.error.code as ErrorDto["error"]["code"],
+          message: result.error.message,
+        },
+      };
+      return new Response(JSON.stringify(errorResponse), {
+        status: statusCode,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    // Step 7: Return success response with complete updated preferences
+    return new Response(JSON.stringify(result.data), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
+  } catch (error) {
+    // Catch any unexpected errors
+    console.error("Unexpected error in PATCH /api/users/me/preferences:", error);
 
     const errorResponse: ErrorDto = {
       error: {
