@@ -121,3 +121,68 @@ export async function createUserPreferences(
     };
   }
 }
+
+/**
+ * Retrieves user travel preferences from the database
+ *
+ * @param supabase - Authenticated Supabase client instance
+ * @param userId - ID of the authenticated user
+ * @returns ServiceResult containing either the user preferences or an error
+ *
+ * Business Logic:
+ * 1. Query user_preferences table for the user's record
+ * 2. Return preferences if found
+ * 3. Return 404 error if preferences don't exist (user hasn't completed onboarding)
+ */
+export async function getUserPreferences(
+  supabase: SupabaseClient<Database>,
+  userId: string
+): Promise<ServiceResult<UserPreferencesDto>> {
+  try {
+    // Step 1: Query user preferences by user_id
+    const { data: preferences, error: selectError } = await supabase
+      .from("user_preferences")
+      .select("*")
+      .eq("user_id", userId)
+      .single();
+
+    // Step 2: Handle query errors
+    if (selectError) {
+      // PGRST116 = no rows returned (user hasn't completed onboarding)
+      if (selectError.code === "PGRST116") {
+        return {
+          success: false,
+          error: {
+            code: "NOT_FOUND",
+            message: "User preferences not found. Please complete onboarding.",
+          },
+        };
+      }
+
+      // Other database errors
+      console.error("Error retrieving user preferences:", selectError);
+      return {
+        success: false,
+        error: {
+          code: "INTERNAL_ERROR",
+          message: "Failed to retrieve user preferences",
+        },
+      };
+    }
+
+    // Step 3: Return the preferences
+    return {
+      success: true,
+      data: preferences,
+    };
+  } catch (error) {
+    console.error("Unexpected error in getUserPreferences:", error);
+    return {
+      success: false,
+      error: {
+        code: "INTERNAL_ERROR",
+        message: "An unexpected error occurred",
+      },
+    };
+  }
+}
