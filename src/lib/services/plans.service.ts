@@ -12,7 +12,15 @@
 import { z } from "zod";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "../../db/database.types";
-import type { CreatePlanDto, PlanDto, DayDto, BlockDto, ActivityDto } from "../../types";
+import type {
+  CreatePlanDto,
+  PlanDto,
+  DayDto,
+  BlockDto,
+  ActivityDto,
+  PaginatedPlansDto,
+  BlockTypeEnum,
+} from "../../types";
 import { generatePlanItinerary, type AIItineraryResponse } from "./ai.service";
 import { logPlanGenerated } from "./events.service";
 
@@ -335,7 +343,10 @@ export async function createPlan(
       }
 
       // Helper to map activities for a given block
-      function mapActivitiesForBlock(block, activities) {
+      function mapActivitiesForBlock(
+        block: { block_type: BlockTypeEnum; created_at: string; day_id: string; id: string },
+        activities: AIItineraryResponse["days"][number]["activities"]["morning"]
+      ) {
         return activities.map((activity, idx) => ({
           block_id: block.id,
           title: activity.title,
@@ -491,6 +502,160 @@ async function fetchCompletePlan(
     return {
       data: null,
       error: error instanceof Error ? error : new Error("Unknown error"),
+    };
+  }
+}
+
+// ============================================================================
+// List Plans Query Parameter Validation
+// ============================================================================
+
+/**
+ * Allowed sort fields for plan list queries
+ * Whitelist to prevent SQL injection through sort parameter
+ */
+const ALLOWED_SORT_FIELDS = ["created_at", "date_start", "date_end", "name"] as const;
+
+/**
+ * Interface for validated list query parameters
+ */
+export interface ValidatedListParams {
+  limit: number;
+  offset: number;
+  sortField: string;
+  ascending: boolean;
+}
+
+/**
+ * Validates and normalizes list query parameters
+ * Returns validated values or defaults
+ *
+ * @param params - Raw query parameters from URL
+ * @returns Validated parameters with defaults applied
+ */
+export function validateListQueryParams(params: {
+  limit?: string | number;
+  offset?: string | number;
+  sort?: string;
+}): ValidatedListParams {
+  // Parse and validate limit (default: 10, max: 100, min: 1)
+  let limit = 10;
+  if (params.limit !== undefined) {
+    const parsedLimit = typeof params.limit === "string" ? parseInt(params.limit, 10) : params.limit;
+    if (!isNaN(parsedLimit) && parsedLimit >= 1 && parsedLimit <= 100) {
+      limit = parsedLimit;
+    }
+  }
+
+  // Parse and validate offset (default: 0, min: 0)
+  let offset = 0;
+  if (params.offset !== undefined) {
+    const parsedOffset = typeof params.offset === "string" ? parseInt(params.offset, 10) : params.offset;
+    if (!isNaN(parsedOffset) && parsedOffset >= 0) {
+      offset = parsedOffset;
+    }
+  }
+
+  // Parse and validate sort field (default: '-created_at')
+  let sortField = "created_at";
+  let ascending = false;
+
+  if (params.sort) {
+    const sortParam = params.sort.trim();
+    const isDescending = sortParam.startsWith("-");
+    const fieldName = isDescending ? sortParam.substring(1) : sortParam;
+
+    // Check if field is in whitelist
+    if (ALLOWED_SORT_FIELDS.includes(fieldName as (typeof ALLOWED_SORT_FIELDS)[number])) {
+      sortField = fieldName;
+      ascending = !isDescending;
+    }
+    // If invalid field, fall back to default (created_at descending)
+  }
+
+  return {
+    limit,
+    offset,
+    sortField,
+    ascending,
+  };
+}
+
+// ============================================================================
+// List Plans Service Function
+// ============================================================================
+
+/**
+ * Retrieves paginated list of travel plans for a user
+ *
+ * @param supabase - Supabase client instance
+ * @param userId - ID of the user whose plans to retrieve
+ * @param params - Query parameters (limit, offset, sort)
+ * @returns ServiceResult with paginated plans data
+ */
+export async function listPlans(
+  supabase: SupabaseClient<Database>,
+  userId: string,
+  params: ValidatedListParams
+): Promise<ServiceResult<PaginatedPlansDto>> {
+  try {
+    // Step 1: Build query for plan data with pagination and sorting
+    const { data: plans, error: plansError } = await supabase
+      .from("plans")
+      .select("id, name, destination_text, date_start, date_end, created_at")
+      .eq("owner_id", userId)
+      .order(params.sortField, { ascending: params.ascending })
+      .range(params.offset, params.offset + params.limit - 1);
+
+    if (plansError) {
+      console.error("Error fetching plans:", plansError);
+      return {
+        success: false,
+        error: {
+          code: "INTERNAL_ERROR",
+          message: "Failed to fetch plans",
+        },
+      };
+    }
+
+    // Step 2: Get total count for pagination metadata
+    const { count, error: countError } = await supabase
+      .from("plans")
+      .select("*", { count: "exact", head: true })
+      .eq("owner_id", userId);
+
+    if (countError) {
+      console.error("Error counting plans:", countError);
+      return {
+        success: false,
+        error: {
+          code: "INTERNAL_ERROR",
+          message: "Failed to count plans",
+        },
+      };
+    }
+    // Step 3: Build paginated response
+    const response: PaginatedPlansDto = {
+      data: plans || [],
+      pagination: {
+        total: count || 0,
+        limit: params.limit,
+        offset: params.offset,
+      },
+    };
+
+    return {
+      success: true,
+      data: response,
+    };
+  } catch (error) {
+    console.error("Unexpected error in listPlans:", error);
+    return {
+      success: false,
+      error: {
+        code: "INTERNAL_ERROR",
+        message: "An unexpected error occurred",
+      },
     };
   }
 }
