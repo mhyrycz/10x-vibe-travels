@@ -22,7 +22,7 @@ import type {
   BlockTypeEnum,
 } from "../../types";
 import { generatePlanItinerary, type AIItineraryResponse } from "./ai.service";
-import { logPlanGenerated, logPlanEdited } from "./events.service";
+import { logPlanGenerated, logPlanEdited, logPlanDeleted } from "./events.service";
 
 // ============================================================================
 // Validation Schema
@@ -776,6 +776,80 @@ async function verifyPlanOwnership(
     success: true,
     plan: planData,
   };
+}
+
+// ============================================================================
+// Delete Plan Service Function
+// ============================================================================
+
+/**
+ * Permanently deletes a plan and all nested data (cascading)
+ *
+ * @param supabase - Supabase client instance
+ * @param userId - ID of the authenticated user
+ * @param planId - ID of the plan to delete
+ * @returns ServiceResult with null data on success or authorization error
+ *
+ * Deletion Flow:
+ * 1. Validate planId is a valid UUID format
+ * 2. Verify plan exists and user owns it (uses verifyPlanOwnership)
+ * 3. Capture plan context (destination_text) BEFORE deletion for event logging
+ * 4. Execute DELETE query (database handles cascading to days/blocks/activities)
+ * 5. Log plan_deleted event (fire-and-forget)
+ * 6. Return success
+ *
+ * Error Codes:
+ * - VALIDATION_ERROR: Invalid UUID format
+ * - NOT_FOUND: Plan doesn't exist
+ * - FORBIDDEN: User doesn't own the plan
+ * - INTERNAL_ERROR: Database error during deletion
+ *
+ * Note: Deletion is permanent and irreversible. Database cascading automatically
+ * deletes all associated plan_days, plan_blocks, and plan_activities.
+ */
+export async function deletePlan(
+  supabase: SupabaseClient<Database>,
+  userId: string,
+  planId: string
+): Promise<ServiceResult<null>> {
+  try {
+    console.log(`Attempting to delete plan ${planId} for user ${userId}`);
+
+    // Step 1: Verify plan ownership and fetch destination_text for logging
+    const verification = await verifyPlanOwnership(supabase, userId, planId, "id, owner_id, destination_text");
+
+    if (!verification.success) {
+      return verification;
+    }
+
+    // Step 2: Log plan_deleted event BEFORE deletion
+    // Must happen before DELETE because of foreign key constraint on events.plan_id
+    // IMPORTANT: Must await to ensure event is logged before plan is deleted
+    console.log(`Logging plan_deleted event before deletion of plan ${planId}`);
+    try {
+      await logPlanDeleted(supabase, userId, planId);
+    } catch (logError: unknown) {
+      console.error(`Failed to log plan_deleted event for plan ${planId}:`, logError);
+      // Continue with deletion even if event logging fails
+    }
+
+    // Step 3: Execute DELETE query (cascades to nested tables automatically)
+    const { error: deleteError } = await supabase.from("plans").delete().eq("id", planId);
+
+    if (deleteError) {
+      console.error(`Database error deleting plan ${planId}:`, deleteError);
+      return createErrorResult("INTERNAL_ERROR", "Failed to delete plan");
+    }
+
+    console.log(`Plan ${planId} deleted successfully`);
+
+    return {
+      success: true,
+      data: null,
+    };
+  } catch (error) {
+    return handleUnexpectedError("deletePlan", error);
+  }
 }
 
 // ============================================================================

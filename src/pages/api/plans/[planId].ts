@@ -8,11 +8,18 @@
 
 import type { APIRoute } from "astro";
 import { DEFAULT_USER_ID } from "../../../db/supabase.client";
-import { getPlanDetails, updatePlan, updatePlanSchema } from "../../../lib/services/plans.service";
-import type { ErrorDto, UpdatePlanDto } from "../../../types";
+import { getPlanDetails, updatePlan, updatePlanSchema, deletePlan } from "../../../lib/services/plans.service";
+import type { ErrorDto, UpdatePlanDto, ErrorCode } from "../../../types";
 
 // Disable prerendering for this API route (SSR required for auth and dynamic operations)
 export const prerender = false;
+
+const statusMap: Record<string, number> = {
+  VALIDATION_ERROR: 400,
+  FORBIDDEN: 403,
+  NOT_FOUND: 404,
+  INTERNAL_ERROR: 500,
+};
 
 /**
  * GET /api/plans/{planId}
@@ -59,27 +66,9 @@ export const GET: APIRoute = async ({ params, locals }) => {
 
     // Step 5: Handle service result based on error code
     if (!result.success) {
-      // Map service error codes to HTTP status codes
-      let statusCode: number;
-      switch (result.error.code) {
-        case "VALIDATION_ERROR":
-          statusCode = 400;
-          break;
-        case "FORBIDDEN":
-          statusCode = 403;
-          break;
-        case "NOT_FOUND":
-          statusCode = 404;
-          break;
-        case "INTERNAL_ERROR":
-        default:
-          statusCode = 500;
-          break;
-      }
-
       const errorResponse: ErrorDto = {
         error: {
-          code: result.error.code as ErrorDto["error"]["code"],
+          code: result.error.code as ErrorCode,
           message: result.error.message,
         },
       };
@@ -87,7 +76,7 @@ export const GET: APIRoute = async ({ params, locals }) => {
       console.error(`Failed to fetch plan ${planId}:`, result.error);
 
       return new Response(JSON.stringify(errorResponse), {
-        status: statusCode,
+        status: statusMap[result.error.code] || 500,
         headers: { "Content-Type": "application/json" },
       });
     }
@@ -211,16 +200,9 @@ export const PATCH: APIRoute = async ({ request, params, locals }) => {
 
     // Step 7: Handle service errors
     if (!result.success) {
-      const statusMap: Record<string, number> = {
-        VALIDATION_ERROR: 400,
-        FORBIDDEN: 403,
-        NOT_FOUND: 404,
-        INTERNAL_ERROR: 500,
-      };
-
       const errorResponse: ErrorDto = {
         error: {
-          code: result.error.code as import("../../../types").ErrorCode,
+          code: result.error.code as ErrorCode,
           message: result.error.message,
         },
       };
@@ -248,6 +230,91 @@ export const PATCH: APIRoute = async ({ request, params, locals }) => {
       error: {
         code: "INTERNAL_ERROR",
         message: "An unexpected error occurred while updating the plan",
+      },
+    };
+
+    return new Response(JSON.stringify(errorResponse), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+};
+
+/**
+ * DELETE /api/plans/{planId}
+ * Permanently deletes a plan and all associated nested data
+ *
+ * Path Parameters:
+ * - planId (required, UUID): The unique identifier of the plan to delete
+ *
+ * @returns 204 No Content on successful deletion (empty body)
+ * @returns 400 Bad Request if planId is not a valid UUID
+ * @returns 403 Forbidden if user doesn't own the plan
+ * @returns 404 Not Found if plan doesn't exist
+ * @returns 500 Internal Server Error on unexpected errors
+ *
+ * Note: Deletion is permanent and irreversible. The database automatically
+ * cascades the deletion to all associated plan_days, plan_blocks, and plan_activities.
+ */
+export const DELETE: APIRoute = async ({ params, locals }) => {
+  try {
+    // Step 1: Extract Supabase client from context
+    const supabase = locals.supabase;
+
+    // Step 2: Use DEFAULT_USER_ID for development (TODO: implement real JWT auth)
+    const userId = DEFAULT_USER_ID;
+
+    // Step 3: Extract planId from path parameters
+    const planId = params.planId;
+
+    if (!planId) {
+      const errorResponse: ErrorDto = {
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Plan ID is required",
+        },
+      };
+
+      return new Response(JSON.stringify(errorResponse), {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    // Step 4: Call deletePlan service function
+    console.log(`DELETE /api/plans/${planId} - Deleting plan for user ${userId}`);
+
+    const result = await deletePlan(supabase, userId, planId);
+
+    // Step 5: Handle service errors
+    if (!result.success) {
+      const errorResponse: ErrorDto = {
+        error: {
+          code: result.error.code as ErrorCode,
+          message: result.error.message,
+        },
+      };
+
+      return new Response(JSON.stringify(errorResponse), {
+        status: statusMap[result.error.code] || 500,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    // Step 6: Return 204 No Content (successful deletion has no response body)
+    console.log(`Plan ${planId} deleted successfully`);
+
+    return new Response(null, {
+      status: 204,
+    });
+  } catch (error) {
+    // Catch any unexpected errors
+    console.error("Unexpected error in DELETE /api/plans/{planId}:", error);
+
+    const errorResponse: ErrorDto = {
+      error: {
+        code: "INTERNAL_ERROR",
+        message: "An unexpected error occurred while deleting the plan",
       },
     };
 
