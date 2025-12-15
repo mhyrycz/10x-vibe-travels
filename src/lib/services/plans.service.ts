@@ -151,7 +151,10 @@ export async function getUserPlanCount(supabase: SupabaseClient<Database>, userI
  * @param activities - Array of activities in the block
  * @returns Object with total duration and warning message
  */
-function calculateBlockMetrics(activities: ActivityDto[]): {
+function calculateBlockMetrics(
+  activities: ActivityDto[],
+  blockType: BlockTypeEnum
+): {
   total_duration_minutes: number;
   warning: string | null;
 } {
@@ -159,11 +162,17 @@ function calculateBlockMetrics(activities: ActivityDto[]): {
     return sum + activity.duration_minutes + (activity.transport_minutes || 0);
   }, 0);
 
-  // Generate warning if block exceeds reasonable time (6 hours = 360 minutes)
-  const warning =
-    totalDuration > 360
-      ? `This block is quite packed (${Math.round(totalDuration / 60)} hours). Consider spacing activities.`
-      : null;
+  // Generate warning based on block type thresholds
+  let warning: string | null = null;
+  const hours = Math.round((totalDuration / 60) * 10) / 10; // Round to 1 decimal
+
+  if (blockType === "morning" && totalDuration > 240) {
+    warning = `This morning block is quite packed (${hours} hours). Consider spacing activities.`;
+  } else if (blockType === "afternoon" && totalDuration > 300) {
+    warning = `This afternoon block is quite packed (${hours} hours). Consider spacing activities.`;
+  } else if (blockType === "evening" && totalDuration > 240) {
+    warning = `This evening block is quite packed (${hours} hours). Consider spacing activities.`;
+  }
 
   return {
     total_duration_minutes: totalDuration,
@@ -473,7 +482,7 @@ async function fetchCompletePlan(
           updated_at: activity.updated_at,
         }));
 
-        const metrics = calculateBlockMetrics(activitiesDto);
+        const metrics = calculateBlockMetrics(activitiesDto, block.block_type);
 
         blocksWithActivities.push({
           id: block.id,
@@ -650,6 +659,121 @@ export async function listPlans(
     };
   } catch (error) {
     console.error("Unexpected error in listPlans:", error);
+    return {
+      success: false,
+      error: {
+        code: "INTERNAL_ERROR",
+        message: "An unexpected error occurred",
+      },
+    };
+  }
+}
+
+// ============================================================================
+// Get Plan Details Service Function
+// ============================================================================
+
+/**
+ * Simple UUID v4 validation regex
+ */
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+/**
+ * Validates if a string is a valid UUID format
+ */
+function isValidUUID(uuid: string): boolean {
+  return UUID_REGEX.test(uuid);
+}
+
+/**
+ * Retrieves complete plan details with authorization check
+ *
+ * @param supabase - Supabase client instance
+ * @param userId - ID of the authenticated user
+ * @param planId - ID of the plan to retrieve
+ * @returns ServiceResult with complete plan data or authorization error
+ *
+ * Authorization Flow:
+ * 1. Validate planId is a valid UUID format
+ * 2. Fetch plan to check if it exists
+ * 3. Verify plan ownership (owner_id === userId)
+ * 4. Fetch complete nested structure if authorized
+ *
+ * Error Codes:
+ * - VALIDATION_ERROR: Invalid UUID format
+ * - NOT_FOUND: Plan doesn't exist
+ * - FORBIDDEN: User doesn't own the plan
+ * - INTERNAL_ERROR: Database error
+ */
+export async function getPlanDetails(
+  supabase: SupabaseClient<Database>,
+  userId: string,
+  planId: string
+): Promise<ServiceResult<PlanDto>> {
+  try {
+    // Step 1: Validate UUID format
+    if (!isValidUUID(planId)) {
+      return {
+        success: false,
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Invalid plan ID format",
+        },
+      };
+    }
+
+    // Step 2: Fetch plan to check ownership
+    const { data: plan, error: planError } = await supabase
+      .from("plans")
+      .select("id, owner_id")
+      .eq("id", planId)
+      .single();
+
+    // Step 3: Handle not found
+    if (planError || !plan) {
+      console.log(`Plan ${planId} not found`);
+      return {
+        success: false,
+        error: {
+          code: "NOT_FOUND",
+          message: "Plan not found",
+        },
+      };
+    }
+
+    // Step 4: Verify ownership
+    if (plan.owner_id !== userId) {
+      console.log(`User ${userId} attempted to access plan ${planId} owned by ${plan.owner_id}`);
+      return {
+        success: false,
+        error: {
+          code: "FORBIDDEN",
+          message: "You don't have permission to access this plan",
+        },
+      };
+    }
+
+    // Step 5: Fetch complete plan structure
+    const { data: completePlan, error: fetchError } = await fetchCompletePlan(supabase, planId);
+
+    if (fetchError || !completePlan) {
+      console.error(`Error fetching complete plan ${planId}:`, fetchError);
+      return {
+        success: false,
+        error: {
+          code: "INTERNAL_ERROR",
+          message: "Failed to fetch plan details",
+        },
+      };
+    }
+
+    console.log(`✅ Plan ${planId} retrieved successfully for user ${userId}`);
+    return {
+      success: true,
+      data: completePlan,
+    };
+  } catch (error) {
+    console.error("Unexpected error in getPlanDetails:", error);
     return {
       success: false,
       error: {
