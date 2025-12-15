@@ -8,8 +8,8 @@
 
 import type { APIRoute } from "astro";
 import { DEFAULT_USER_ID } from "../../../db/supabase.client";
-import { getPlanDetails } from "../../../lib/services/plans.service";
-import type { ErrorDto } from "../../../types";
+import { getPlanDetails, updatePlan, updatePlanSchema } from "../../../lib/services/plans.service";
+import type { ErrorDto, UpdatePlanDto } from "../../../types";
 
 // Disable prerendering for this API route (SSR required for auth and dynamic operations)
 export const prerender = false;
@@ -115,6 +115,139 @@ export const GET: APIRoute = async ({ params, locals }) => {
       error: {
         code: "INTERNAL_ERROR",
         message: "An unexpected error occurred while fetching the plan",
+      },
+    };
+
+    return new Response(JSON.stringify(errorResponse), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+};
+
+/**
+ * PATCH /api/plans/{planId}
+ * Updates plan metadata (name, budget, note_text, people_count)
+ * Does NOT regenerate itinerary - use POST /api/plans/{planId}/regenerate for that
+ *
+ * Path Parameters:
+ * - planId (required, UUID): The unique identifier of the plan to update
+ *
+ * Request Body (at least one field required):
+ * - name (optional, string, 1-140 chars): Plan name
+ * - budget (optional, enum): 'budget' | 'moderate' | 'luxury'
+ * - note_text (optional, string, max 20000 chars): Travel notes
+ * - people_count (optional, number, 1-20): Number of travelers
+ *
+ * @returns 200 OK with updated fields and timestamp
+ * @returns 400 Bad Request if validation fails or empty body
+ * @returns 403 Forbidden if user doesn't own the plan
+ * @returns 404 Not Found if plan doesn't exist
+ * @returns 500 Internal Server Error on unexpected errors
+ */
+export const PATCH: APIRoute = async ({ request, params, locals }) => {
+  try {
+    // Step 1: Extract Supabase client from context
+    const supabase = locals.supabase;
+
+    // Step 2: Use DEFAULT_USER_ID for development (TODO: implement real JWT auth)
+    const userId = DEFAULT_USER_ID;
+
+    // Step 3: Extract planId from path parameters
+    const planId = params.planId;
+
+    if (!planId) {
+      const errorResponse: ErrorDto = {
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Plan ID is required",
+        },
+      };
+
+      return new Response(JSON.stringify(errorResponse), {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    // Step 4: Parse request body
+    let body: UpdatePlanDto;
+    try {
+      body = await request.json();
+    } catch {
+      const errorResponse: ErrorDto = {
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Invalid JSON in request body",
+        },
+      };
+
+      return new Response(JSON.stringify(errorResponse), {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    // Step 5: Validate request body
+    const validation = updatePlanSchema.safeParse(body);
+
+    if (!validation.success) {
+      const errorResponse: ErrorDto = {
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Invalid update data",
+          details: validation.error.flatten(),
+        },
+      };
+
+      return new Response(JSON.stringify(errorResponse), {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    // Step 6: Call service layer
+    const result = await updatePlan(supabase, userId, planId, validation.data);
+
+    // Step 7: Handle service errors
+    if (!result.success) {
+      const statusMap: Record<string, number> = {
+        VALIDATION_ERROR: 400,
+        FORBIDDEN: 403,
+        NOT_FOUND: 404,
+        INTERNAL_ERROR: 500,
+      };
+
+      const errorResponse: ErrorDto = {
+        error: {
+          code: result.error.code as import("../../../types").ErrorCode,
+          message: result.error.message,
+        },
+      };
+
+      return new Response(JSON.stringify(errorResponse), {
+        status: statusMap[result.error.code] || 500,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    // Step 8: Return success response
+    console.log(`Plan ${planId} updated successfully:`, {
+      updatedFields: Object.keys(validation.data),
+    });
+
+    return new Response(JSON.stringify(result.data), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
+  } catch (error) {
+    // Catch any unexpected errors
+    console.error("Unexpected error in PATCH /api/plans/{planId}:", error);
+
+    const errorResponse: ErrorDto = {
+      error: {
+        code: "INTERNAL_ERROR",
+        message: "An unexpected error occurred while updating the plan",
       },
     };
 

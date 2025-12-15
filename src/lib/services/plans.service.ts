@@ -22,7 +22,7 @@ import type {
   BlockTypeEnum,
 } from "../../types";
 import { generatePlanItinerary, type AIItineraryResponse } from "./ai.service";
-import { logPlanGenerated } from "./events.service";
+import { logPlanGenerated, logPlanEdited } from "./events.service";
 
 // ============================================================================
 // Validation Schema
@@ -78,6 +78,21 @@ export const createPlanSchema = z
       path: ["date_end"],
     }
   );
+
+/**
+ * Zod schema for validating plan update (metadata only) request
+ * Requires at least one field to be provided
+ */
+export const updatePlanSchema = z
+  .object({
+    name: z.string().min(1).max(140).optional(),
+    budget: z.enum(["budget", "moderate", "luxury"]).optional(),
+    note_text: z.string().max(20000).optional(),
+    people_count: z.number().int().min(1).max(20).optional(),
+  })
+  .refine((data) => Object.keys(data).length > 0, {
+    message: "At least one field must be provided",
+  });
 
 // ============================================================================
 // Service Result Type
@@ -217,13 +232,7 @@ export async function createPlan(
     // Step 1: Check plan count limit
     const planCount = await getUserPlanCount(supabase, userId);
     if (planCount >= 10) {
-      return {
-        success: false,
-        error: {
-          code: "FORBIDDEN",
-          message: "Plan limit reached (maximum 10 plans per user)",
-        },
-      };
+      return createErrorResult("FORBIDDEN", "Plan limit reached (maximum 10 plans per user)");
     }
 
     // Step 2: Generate plan name
@@ -236,16 +245,11 @@ export async function createPlan(
       aiItinerary = await generatePlanItinerary(data);
     } catch (error) {
       console.error("AI service error:", error);
-      return {
-        success: false,
-        error: {
-          code: "INTERNAL_ERROR",
-          message:
-            error instanceof Error && error.message.includes("timeout")
-              ? "Itinerary generation timed out. Please try again"
-              : "Failed to generate itinerary",
-        },
-      };
+      const errorMessage =
+        error instanceof Error && error.message.includes("timeout")
+          ? "Itinerary generation timed out. Please try again"
+          : "Failed to generate itinerary";
+      return createErrorResult("INTERNAL_ERROR", errorMessage);
     }
 
     // Step 4: Insert plan record
@@ -269,13 +273,7 @@ export async function createPlan(
 
     if (planError || !plan) {
       console.error("Error creating plan:", planError);
-      return {
-        success: false,
-        error: {
-          code: "INTERNAL_ERROR",
-          message: "Failed to create plan",
-        },
-      };
+      return createErrorResult("INTERNAL_ERROR", "Failed to create plan");
     }
 
     // Step 5: Insert plan_days records
@@ -295,13 +293,7 @@ export async function createPlan(
       console.error("Error creating plan days:", daysError);
       // Rollback: delete plan
       await supabase.from("plans").delete().eq("id", plan.id);
-      return {
-        success: false,
-        error: {
-          code: "INTERNAL_ERROR",
-          message: "Failed to create plan days",
-        },
-      };
+      return createErrorResult("INTERNAL_ERROR", "Failed to create plan days");
     }
 
     // Step 6 & 7: Insert blocks and activities for each day
@@ -323,15 +315,9 @@ export async function createPlan(
 
       if (blocksError || !insertedBlocks || insertedBlocks.length !== 3) {
         console.error("Error creating plan blocks:", blocksError);
-        // Rollback: delete plan (cascade will handle days)
+        // Rollback: delete plan and days
         await supabase.from("plans").delete().eq("id", plan.id);
-        return {
-          success: false,
-          error: {
-            code: "INTERNAL_ERROR",
-            message: "Failed to create plan blocks",
-          },
-        };
+        return createErrorResult("INTERNAL_ERROR", "Failed to create plan blocks");
       }
 
       // Insert activities for each block
@@ -342,13 +328,7 @@ export async function createPlan(
       if (!morningBlock || !afternoonBlock || !eveningBlock) {
         console.error("Missing required blocks for day");
         await supabase.from("plans").delete().eq("id", plan.id);
-        return {
-          success: false,
-          error: {
-            code: "INTERNAL_ERROR",
-            message: "Failed to create plan blocks",
-          },
-        };
+        return createErrorResult("INTERNAL_ERROR", "Failed to create plan blocks");
       }
 
       // Helper to map activities for a given block
@@ -377,13 +357,7 @@ export async function createPlan(
         console.error("Error creating plan activities:", activitiesError);
         // Rollback: delete plan (cascade will handle days/blocks)
         await supabase.from("plans").delete().eq("id", plan.id);
-        return {
-          success: false,
-          error: {
-            code: "INTERNAL_ERROR",
-            message: "Failed to create plan activities",
-          },
-        };
+        return createErrorResult("INTERNAL_ERROR", "Failed to create plan activities");
       }
     }
 
@@ -392,13 +366,7 @@ export async function createPlan(
 
     if (fetchError || !completePlan) {
       console.error("Error fetching complete plan:", fetchError);
-      return {
-        success: false,
-        error: {
-          code: "INTERNAL_ERROR",
-          message: "Plan created but failed to retrieve complete data",
-        },
-      };
+      return createErrorResult("INTERNAL_ERROR", "Plan created but failed to retrieve complete data");
     }
 
     // Step 9: Log plan_generated event (fire-and-forget)
@@ -410,14 +378,84 @@ export async function createPlan(
       data: completePlan,
     };
   } catch (error) {
-    console.error("Unexpected error in createPlan:", error);
+    return handleUnexpectedError("createPlan", error);
+  }
+}
+
+/**
+ * Updates plan metadata (name, budget, note_text, people_count)
+ * Does NOT regenerate itinerary - use regeneratePlan() for that
+ *
+ * Authorization: Verifies plan exists and belongs to authenticated user
+ *
+ * @param supabase - Authenticated Supabase client instance
+ * @param userId - ID of the authenticated user making the request
+ * @param planId - UUID of the plan to update
+ * @param data - Partial update data (at least one field required)
+ * @returns ServiceResult<PlanUpdatedDto> with updated fields and timestamp
+ *
+ * @example
+ * ```typescript
+ * const result = await updatePlan(supabase, userId, planId, {
+ *   name: "Updated Plan Name",
+ *   budget: "luxury"
+ * });
+ * ```
+ */
+export async function updatePlan(
+  supabase: SupabaseClient<Database>,
+  userId: string,
+  planId: string,
+  data: {
+    name?: string;
+    budget?: "budget" | "moderate" | "luxury";
+    note_text?: string;
+    people_count?: number;
+  }
+): Promise<
+  ServiceResult<{
+    id: string;
+    name: string;
+    budget: string;
+    note_text: string;
+    people_count: number;
+    updated_at: string;
+  }>
+> {
+  try {
+    console.log(`Updating plan ${planId} for user ${userId}`);
+
+    // Step 1-4: Validate and verify ownership
+    const verification = await verifyPlanOwnership(supabase, userId, planId);
+    if (!verification.success) {
+      return verification;
+    }
+
+    // Step 5: Update plan with provided fields
+    const { data: updatedPlan, error: updateError } = await supabase
+      .from("plans")
+      .update(data)
+      .eq("id", planId)
+      .select("id, name, budget, note_text, people_count, updated_at")
+      .single();
+
+    if (updateError || !updatedPlan) {
+      console.error(`Error updating plan ${planId}:`, updateError);
+      return createErrorResult("INTERNAL_ERROR", "Failed to update plan");
+    }
+
+    // Step 6: Log plan_edited event (fire-and-forget)
+    logPlanEdited(supabase, userId, planId).catch((error) => {
+      console.error("Failed to log plan_edited event:", error);
+    });
+
+    console.log(`✅ Plan ${planId} updated successfully`);
     return {
-      success: false,
-      error: {
-        code: "INTERNAL_ERROR",
-        message: "An unexpected error occurred",
-      },
+      success: true,
+      data: updatedPlan,
     };
+  } catch (error) {
+    return handleUnexpectedError("updatePlan", error);
   }
 }
 
@@ -618,13 +656,7 @@ export async function listPlans(
 
     if (plansError) {
       console.error("Error fetching plans:", plansError);
-      return {
-        success: false,
-        error: {
-          code: "INTERNAL_ERROR",
-          message: "Failed to fetch plans",
-        },
-      };
+      return createErrorResult("INTERNAL_ERROR", "Failed to fetch plans");
     }
 
     // Step 2: Get total count for pagination metadata
@@ -635,13 +667,7 @@ export async function listPlans(
 
     if (countError) {
       console.error("Error counting plans:", countError);
-      return {
-        success: false,
-        error: {
-          code: "INTERNAL_ERROR",
-          message: "Failed to count plans",
-        },
-      };
+      return createErrorResult("INTERNAL_ERROR", "Failed to count plans");
     }
     // Step 3: Build paginated response
     const response: PaginatedPlansDto = {
@@ -658,19 +684,12 @@ export async function listPlans(
       data: response,
     };
   } catch (error) {
-    console.error("Unexpected error in listPlans:", error);
-    return {
-      success: false,
-      error: {
-        code: "INTERNAL_ERROR",
-        message: "An unexpected error occurred",
-      },
-    };
+    return handleUnexpectedError("listPlans", error);
   }
 }
 
 // ============================================================================
-// Get Plan Details Service Function
+// Shared Helper Functions
 // ============================================================================
 
 /**
@@ -684,6 +703,84 @@ const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9
 function isValidUUID(uuid: string): boolean {
   return UUID_REGEX.test(uuid);
 }
+
+/**
+ * Creates a standardized error ServiceResult
+ * Reduces boilerplate for error returns
+ */
+function createErrorResult<T extends string>(
+  code: T,
+  message: string
+): { success: false; error: { code: T; message: string } } {
+  return {
+    success: false,
+    error: { code, message },
+  };
+}
+
+/**
+ * Creates a standardized internal error ServiceResult from caught exceptions
+ * Logs the error and returns a generic message to the user
+ */
+function handleUnexpectedError(context: string, error: unknown): ServiceResult<never> {
+  console.error(`Unexpected error in ${context}:`, error);
+  return createErrorResult("INTERNAL_ERROR", "An unexpected error occurred");
+}
+
+/**
+ * Validates plan ID format and verifies plan ownership
+ * Common authorization pattern used across multiple service functions
+ *
+ * @param supabase - Supabase client instance
+ * @param userId - ID of the authenticated user
+ * @param planId - UUID of the plan to verify
+ * @param selectFields - Fields to select from plans table (default: "id, owner_id")
+ * @returns ServiceResult with plan data or authorization error
+ *
+ * Error Codes:
+ * - VALIDATION_ERROR: Invalid UUID format
+ * - NOT_FOUND: Plan doesn't exist
+ * - FORBIDDEN: User doesn't own the plan
+ */
+async function verifyPlanOwnership(
+  supabase: SupabaseClient<Database>,
+  userId: string,
+  planId: string,
+  selectFields = "id, owner_id"
+): Promise<
+  | { success: true; plan: { id: string; owner_id: string; [key: string]: unknown } }
+  | { success: false; error: { code: "VALIDATION_ERROR" | "NOT_FOUND" | "FORBIDDEN"; message: string } }
+> {
+  // Step 1: Validate UUID format
+  if (!isValidUUID(planId)) {
+    return createErrorResult("VALIDATION_ERROR", "Invalid plan ID format");
+  }
+
+  // Step 2: Fetch plan to check existence and ownership
+  const { data: plan, error: planError } = await supabase.from("plans").select(selectFields).eq("id", planId).single();
+
+  // Step 3: Handle not found
+  if (planError || !plan) {
+    console.log(`Plan ${planId} not found`);
+    return createErrorResult("NOT_FOUND", "Plan not found");
+  }
+
+  // Step 4: Verify ownership
+  const planData = plan as unknown as { id: string; owner_id: string; [key: string]: unknown };
+  if (planData.owner_id !== userId) {
+    console.log(`User ${userId} attempted to access plan ${planId} owned by ${planData.owner_id}`);
+    return createErrorResult("FORBIDDEN", "You don't have permission to access this plan");
+  }
+
+  return {
+    success: true,
+    plan: planData,
+  };
+}
+
+// ============================================================================
+// Get Plan Details Service Function
+// ============================================================================
 
 /**
  * Retrieves complete plan details with authorization check
@@ -711,46 +808,10 @@ export async function getPlanDetails(
   planId: string
 ): Promise<ServiceResult<PlanDto>> {
   try {
-    // Step 1: Validate UUID format
-    if (!isValidUUID(planId)) {
-      return {
-        success: false,
-        error: {
-          code: "VALIDATION_ERROR",
-          message: "Invalid plan ID format",
-        },
-      };
-    }
-
-    // Step 2: Fetch plan to check ownership
-    const { data: plan, error: planError } = await supabase
-      .from("plans")
-      .select("id, owner_id")
-      .eq("id", planId)
-      .single();
-
-    // Step 3: Handle not found
-    if (planError || !plan) {
-      console.log(`Plan ${planId} not found`);
-      return {
-        success: false,
-        error: {
-          code: "NOT_FOUND",
-          message: "Plan not found",
-        },
-      };
-    }
-
-    // Step 4: Verify ownership
-    if (plan.owner_id !== userId) {
-      console.log(`User ${userId} attempted to access plan ${planId} owned by ${plan.owner_id}`);
-      return {
-        success: false,
-        error: {
-          code: "FORBIDDEN",
-          message: "You don't have permission to access this plan",
-        },
-      };
+    // Step 1-4: Validate and verify ownership
+    const verification = await verifyPlanOwnership(supabase, userId, planId);
+    if (!verification.success) {
+      return verification;
     }
 
     // Step 5: Fetch complete plan structure
@@ -758,13 +819,7 @@ export async function getPlanDetails(
 
     if (fetchError || !completePlan) {
       console.error(`Error fetching complete plan ${planId}:`, fetchError);
-      return {
-        success: false,
-        error: {
-          code: "INTERNAL_ERROR",
-          message: "Failed to fetch plan details",
-        },
-      };
+      return createErrorResult("INTERNAL_ERROR", "Failed to fetch plan details");
     }
 
     console.log(`✅ Plan ${planId} retrieved successfully for user ${userId}`);
@@ -773,13 +828,6 @@ export async function getPlanDetails(
       data: completePlan,
     };
   } catch (error) {
-    console.error("Unexpected error in getPlanDetails:", error);
-    return {
-      success: false,
-      error: {
-        code: "INTERNAL_ERROR",
-        message: "An unexpected error occurred",
-      },
-    };
+    return handleUnexpectedError("getPlanDetails", error);
   }
 }
