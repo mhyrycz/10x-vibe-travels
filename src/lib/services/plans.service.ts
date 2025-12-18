@@ -11,9 +11,10 @@
 
 import { z } from "zod";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "../../db/database.types";
+import type { Database, Tables } from "../../db/database.types";
 import type {
   CreatePlanDto,
+  RegeneratePlanDto,
   PlanDto,
   DayDto,
   BlockDto,
@@ -22,7 +23,8 @@ import type {
   BlockTypeEnum,
 } from "../../types";
 import { generatePlanItinerary, type AIItineraryResponse } from "./ai.service";
-import { logPlanGenerated, logPlanEdited, logPlanDeleted } from "./events.service";
+import { logPlanGenerated, logPlanEdited, logPlanDeleted, logPlanRegenerated } from "./events.service";
+import { checkRateLimit } from "./rateLimiter.service";
 
 // ============================================================================
 // Validation Schema
@@ -94,6 +96,42 @@ export const updatePlanSchema = z
     message: "At least one field must be provided",
   });
 
+/**
+ * Zod schema for validating plan regeneration request
+ * All fields are optional - can regenerate with existing params
+ */
+export const regeneratePlanSchema = z
+  .object({
+    date_start: z
+      .string()
+      .refine(
+        (date) => {
+          const startDate = new Date(date);
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          return startDate >= today;
+        },
+        { message: "Start date cannot be in the past" }
+      )
+      .optional(),
+    date_end: z.string().optional(),
+    note_text: z.string().max(20000).optional(),
+    comfort: z.enum(["relax", "balanced", "intense"]).optional(),
+    transport_modes: z
+      .array(z.enum(["car", "walk", "public"]))
+      .nullable()
+      .optional(),
+  })
+  .refine(
+    (data) => {
+      if (data.date_start && data.date_end) {
+        return new Date(data.date_end) > new Date(data.date_start);
+      }
+      return true;
+    },
+    { message: "End date must be after start date" }
+  );
+
 // ============================================================================
 // Service Result Type
 // ============================================================================
@@ -161,6 +199,27 @@ export async function getUserPlanCount(supabase: SupabaseClient<Database>, userI
 }
 
 /**
+ * Generates AI itinerary with consistent error handling
+ * Shared by createPlan and regeneratePlan
+ *
+ * @param params - Plan parameters for AI generation
+ * @returns ServiceResult with AI itinerary or error
+ */
+async function generateAIItinerary(params: CreatePlanDto): Promise<ServiceResult<AIItineraryResponse>> {
+  try {
+    const aiItinerary = await generatePlanItinerary(params);
+    return { success: true, data: aiItinerary };
+  } catch (error) {
+    console.error("AI service error:", error);
+    const errorMessage =
+      error instanceof Error && error.message.includes("timeout")
+        ? "Itinerary generation timed out. Please try again"
+        : "Failed to generate itinerary";
+    return createErrorResult("INTERNAL_ERROR", errorMessage);
+  }
+}
+
+/**
  * Calculates total duration for a block and generates warning if too long
  *
  * @param activities - Array of activities in the block
@@ -193,6 +252,103 @@ function calculateBlockMetrics(
     total_duration_minutes: totalDuration,
     warning,
   };
+}
+
+/**
+ * Inserts days, blocks, and activities for a plan
+ * Shared by createPlan and regeneratePlan to avoid code duplication
+ *
+ * @param supabase - Supabase client instance
+ * @param planId - ID of the plan to insert data for
+ * @param aiItinerary - AI-generated itinerary response
+ * @param dateStart - Start date of the trip (YYYY-MM-DD)
+ * @returns ServiceResult with null data on success or error
+ */
+async function insertPlanItineraryData(
+  supabase: SupabaseClient<Database>,
+  planId: string,
+  aiItinerary: AIItineraryResponse,
+  dateStart: string
+): Promise<ServiceResult<null>> {
+  // Step 1: Insert plan_days records
+  const daysToInsert = aiItinerary.days.map((day, index) => {
+    const dayDate = new Date(dateStart);
+    dayDate.setDate(dayDate.getDate() + index);
+    return {
+      plan_id: planId,
+      day_index: day.day_index,
+      day_date: dayDate.toISOString().split("T")[0],
+    };
+  });
+
+  const { data: insertedDays, error: daysError } = await supabase.from("plan_days").insert(daysToInsert).select();
+
+  if (daysError || !insertedDays) {
+    console.error("Error creating plan days:", daysError);
+    return createErrorResult("INTERNAL_ERROR", "Failed to create plan days");
+  }
+
+  // Step 2: Insert blocks and activities for each day
+  for (let i = 0; i < insertedDays.length; i++) {
+    const day = insertedDays[i];
+    const aiDay = aiItinerary.days[i];
+
+    // Insert 3 blocks per day (morning, afternoon, evening)
+    const blocksToInsert = [
+      { day_id: day.id, block_type: "morning" as const },
+      { day_id: day.id, block_type: "afternoon" as const },
+      { day_id: day.id, block_type: "evening" as const },
+    ];
+
+    const { data: insertedBlocks, error: blocksError } = await supabase
+      .from("plan_blocks")
+      .insert(blocksToInsert)
+      .select();
+
+    if (blocksError || !insertedBlocks || insertedBlocks.length !== 3) {
+      console.error("Error creating plan blocks:", blocksError);
+      return createErrorResult("INTERNAL_ERROR", "Failed to create plan blocks");
+    }
+
+    // Insert activities for each block
+    const morningBlock = insertedBlocks.find((b) => b.block_type === "morning");
+    const afternoonBlock = insertedBlocks.find((b) => b.block_type === "afternoon");
+    const eveningBlock = insertedBlocks.find((b) => b.block_type === "evening");
+
+    if (!morningBlock || !afternoonBlock || !eveningBlock) {
+      console.error("Missing required blocks for day");
+      return createErrorResult("INTERNAL_ERROR", "Failed to create plan blocks");
+    }
+
+    // Helper to map activities for a given block
+    function mapActivitiesForBlock(
+      block: { block_type: BlockTypeEnum; created_at: string; day_id: string; id: string },
+      activities: AIItineraryResponse["days"][number]["activities"]["morning"]
+    ) {
+      return activities.map((activity, idx) => ({
+        block_id: block.id,
+        title: activity.title,
+        duration_minutes: activity.duration_minutes,
+        transport_minutes: activity.transport_minutes,
+        order_index: idx + 1,
+      }));
+    }
+
+    const activitiesToInsert = [
+      ...mapActivitiesForBlock(morningBlock, aiDay.activities.morning),
+      ...mapActivitiesForBlock(afternoonBlock, aiDay.activities.afternoon),
+      ...mapActivitiesForBlock(eveningBlock, aiDay.activities.evening),
+    ];
+
+    const { error: activitiesError } = await supabase.from("plan_activities").insert(activitiesToInsert);
+
+    if (activitiesError) {
+      console.error("Error creating plan activities:", activitiesError);
+      return createErrorResult("INTERNAL_ERROR", "Failed to create plan activities");
+    }
+  }
+
+  return { success: true, data: null };
 }
 
 // ============================================================================
@@ -229,10 +385,10 @@ export async function createPlan(
   data: CreatePlanDto
 ): Promise<ServiceResult<PlanDto>> {
   try {
-    // Step 1: Check plan count limit
-    const planCount = await getUserPlanCount(supabase, userId);
-    if (planCount >= 10) {
-      return createErrorResult("FORBIDDEN", "Plan limit reached (maximum 10 plans per user)");
+    // Step 1: Check rate limit (10 plans per hour, shared with regenerate)
+    const rateLimit = await checkRateLimit(`plan-operations:${userId}`, 10, 60 * 60 * 1000);
+    if (!rateLimit.allowed) {
+      return createErrorResult("RATE_LIMIT_EXCEEDED", "Rate limit exceeded. You can create up to 10 plans per hour");
     }
 
     // Step 2: Generate plan name
@@ -240,17 +396,11 @@ export async function createPlan(
     const tripLengthDays = calculateTripLengthDays(data.date_start, data.date_end);
 
     // Step 3: Call AI service to generate itinerary
-    let aiItinerary: AIItineraryResponse;
-    try {
-      aiItinerary = await generatePlanItinerary(data);
-    } catch (error) {
-      console.error("AI service error:", error);
-      const errorMessage =
-        error instanceof Error && error.message.includes("timeout")
-          ? "Itinerary generation timed out. Please try again"
-          : "Failed to generate itinerary";
-      return createErrorResult("INTERNAL_ERROR", errorMessage);
+    const aiResult = await generateAIItinerary(data);
+    if (!aiResult.success) {
+      return aiResult;
     }
+    const aiItinerary = aiResult.data;
 
     // Step 4: Insert plan record
     const { data: plan, error: planError } = await supabase
@@ -276,92 +426,15 @@ export async function createPlan(
       return createErrorResult("INTERNAL_ERROR", "Failed to create plan");
     }
 
-    // Step 5: Insert plan_days records
-    const daysToInsert = aiItinerary.days.map((day, index) => {
-      const dayDate = new Date(data.date_start);
-      dayDate.setDate(dayDate.getDate() + index);
-      return {
-        plan_id: plan.id,
-        day_index: day.day_index,
-        day_date: dayDate.toISOString().split("T")[0],
-      };
-    });
-
-    const { data: insertedDays, error: daysError } = await supabase.from("plan_days").insert(daysToInsert).select();
-
-    if (daysError || !insertedDays) {
-      console.error("Error creating plan days:", daysError);
-      // Rollback: delete plan
+    // Step 5: Insert plan days, blocks, and activities
+    const insertionResult = await insertPlanItineraryData(supabase, plan.id, aiItinerary, data.date_start);
+    if (!insertionResult.success) {
+      // Rollback: delete plan (cascade will handle any partially inserted data)
       await supabase.from("plans").delete().eq("id", plan.id);
-      return createErrorResult("INTERNAL_ERROR", "Failed to create plan days");
+      return insertionResult;
     }
 
-    // Step 6 & 7: Insert blocks and activities for each day
-    for (let i = 0; i < insertedDays.length; i++) {
-      const day = insertedDays[i];
-      const aiDay = aiItinerary.days[i];
-
-      // Insert 3 blocks per day (morning, afternoon, evening)
-      const blocksToInsert = [
-        { day_id: day.id, block_type: "morning" as const },
-        { day_id: day.id, block_type: "afternoon" as const },
-        { day_id: day.id, block_type: "evening" as const },
-      ];
-
-      const { data: insertedBlocks, error: blocksError } = await supabase
-        .from("plan_blocks")
-        .insert(blocksToInsert)
-        .select();
-
-      if (blocksError || !insertedBlocks || insertedBlocks.length !== 3) {
-        console.error("Error creating plan blocks:", blocksError);
-        // Rollback: delete plan and days
-        await supabase.from("plans").delete().eq("id", plan.id);
-        return createErrorResult("INTERNAL_ERROR", "Failed to create plan blocks");
-      }
-
-      // Insert activities for each block
-      const morningBlock = insertedBlocks.find((b) => b.block_type === "morning");
-      const afternoonBlock = insertedBlocks.find((b) => b.block_type === "afternoon");
-      const eveningBlock = insertedBlocks.find((b) => b.block_type === "evening");
-
-      if (!morningBlock || !afternoonBlock || !eveningBlock) {
-        console.error("Missing required blocks for day");
-        await supabase.from("plans").delete().eq("id", plan.id);
-        return createErrorResult("INTERNAL_ERROR", "Failed to create plan blocks");
-      }
-
-      // Helper to map activities for a given block
-      function mapActivitiesForBlock(
-        block: { block_type: BlockTypeEnum; created_at: string; day_id: string; id: string },
-        activities: AIItineraryResponse["days"][number]["activities"]["morning"]
-      ) {
-        return activities.map((activity, idx) => ({
-          block_id: block.id,
-          title: activity.title,
-          duration_minutes: activity.duration_minutes,
-          transport_minutes: activity.transport_minutes,
-          order_index: idx + 1,
-        }));
-      }
-
-      const activitiesToInsert = [
-        ...mapActivitiesForBlock(morningBlock, aiDay.activities.morning),
-        ...mapActivitiesForBlock(afternoonBlock, aiDay.activities.afternoon),
-        ...mapActivitiesForBlock(eveningBlock, aiDay.activities.evening),
-      ];
-
-      const { error: activitiesError } = await supabase.from("plan_activities").insert(activitiesToInsert);
-
-      if (activitiesError) {
-        console.error("Error creating plan activities:", activitiesError);
-        // Rollback: delete plan (cascade will handle days/blocks)
-        await supabase.from("plans").delete().eq("id", plan.id);
-        return createErrorResult("INTERNAL_ERROR", "Failed to create plan activities");
-      }
-    }
-
-    // Step 8: Fetch complete plan with nested structure
+    // Step 6: Fetch complete plan with nested structure
     const { data: completePlan, error: fetchError } = await fetchCompletePlan(supabase, plan.id);
 
     if (fetchError || !completePlan) {
@@ -849,6 +922,158 @@ export async function deletePlan(
     };
   } catch (error) {
     return handleUnexpectedError("deletePlan", error);
+  }
+}
+
+// ============================================================================
+// Regenerate Plan Service Function
+// ============================================================================
+
+/**
+ * Regenerates a plan's itinerary using AI while preserving plan identity
+ *
+ * @param supabase - Supabase client instance
+ * @param userId - ID of the authenticated user
+ * @param planId - ID of the plan to regenerate
+ * @param updates - Optional parameter updates to merge with existing plan
+ * @returns ServiceResult with complete regenerated plan
+ *
+ * Regeneration Flow:
+ * 1. Validate planId is a valid UUID format
+ * 2. Check rate limit (shares 10/hour bucket with plan creation)
+ * 3. Verify plan exists and user owns it
+ * 4. Merge provided updates with existing plan parameters
+ * 5. Generate new itinerary with AI using merged parameters
+ * 6. Update plan record with new parameters
+ * 7. Delete all nested data (days, blocks, activities) via cascading
+ * 8. Insert new days, blocks, and activities from AI response
+ * 9. Log plan_regenerated event
+ * 10. Fetch and return complete regenerated plan
+ *
+ * Error Codes:
+ * - VALIDATION_ERROR: Invalid UUID format
+ * - FORBIDDEN: Rate limit exceeded or user doesn't own plan
+ * - NOT_FOUND: Plan doesn't exist
+ * - INTERNAL_ERROR: Database or AI service error
+ *
+ * Note: Parameter updates ARE persisted to the plan record. Merged parameters
+ * are used for AI generation and saved permanently to the database.
+ */
+export async function regeneratePlan(
+  supabase: SupabaseClient<Database>,
+  userId: string,
+  planId: string,
+  updates: RegeneratePlanDto
+): Promise<ServiceResult<PlanDto>> {
+  try {
+    console.log(`Regenerating plan ${planId} for user ${userId}`);
+
+    // Step 1: Validate UUID format
+    if (!isValidUUID(planId)) {
+      return createErrorResult("VALIDATION_ERROR", "Invalid plan ID format");
+    }
+
+    // Step 2: Check rate limit (shared with plan creation - max 10 per hour)
+    const rateLimit = await checkRateLimit(`plan-operations:${userId}`, 10, 60 * 60 * 1000);
+    if (!rateLimit.allowed) {
+      return createErrorResult(
+        "RATE_LIMIT_EXCEEDED",
+        "Rate limit exceeded. You can regenerate/create up to 10 plans per hour"
+      );
+    }
+
+    // Step 3: Verify ownership and fetch existing plan data
+    const verification = await verifyPlanOwnership(supabase, userId, planId, "*");
+
+    if (!verification.success) {
+      return verification;
+    }
+
+    const existingPlan = verification.plan as Tables<"plans">;
+
+    // Step 4: Merge provided updates with existing plan parameters
+    const mergedParams = {
+      destination_text: existingPlan.destination_text,
+      date_start: updates.date_start || existingPlan.date_start,
+      date_end: updates.date_end || existingPlan.date_end,
+      note_text: updates.note_text !== undefined ? updates.note_text : existingPlan.note_text,
+      people_count: existingPlan.people_count,
+      trip_type: existingPlan.trip_type,
+      comfort: updates.comfort || existingPlan.comfort,
+      budget: existingPlan.budget,
+      transport_modes: updates.transport_modes !== undefined ? updates.transport_modes : existingPlan.transport_modes,
+    };
+
+    console.log(`Merged parameters for regeneration:`, {
+      dateRange: `${mergedParams.date_start} to ${mergedParams.date_end}`,
+      comfort: mergedParams.comfort,
+      hasUpdates: Object.keys(updates).length > 0,
+    });
+
+    // Step 5: Generate new itinerary with AI
+    const aiResult = await generateAIItinerary(mergedParams as CreatePlanDto);
+    if (!aiResult.success) {
+      return aiResult;
+    }
+    const aiItinerary = aiResult.data;
+
+    // Step 6: Update plan record with merged parameters
+    const { error: updateError } = await supabase
+      .from("plans")
+      .update({
+        date_start: mergedParams.date_start,
+        date_end: mergedParams.date_end,
+        note_text: mergedParams.note_text,
+        comfort: mergedParams.comfort,
+        transport_modes: mergedParams.transport_modes,
+      })
+      .eq("id", planId);
+
+    if (updateError) {
+      console.error(`Error updating plan ${planId}:`, updateError);
+      return createErrorResult("INTERNAL_ERROR", "Failed to update plan parameters");
+    }
+
+    // Step 7: Delete all existing nested data (cascades automatically via foreign keys)
+    const { error: deleteDaysError } = await supabase.from("plan_days").delete().eq("plan_id", planId);
+
+    if (deleteDaysError) {
+      console.error(`Error deleting old plan days for ${planId}:`, deleteDaysError);
+      return createErrorResult("INTERNAL_ERROR", "Failed to delete old itinerary");
+    }
+
+    // Step 8: Insert new days, blocks, and activities
+    const insertionResult = await insertPlanItineraryData(supabase, planId, aiItinerary, mergedParams.date_start);
+    if (!insertionResult.success) {
+      return insertionResult;
+    }
+
+    // Step 9: Fetch complete regenerated plan
+    const { data: completePlan, error: fetchError } = await fetchCompletePlan(supabase, planId);
+
+    if (fetchError || !completePlan) {
+      console.error("Error fetching regenerated plan:", fetchError);
+      return createErrorResult("INTERNAL_ERROR", "Plan regenerated but failed to retrieve complete data");
+    }
+
+    // Step 10: Log plan_regenerated event (fire-and-forget)
+    const tripLengthDays = calculateTripLengthDays(mergedParams.date_start, mergedParams.date_end);
+    logPlanRegenerated(
+      supabase,
+      userId,
+      planId,
+      mergedParams.destination_text,
+      mergedParams.transport_modes,
+      tripLengthDays
+    );
+
+    console.log(`✅ Plan ${planId} regenerated successfully`);
+    return {
+      success: true,
+      data: completePlan,
+    };
+  } catch (error) {
+    return handleUnexpectedError("regeneratePlan", error);
   }
 }
 

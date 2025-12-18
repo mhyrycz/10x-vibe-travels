@@ -9,7 +9,6 @@
 
 import type { APIRoute } from "astro";
 import { DEFAULT_USER_ID } from "../../db/supabase.client";
-import { checkRateLimit } from "../../lib/services/rateLimiter.service";
 import { createPlan, createPlanSchema, listPlans, validateListQueryParams } from "../../lib/services/plans.service";
 import type { ErrorDto } from "../../types";
 
@@ -122,36 +121,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     // Step 2: Use DEFAULT_USER_ID for development (TODO: implement real JWT auth)
     const userId = DEFAULT_USER_ID;
 
-    // Step 3: Check rate limit (10 requests per hour)
-    const rateLimit = await checkRateLimit(
-      userId,
-      10, // limit: 10 requests
-      60 * 60 * 1000 // window: 1 hour in milliseconds
-    );
-
-    if (!rateLimit.allowed) {
-      // User exceeded rate limit - calculate time until reset
-      const minutesUntilReset = Math.ceil((rateLimit.resetTime - Date.now()) / 60000);
-
-      const errorResponse: ErrorDto = {
-        error: {
-          code: "RATE_LIMIT_EXCEEDED",
-          message: `Too many requests. You can create ${minutesUntilReset > 60 ? "another plan in " + Math.ceil(minutesUntilReset / 60) + " hours" : "another plan in " + minutesUntilReset + " minutes"}.`,
-        },
-      };
-
-      console.log(`Rate limit exceeded for user ${userId}. Reset in ${minutesUntilReset} minutes.`);
-
-      return new Response(JSON.stringify(errorResponse), {
-        status: 429,
-        headers: {
-          "Content-Type": "application/json",
-          "Retry-After": String(Math.ceil((rateLimit.resetTime - Date.now()) / 1000)), // seconds
-        },
-      });
-    }
-
-    // Step 4: Parse request body
+    // Step 3: Parse request body
     const body = await request.json();
 
     // Step 5: Validate request data with Zod schema
@@ -176,19 +146,22 @@ export const POST: APIRoute = async ({ request, locals }) => {
       });
     }
 
-    // Step 6: Call service function to create plan with AI generation
+    // Step 5: Call service function to create plan with AI generation (rate limit checked in service)
     console.log(`Creating plan for user ${userId}:`, {
       destination: validation.data.destination_text,
       dates: `${validation.data.date_start} to ${validation.data.date_end}`,
     });
 
     const result = await createPlan(supabase, userId, validation.data);
-
-    // Step 7: Handle service result and return appropriate response
+    // Step 4: Validate request data with Zod schema
+    // Step 6: Handle service result and return appropriate response
     if (!result.success) {
       // Map service error codes to HTTP status codes
       let statusCode: number;
       switch (result.error.code) {
+        case "RATE_LIMIT_EXCEEDED":
+          statusCode = 429;
+          break;
         case "FORBIDDEN":
           statusCode = 403;
           break;
@@ -215,7 +188,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       });
     }
 
-    // Step 8: Return success response with complete plan
+    // Step 7: Return success response with complete plan
     console.log(`✅ Plan created successfully:`, {
       planId: result.data.id,
       planName: result.data.name,
