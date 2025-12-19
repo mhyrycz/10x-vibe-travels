@@ -276,7 +276,25 @@ export interface Database {
       };
     };
     Views: Record<never, never>;
-    Functions: Record<never, never>;
+    Functions: {
+      move_activity_transaction: {
+        Args: {
+          p_activity_id: string;
+          p_target_block_id: string;
+          p_target_order_index: number;
+        };
+        Returns: {
+          block_id: string;
+          created_at: string;
+          duration_minutes: number;
+          id: string;
+          order_index: number;
+          title: string;
+          transport_minutes: number;
+          updated_at: string;
+        }[];
+      };
+    };
     Enums: {
       block_type_enum: "morning" | "afternoon" | "evening";
       budget_level_enum: "budget" | "moderate" | "luxury";

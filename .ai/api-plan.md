@@ -532,6 +532,7 @@
   - Verify plan owner_id = auth.uid()
   - Reorder activities in source block (decrement order_index for items after moved activity)
   - Insert activity at target position (increment order_index for items at/after target position)
+  - Consider bottleneck regarding conflict of order indexes during swap/reordering.
   - Update activity block_id and order_index
   - Log `plan_edited` event
 - **Errors**:

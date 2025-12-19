@@ -11,7 +11,7 @@
 import { z } from "zod";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "../../db/database.types";
-import type { UpdateActivityDto, ActivityDto } from "../../types";
+import type { UpdateActivityDto, MoveActivityDto, ActivityUpdatedDto, ActivityDto } from "../../types";
 import { logPlanEdited } from "./events.service";
 import { type ServiceResult, isValidUUID, createErrorResult, handleUnexpectedError } from "./serviceUtils";
 
@@ -32,6 +32,15 @@ export const updateActivitySchema = z
   .refine((data) => Object.keys(data).length > 0, {
     message: "At least one field must be provided",
   });
+
+/**
+ * Zod schema for validating activity move request
+ * Both fields are required
+ */
+export const moveActivitySchema = z.object({
+  target_block_id: z.string().uuid("Invalid target block ID format"),
+  target_order_index: z.number().int().min(1).max(50, "Order index must be between 1 and 50"),
+});
 
 // ============================================================================
 // Main Service Functions
@@ -140,5 +149,149 @@ export async function updateActivity(
     };
   } catch (error) {
     return handleUnexpectedError("updateActivity", error);
+  }
+}
+
+/**
+ * Moves an activity to a different block and/or position
+ *
+ * This function uses a PostgreSQL stored procedure to atomically handle the complex
+ * reordering logic while respecting the database constraint: check (order_index between 1 and 50)
+ *
+ * @param supabase - Supabase client instance
+ * @param userId - ID of the authenticated user
+ * @param planId - UUID of the plan containing the activity
+ * @param activityId - UUID of the activity to move
+ * @param data - Target block and position information
+ * @returns ServiceResult with updated activity or error
+ *
+ * Move Flow:
+ * 1. Validate UUID formats for all identifiers
+ * 2. Verify activity exists and belongs to the specified plan
+ * 3. Verify user owns the plan (authorization check)
+ * 4. Verify target block belongs to the same plan
+ * 5. Execute stored procedure to atomically reorder activities
+ * 6. Log plan_edited event (fire-and-forget)
+ * 7. Return updated activity with new position
+ *
+ * The stored procedure handles three scenarios:
+ * - Cross-block moves: Compact source, make space in target, move activity
+ * - Same-block move down: Shift intervening activities up, move activity
+ * - Same-block move up: Shift intervening activities down, move activity
+ *
+ * Error Codes:
+ * - VALIDATION_ERROR: Invalid UUID format or target block not in same plan
+ * - NOT_FOUND: Plan, activity, or target block not found
+ * - FORBIDDEN: User doesn't own the plan
+ * - INTERNAL_ERROR: Database or stored procedure error
+ */
+export async function moveActivity(
+  supabase: SupabaseClient<Database>,
+  userId: string,
+  planId: string,
+  activityId: string,
+  data: MoveActivityDto
+): Promise<ServiceResult<ActivityUpdatedDto>> {
+  try {
+    // Step 1: Validate UUID formats
+    if (!isValidUUID(planId)) {
+      return createErrorResult("VALIDATION_ERROR", "Invalid plan ID format");
+    }
+
+    if (!isValidUUID(activityId)) {
+      return createErrorResult("VALIDATION_ERROR", "Invalid activity ID format");
+    }
+
+    if (!isValidUUID(data.target_block_id)) {
+      return createErrorResult("VALIDATION_ERROR", "Invalid target block ID format");
+    }
+
+    // Step 2: Verify activity exists and get current state with authorization
+    // Use single query with joins for efficiency
+    const { data: activityData, error: activityError } = await supabase
+      .from("plan_activities")
+      .select(
+        `
+        id,
+        block_id,
+        order_index,
+        plan_blocks!inner(
+          id,
+          plan_days!inner(
+            id,
+            plans!inner(
+              id,
+              owner_id
+            )
+          )
+        )
+      `
+      )
+      .eq("id", activityId)
+      .single();
+
+    if (activityError || !activityData) {
+      return createErrorResult("NOT_FOUND", "Activity not found");
+    }
+
+    // Extract plan info from nested structure
+    const planInfo = activityData.plan_blocks?.plan_days?.plans;
+
+    // Step 3: Verify activity belongs to specified plan
+    if (planInfo?.id !== planId) {
+      return createErrorResult("NOT_FOUND", "Activity not found");
+    }
+
+    // Step 4: Verify plan ownership
+    if (planInfo?.owner_id !== userId) {
+      return createErrorResult("FORBIDDEN", "You don't have permission to access this plan");
+    }
+
+    // Step 5: Verify target block belongs to same plan
+    const { data: targetBlock, error: blockError } = await supabase
+      .from("plan_blocks")
+      .select(
+        `
+        id,
+        plan_days!inner(
+          plan_id
+        )
+      `
+      )
+      .eq("id", data.target_block_id)
+      .single();
+
+    if (blockError || !targetBlock) {
+      return createErrorResult("NOT_FOUND", "Target block not found");
+    }
+
+    if (targetBlock.plan_days?.plan_id !== planId) {
+      return createErrorResult("VALIDATION_ERROR", "Target block does not belong to this plan");
+    }
+
+    // Step 6: Execute reordering via stored procedure
+    // The stored procedure handles all the complex reordering logic atomically
+    const { data: updatedActivity, error: moveError } = await supabase
+      .rpc("move_activity_transaction", {
+        p_activity_id: activityId,
+        p_target_block_id: data.target_block_id,
+        p_target_order_index: data.target_order_index,
+      })
+      .single();
+
+    if (moveError || !updatedActivity) {
+      console.error("Error moving activity:", moveError);
+      return createErrorResult("INTERNAL_ERROR", "Failed to move activity");
+    }
+
+    // Step 7: Log plan_edited event (fire-and-forget)
+    logPlanEdited(supabase, userId, planId);
+
+    return {
+      success: true,
+      data: updatedActivity as ActivityUpdatedDto,
+    };
+  } catch (error) {
+    return handleUnexpectedError("moveActivity", error);
   }
 }
