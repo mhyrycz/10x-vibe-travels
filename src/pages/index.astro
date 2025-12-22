@@ -1,8 +1,16 @@
 ---
-import Welcome from "../components/Welcome.astro";
+/**
+ * My Plans Page
+ *
+ * The main dashboard view for authenticated users.
+ * Displays all user's travel plans with options to create, view, and manage them.
+ *
+ * Uses React island pattern with client:load for interactivity.
+ */
 import Layout from "../layouts/Layout.astro";
+import { MyPlansPage } from "../components/MyPlansPage";
 ---
 
-<Layout>
-  <Welcome />
+<Layout title="My Plans - VibeTravels">
+  <MyPlansPage client:load />
 </Layout>
