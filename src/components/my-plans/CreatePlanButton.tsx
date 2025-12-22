@@ -15,28 +15,19 @@ interface CreatePlanButtonProps {
 }
 
 export function CreatePlanButton({ isDisabled, planLimit }: CreatePlanButtonProps) {
-  const button = (
-    <Button asChild={!isDisabled} disabled={isDisabled}>
-      {isDisabled ? (
-        <>
-          <PlusCircle className="mr-2 h-5 w-5" />
-          Create Plan
-        </>
-      ) : (
-        <a href="/plans/new">
-          <PlusCircle className="mr-2 h-5 w-5" />
-          Create Plan
-        </a>
-      )}
-    </Button>
-  );
-
   // Show tooltip only when disabled
   if (isDisabled) {
     return (
       <TooltipProvider>
         <Tooltip>
-          <TooltipTrigger asChild>{button}</TooltipTrigger>
+          <TooltipTrigger asChild>
+            <span className="inline-block">
+              <Button disabled>
+                <PlusCircle className="mr-2 h-5 w-5" />
+                Create Plan
+              </Button>
+            </span>
+          </TooltipTrigger>
           <TooltipContent>
             <p>You&apos;ve reached the maximum of {planLimit} plans</p>
           </TooltipContent>
@@ -45,5 +36,12 @@ export function CreatePlanButton({ isDisabled, planLimit }: CreatePlanButtonProp
     );
   }
 
-  return button;
+  return (
+    <Button asChild>
+      <a href="/plans/new">
+        <PlusCircle className="mr-2 h-5 w-5" />
+        Create Plan
+      </a>
+    </Button>
+  );
 }
