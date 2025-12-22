@@ -1,0 +1,26 @@
+---
+/**
+ * Plan Details Page
+ *
+ * Dynamic route for displaying complete travel plan with nested days, blocks, and activities.
+ * Allows users to view, edit, regenerate, and delete their travel plans.
+ *
+ * Route: /plans/[planId]
+ * Access: Authenticated users only (enforced by middleware)
+ * Authorization: User must own the plan (verified by API)
+ */
+import Layout from "../../layouts/Layout.astro";
+import { PlanDetailsPage } from "../../components/PlanDetailsPage";
+import { ViewTransitions } from "astro:transitions";
+
+const { planId } = Astro.params;
+
+if (!planId) {
+  return Astro.redirect("/");
+}
+---
+
+<Layout title="Plan Details - VibeTravels">
+  <ViewTransitions />
+  <PlanDetailsPage client:load planId={planId} />
+</Layout>
