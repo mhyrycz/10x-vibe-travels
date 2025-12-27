@@ -10,6 +10,8 @@ export function useUpdatePlan(planId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
+    networkMode: "always",
+    retry: 1,
     mutationFn: async (data: UpdatePlanDto) => {
       const response = await fetch(`/api/plans/${planId}`, {
         method: "PATCH",
@@ -67,6 +69,8 @@ export function useUpdateActivity(planId: string, activityId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
+    networkMode: "always",
+    retry: 1,
     mutationFn: async (data: UpdateActivityDto) => {
       const response = await fetch(`/api/plans/${planId}/activities/${activityId}`, {
         method: "PATCH",
@@ -128,6 +132,8 @@ export function useMoveActivity(planId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
+    networkMode: "always",
+    retry: 1,
     mutationFn: async ({ activityId, data }: { activityId: string; data: MoveActivityDto }) => {
       const response = await fetch(`/api/plans/${planId}/activities/${activityId}/move`, {
         method: "POST",
@@ -220,6 +226,8 @@ export function useRegeneratePlan(planId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
+    networkMode: "always",
+    retry: 1,
     mutationFn: async (data: RegeneratePlanDto) => {
       const response = await fetch(`/api/plans/${planId}/regenerate`, {
         method: "POST",
@@ -261,6 +269,8 @@ export function useDeletePlan(planId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
+    networkMode: "always",
+    retry: 1,
     mutationFn: async () => {
       const response = await fetch(`/api/plans/${planId}`, {
         method: "DELETE",

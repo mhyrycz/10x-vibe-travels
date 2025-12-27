@@ -44,7 +44,7 @@ export function DeletePlanDialog({ open, onOpenChange, plan, onDeleted }: Delete
         // Small delay to allow modal close animation
         setTimeout(() => {
           onDeleted();
-        }, 100);
+        }, 500);
       },
     });
   };
