@@ -1,0 +1,11 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import CreatePlanPage from "@/components/create-plan/CreatePlanPage";
+
+// TODO: Add authentication check in middleware
+// For now, we assume user is authenticated
+---
+
+<Layout title="Create New Plan - VibeTravels">
+  <CreatePlanPage client:load />
+</Layout>

@@ -32,6 +32,7 @@ import { EditActivityModal } from "./EditActivityModal";
 import { RegeneratePlanModal } from "./RegeneratePlanModal";
 import { DeletePlanDialog } from "./DeletePlanDialog";
 import type { ActivityViewModel } from "./types";
+import { useNavigate } from "@/lib/navigation";
 
 interface PlanDetailsViewProps {
   planId: string;
@@ -40,6 +41,7 @@ interface PlanDetailsViewProps {
 export function PlanDetailsView({ planId }: PlanDetailsViewProps) {
   const { data: viewModel, isLoading, isError, error, refetch } = usePlan(planId);
   const moveActivityMutation = useMoveActivity(planId);
+  const navigate = useNavigate();
 
   // Modal states
   const [isEditPlanModalOpen, setIsEditPlanModalOpen] = useState(false);
@@ -198,10 +200,10 @@ export function PlanDetailsView({ planId }: PlanDetailsViewProps) {
     if (typeof window !== "undefined") {
       if (document.startViewTransition) {
         document.startViewTransition(() => {
-          window.location.href = "/";
+          navigate("/");
         });
       } else {
-        window.location.href = "/";
+        navigate("/");
       }
     }
   };
