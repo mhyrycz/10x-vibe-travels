@@ -9,6 +9,22 @@
  */
 import Layout from "../layouts/Layout.astro";
 import { MyPlansPage } from "../components/MyPlansPage";
+import { getUserPreferences } from "@/lib/services/userPreferences.service";
+import { DEFAULT_USER_ID } from "@/db/supabase.client";
+
+// Get Supabase client from context
+const supabase = Astro.locals.supabase;
+
+// Use DEFAULT_USER_ID for development (TODO: implement real JWT auth)
+const userId = DEFAULT_USER_ID;
+
+// Check if user has completed preferences (mandatory onboarding step)
+const preferencesResult = await getUserPreferences(supabase, userId);
+
+// If preferences don't exist, redirect to onboarding
+if (!preferencesResult.success) {
+  return Astro.redirect("/onboarding/preferences");
+}
 ---
 
 <Layout title="My Plans - VibeTravels">
