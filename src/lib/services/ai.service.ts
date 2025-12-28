@@ -5,7 +5,10 @@
  * Supports mock mode for development to avoid API costs and enable fast testing.
  */
 
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "../../db/database.types";
 import type { CreatePlanDto } from "../../types";
+import { getUserPreferences } from "./userPreferences.service";
 
 // ============================================================================
 // Type Definitions
@@ -51,6 +54,7 @@ export interface AIItineraryResponse {
 /**
  * Generates a realistic mock travel itinerary for development/testing
  * Creates varied activities across morning, afternoon, and evening blocks
+ * Note: Mock generator does not use user preferences (age/country) for simplicity
  *
  * @param params - Plan creation parameters
  * @returns Structured mock itinerary data
@@ -157,10 +161,16 @@ export function generateMockItinerary(params: CreatePlanDto): AIItineraryRespons
  * Uses Claude 3.5 Sonnet for high-quality travel planning
  *
  * @param params - Plan creation parameters
+ * @param userAge - User's age for personalized activity recommendations
+ * @param userCountry - User's country of origin for travel context
  * @returns AI-generated itinerary data
  * @throws Error if API call fails or times out
  */
-async function callOpenRouterAI(params: CreatePlanDto): Promise<AIItineraryResponse> {
+async function callOpenRouterAI(
+  params: CreatePlanDto,
+  userAge?: number,
+  userCountry?: string
+): Promise<AIItineraryResponse> {
   const apiKey = import.meta.env.OPENROUTER_API_KEY;
   const baseUrl = import.meta.env.OPENROUTER_BASE_URL || "https://openrouter.ai/api/v1";
 
@@ -181,6 +191,16 @@ async function callOpenRouterAI(params: CreatePlanDto): Promise<AIItineraryRespo
       ? `Preferred transport: ${params.transport_modes.join(", ")}`
       : "Transport: flexible (choose best options)";
 
+  // Build user context information
+  const userContext = [];
+  if (userAge) {
+    userContext.push(`Traveler age: ${userAge} years old`);
+  }
+  if (userCountry) {
+    userContext.push(`Traveling from: ${userCountry}`);
+  }
+  const userContextInfo = userContext.length > 0 ? `\n- ${userContext.join("\n- ")}` : "";
+
   const userPrompt = `Create a detailed ${dayCount}-day travel itinerary for ${params.destination_text}.
 
 Trip Details:
@@ -189,7 +209,7 @@ Trip Details:
 - Trip Type: ${params.trip_type}
 - Comfort Level: ${params.comfort} (relax=leisurely pace, balanced=moderate pace, intense=packed schedule)
 - Budget: ${params.budget}
-- ${transportInfo}
+- ${transportInfo}${userContextInfo}
 
 User Notes: ${params.note_text}
 
@@ -281,7 +301,10 @@ Guidelines:
 
 /**
  * Generates travel itinerary using AI or mock data based on environment configuration
+ * Automatically fetches user preferences to personalize recommendations
  *
+ * @param supabase - Supabase client instance for fetching user preferences
+ * @param userId - User ID for fetching preferences
  * @param params - Plan creation parameters
  * @returns Structured itinerary data (days with blocks and activities)
  *
@@ -290,17 +313,53 @@ Guidelines:
  * - OPENROUTER_API_KEY (string): Required when USE_MOCK_AI is false
  * - OPENROUTER_BASE_URL (string): Optional, defaults to https://openrouter.ai/api/v1
  */
-export async function generatePlanItinerary(params: CreatePlanDto): Promise<AIItineraryResponse> {
+export async function generatePlanItinerary(
+  supabase: SupabaseClient<Database>,
+  userId: string,
+  params: CreatePlanDto
+): Promise<AIItineraryResponse> {
+  // Fetch user preferences for personalization (age and country)
+  // Note: In development, all requests use DEFAULT_USER_ID, so all users share the same preferences
+  // When JWT authentication is implemented, each user will have their own preferences
+  let userAge: number | undefined;
+  let userCountry: string | undefined;
+
+  try {
+    const preferencesResult = await getUserPreferences(supabase, userId);
+    if (preferencesResult.success) {
+      userAge = preferencesResult.data.age;
+      userCountry = preferencesResult.data.country;
+      console.log(`✅ User preferences loaded for AI personalization: age=${userAge}, country=${userCountry}`);
+    } else {
+      // User hasn't completed onboarding or preferences don't exist
+      console.warn(`⚠️ Could not fetch user preferences: ${preferencesResult.error.message}`);
+      // Continue without preferences - AI will work with plan params only
+    }
+  } catch (error) {
+    // Log but don't fail - preferences are optional for AI generation
+    console.error("Error fetching user preferences for AI:", error);
+    // Continue without preferences - AI will work with plan params only
+  }
+
   // Check if mock mode is enabled (default to true for development)
   const useMockAI = import.meta.env.USE_MOCK_AI !== "false" && import.meta.env.USE_MOCK_AI !== false;
 
-  if (useMockAI) {
-    console.log("🎭 Using mock AI itinerary generator (development mode)");
-    // Add small delay to simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    return generateMockItinerary(params);
-  }
+  try {
+    if (useMockAI) {
+      console.log("🎭 Using mock AI itinerary generator (development mode)");
+      // Add small delay to simulate API call
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      return generateMockItinerary(params);
+    }
 
-  console.log("🤖 Calling OpenRouter.ai for itinerary generation");
-  return callOpenRouterAI(params);
+    console.log("🤖 Calling OpenRouter.ai for itinerary generation");
+    // Only pass user preferences to real AI for personalization
+    return await callOpenRouterAI(params, userAge, userCountry);
+  } catch (error) {
+    // Re-throw with consistent error message for upstream error handling
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error("Failed to generate travel itinerary");
+  }
 }

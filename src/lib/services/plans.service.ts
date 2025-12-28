@@ -201,12 +201,18 @@ export async function getUserPlanCount(supabase: SupabaseClient<Database>, userI
  * Generates AI itinerary with consistent error handling
  * Shared by createPlan and regeneratePlan
  *
+ * @param supabase - Supabase client instance for fetching user preferences
+ * @param userId - User ID for fetching preferences
  * @param params - Plan parameters for AI generation
  * @returns ServiceResult with AI itinerary or error
  */
-async function generateAIItinerary(params: CreatePlanDto): Promise<ServiceResult<AIItineraryResponse>> {
+async function generateAIItinerary(
+  supabase: SupabaseClient<Database>,
+  userId: string,
+  params: CreatePlanDto
+): Promise<ServiceResult<AIItineraryResponse>> {
   try {
-    const aiItinerary = await generatePlanItinerary(params);
+    const aiItinerary = await generatePlanItinerary(supabase, userId, params);
     return { success: true, data: aiItinerary };
   } catch (error) {
     console.error("AI service error:", error);
@@ -395,7 +401,7 @@ export async function createPlan(
     const tripLengthDays = calculateTripLengthDays(data.date_start, data.date_end);
 
     // Step 3: Call AI service to generate itinerary
-    const aiResult = await generateAIItinerary(data);
+    const aiResult = await generateAIItinerary(supabase, userId, data);
     if (!aiResult.success) {
       return aiResult;
     }
@@ -920,7 +926,7 @@ export async function regeneratePlan(
     });
 
     // Step 5: Generate new itinerary with AI
-    const aiResult = await generateAIItinerary(mergedParams as CreatePlanDto);
+    const aiResult = await generateAIItinerary(supabase, userId, mergedParams as CreatePlanDto);
     if (!aiResult.success) {
       return aiResult;
     }
