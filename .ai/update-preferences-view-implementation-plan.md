@@ -30,7 +30,10 @@ The Edit Preferences page should be accessible from multiple locations in the ap
    - Add a user menu/dropdown in the top navigation bar
    - Trigger: User icon or avatar button in header
    - Menu items:
-     - "Edit Preferences" → `/profile/preferences`
+     - "My Plans" → `/`
+     - "Profile" (with nested items)
+        - "Preferences"  → `/profile/preferences`
+        - "Settings" → `/profile/settings`
      - "Logout" → logout action
    - Location: Persistent across all pages in main layout
    - Icon: User circle or Settings icon

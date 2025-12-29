@@ -1,22 +1,12 @@
 /**
  * PlanDetailsPage Component
  *
- * Wrapper component that provides React Query context for the Plan Details view.
- * This is the client-side entry point mounted by Astro.
+ * Main view for the Plan Details page with QueryClient provider.
+ * This is an Astro island that needs its own React Query context.
  */
 
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider } from "./QueryClientProvider";
 import { PlanDetailsView } from "./plan-details/PlanDetailsView";
-
-// Create a client instance with default configuration
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      refetchOnWindowFocus: false,
-      retry: 1,
-    },
-  },
-});
 
 interface PlanDetailsPageProps {
   planId: string;
@@ -24,7 +14,7 @@ interface PlanDetailsPageProps {
 
 export function PlanDetailsPage({ planId }: PlanDetailsPageProps) {
   return (
-    <QueryClientProvider client={queryClient}>
+    <QueryClientProvider>
       <PlanDetailsView planId={planId} />
     </QueryClientProvider>
   );

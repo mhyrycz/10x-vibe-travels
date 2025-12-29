@@ -6,25 +6,7 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import type { CreatePlanDto, PlanDto, UserPreferencesDto, ErrorDto, PaginatedPlansDto } from "@/types";
-
-/**
- * Fetches user preferences for pre-filling form
- */
-export function useUserPreferences() {
-  return useQuery({
-    queryKey: ["user", "preferences"],
-    queryFn: async () => {
-      const response = await fetch("/api/users/me/preferences");
-      if (!response.ok) {
-        throw new Error("Failed to fetch preferences");
-      }
-      return response.json() as Promise<UserPreferencesDto>;
-    },
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
-  });
-}
+import type { CreatePlanDto, PlanDto, ErrorDto, PaginatedPlansDto } from "@/types";
 
 /**
  * Fetches plan count to determine if user can create new plan

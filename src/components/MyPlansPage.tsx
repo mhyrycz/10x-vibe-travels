@@ -1,26 +1,16 @@
 /**
  * MyPlansPage Component
  *
- * Wrapper that provides React Query context to MyPlansView.
- * This is the client-side entry point for the My Plans page.
+ * Main view for the My Plans page with QueryClient provider.
+ * This is an Astro island that needs its own React Query context.
  */
 
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider } from "./QueryClientProvider";
 import { MyPlansView } from "./MyPlansView";
-
-// Create a client instance
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      refetchOnWindowFocus: false,
-      retry: 1,
-    },
-  },
-});
 
 export function MyPlansPage() {
   return (
-    <QueryClientProvider client={queryClient}>
+    <QueryClientProvider>
       <MyPlansView />
     </QueryClientProvider>
   );

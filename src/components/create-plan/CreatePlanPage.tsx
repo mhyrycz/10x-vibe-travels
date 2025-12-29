@@ -1,26 +1,16 @@
 /**
  * CreatePlanPage Component
  *
- * Wrapper that provides React Query context to CreatePlanView.
- * This is the client-side entry point for the Create Plan page.
+ * Main view for the Create Plan page with QueryClient provider.
+ * This is an Astro island that needs its own React Query context.
  */
 
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider } from "../QueryClientProvider";
 import CreatePlanView from "./CreatePlanView";
-
-// Create a client instance
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      refetchOnWindowFocus: false,
-      retry: 1,
-    },
-  },
-});
 
 export default function CreatePlanPage() {
   return (
-    <QueryClientProvider client={queryClient}>
+    <QueryClientProvider>
       <CreatePlanView />
     </QueryClientProvider>
   );

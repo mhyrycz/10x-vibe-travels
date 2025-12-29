@@ -1,0 +1,21 @@
+---
+/**
+ * Edit User Preferences Page
+ * Allows authenticated users to update their travel preferences
+ * Route: /profile/preferences
+ */
+
+import Layout from "../../layouts/Layout.astro";
+import EditPreferencesView from "../../components/profile/EditPreferencesView";
+
+// For development: using DEFAULT_USER_ID
+// TODO: Replace with actual JWT authentication when implemented
+const DEFAULT_USER_ID = "550e8400-e29b-41d4-a716-446655440000";
+
+// In production, check authentication here
+// For now, we proceed with DEFAULT_USER_ID
+---
+
+<Layout title="Edit Preferences - VibeTravels">
+  <EditPreferencesView client:only="react" />
+</Layout>

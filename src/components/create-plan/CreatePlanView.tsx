@@ -15,8 +15,9 @@ import PlanLimitAlert from "./PlanLimitAlert";
 import CreatePlanForm from "./CreatePlanForm";
 import LoadingOverlay from "./LoadingOverlay";
 import FormSkeleton from "./FormSkeleton";
-import { useUserPreferences, usePlanCount, useCreatePlan } from "./hooks/useCreatePlanMutations";
+import { usePlanCount, useCreatePlan } from "./hooks/useCreatePlanMutations";
 import type { CreatePlanDto } from "@/types";
+import { useUserPreferences } from "../profile/hooks/useUserPreferences";
 
 const PLAN_LIMIT = 10;
 

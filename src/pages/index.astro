@@ -5,7 +5,7 @@
  * The main dashboard view for authenticated users.
  * Displays all user's travel plans with options to create, view, and manage them.
  *
- * Uses React island pattern with client:load for interactivity.
+ * Uses React island pattern with client:only="react" for interactivity.
  */
 import Layout from "../layouts/Layout.astro";
 import { MyPlansPage } from "../components/MyPlansPage";
@@ -28,5 +28,5 @@ if (!preferencesResult.success) {
 ---
 
 <Layout title="My Plans - VibeTravels">
-  <MyPlansPage client:load />
+  <MyPlansPage client:only="react" />
 </Layout>

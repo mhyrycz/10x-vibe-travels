@@ -16,26 +16,24 @@ import { ErrorState } from "./my-plans/ErrorState";
 const PLAN_LIMIT = 10;
 
 export function MyPlansView() {
-  const viewModel = useMyPlans();
+  const { isError, isLoading, plans, totalPlans, error } = useMyPlans();
 
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Header with title and create button - always visible unless error */}
-      {!viewModel.isError && <HeaderSection planCount={viewModel.totalPlans} planLimit={PLAN_LIMIT} />}
+      {!isError && <HeaderSection planCount={totalPlans} planLimit={PLAN_LIMIT} />}
 
       {/* Loading State */}
-      {viewModel.isLoading && <LoadingState />}
+      {isLoading && <LoadingState />}
 
       {/* Error State */}
-      {viewModel.isError && <ErrorState errorMessage={viewModel.error || "An unexpected error occurred"} />}
+      {isError && <ErrorState errorMessage={error || "An unexpected error occurred"} />}
 
       {/* Empty State - no plans */}
-      {!viewModel.isLoading && !viewModel.isError && viewModel.plans.length === 0 && (
-        <EmptyState planLimit={PLAN_LIMIT} />
-      )}
+      {!isLoading && !isError && plans.length === 0 && <EmptyState planLimit={PLAN_LIMIT} />}
 
       {/* Success State - display plans grid */}
-      {!viewModel.isLoading && !viewModel.isError && viewModel.plans.length > 0 && <PlanGrid plans={viewModel.plans} />}
+      {!isLoading && !isError && plans.length > 0 && <PlanGrid plans={plans} />}
     </div>
   );
 }
