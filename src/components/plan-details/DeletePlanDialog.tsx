@@ -8,7 +8,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { useDeletePlan } from "./hooks/usePlanMutations";
 
@@ -23,20 +23,20 @@ interface DeletePlanDialogProps {
 }
 
 export function DeletePlanDialog({ open, onOpenChange, plan, onDeleted }: DeletePlanDialogProps) {
-  const [confirmationText, setConfirmationText] = useState("");
+  const [isConfirmed, setIsConfirmed] = useState(false);
   const deletePlanMutation = useDeletePlan(plan.id);
 
-  // Reset confirmation text when dialog opens/closes
+  // Reset confirmation when dialog opens/closes
   useEffect(() => {
     if (!open) {
-      setConfirmationText("");
+      setIsConfirmed(false);
     }
   }, [open]);
 
   const handleDelete = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (confirmationText !== plan.name) {
+    if (!isConfirmed) {
       return;
     }
 
@@ -44,14 +44,14 @@ export function DeletePlanDialog({ open, onOpenChange, plan, onDeleted }: Delete
       onSuccess: () => {
         onOpenChange(false);
         // Small delay to allow modal close animation
-        setTimeout(() => {
-          onDeleted();
-        }, 500);
+        if (onDeleted) {
+          setTimeout(() => {
+            onDeleted();
+          }, 500);
+        }
       },
     });
   };
-
-  const isConfirmationValid = confirmationText === plan.name;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -66,18 +66,17 @@ export function DeletePlanDialog({ open, onOpenChange, plan, onDeleted }: Delete
           </DialogHeader>
 
           <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="confirmation">
-                To confirm, type the plan name: <span className="font-semibold">{plan.name}</span>
-              </Label>
-              <Input
-                id="confirmation"
-                value={confirmationText}
-                onChange={(e) => setConfirmationText(e.target.value)}
-                placeholder="Enter plan name to confirm"
-                autoComplete="off"
+            <div className="flex items-start space-x-3">
+              <Checkbox
+                id="confirm-delete"
+                checked={isConfirmed}
+                onCheckedChange={(checked) => setIsConfirmed(checked === true)}
                 disabled={deletePlanMutation.isPending}
+                className="mt-1"
               />
+              <Label htmlFor="confirm-delete" className="text-sm font-normal leading-tight cursor-pointer select-none">
+                I understand this will permanently delete this plan
+              </Label>
             </div>
           </div>
 
@@ -90,7 +89,7 @@ export function DeletePlanDialog({ open, onOpenChange, plan, onDeleted }: Delete
             >
               Cancel
             </Button>
-            <Button type="submit" variant="destructive" disabled={!isConfirmationValid || deletePlanMutation.isPending}>
+            <Button type="submit" variant="destructive" disabled={!isConfirmed || deletePlanMutation.isPending}>
               {deletePlanMutation.isPending ? "Deleting..." : "Delete Plan"}
             </Button>
           </DialogFooter>
