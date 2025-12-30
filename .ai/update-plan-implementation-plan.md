@@ -1,15 +1,18 @@
 # API Endpoint Implementation Plan: Update Plan Metadata
 
 ## 1. Endpoint Overview
+
 This document outlines the implementation plan for the `PATCH /api/plans/{planId}` endpoint. This endpoint allows users to update plan metadata fields (name, budget, note_text, people_count) without regenerating the itinerary. It provides a lightweight alternative to full plan regeneration for simple metadata changes.
 
 ## 2. Request Details
+
 - **HTTP Method**: `PATCH`
 - **URL Structure**: `/api/plans/{planId}`
 - **Path Parameters**:
   - `planId` (required, UUID) - The unique identifier of the plan to update
 - **Query Parameters**: None
 - **Request Body** (all fields optional):
+
 ```json
 {
   "name": "Updated Plan Name",
@@ -20,6 +23,7 @@ This document outlines the implementation plan for the `PATCH /api/plans/{planId
 ```
 
 **Field Validation:**
+
 - `name`: String, length between 1 and 140 characters
 - `budget`: Enum ['budget', 'moderate', 'luxury']
 - `note_text`: String, maximum length 20000 characters
@@ -27,12 +31,15 @@ This document outlines the implementation plan for the `PATCH /api/plans/{planId
 - At least one field must be provided (empty body = 400 error)
 
 ## 3. Used Types
+
 The implementation will use the following TypeScript types defined in `src/types.ts`:
+
 - **Request**: `UpdatePlanDto` - Partial update object
 - **Response**: `PlanUpdatedDto` - Updated fields with updated_at timestamp
 - **Error Response**: `ErrorDto`
 
 Types already defined in `src/types.ts`:
+
 ```typescript
 export type UpdatePlanDto = Partial<Pick<TablesUpdate<"plans">, "name" | "budget" | "note_text" | "people_count">>;
 
@@ -40,6 +47,7 @@ export type PlanUpdatedDto = Pick<Plan, "id" | "name" | "budget" | "note_text" |
 ```
 
 ## 4. Response Details
+
 - **Success (200 OK)**: Returns updated plan metadata with timestamp
   ```json
   {
@@ -56,6 +64,7 @@ export type PlanUpdatedDto = Pick<Plan, "id" | "name" | "budget" | "note_text" |
 ## 5. Data Flow
 
 ### Request Processing Flow:
+
 1. **Request Reception**: Astro server endpoint at `src/pages/api/plans/[planId].ts` receives PATCH request
 2. **Authentication**: For development, uses `DEFAULT_USER_ID`. In production, validates JWT Bearer token
 3. **Path Parameter Extraction**: Extract `planId` from URL path
@@ -77,12 +86,14 @@ export type PlanUpdatedDto = Pick<Plan, "id" | "name" | "budget" | "note_text" |
 ## 6. Security Considerations
 
 ### Authentication & Authorization
+
 - **Authentication**: JWT Bearer token validation (TODO: currently using DEFAULT_USER_ID for development)
 - **Authorization**: Verify `owner_id = authenticated user ID` before allowing update
 - **IDOR Prevention**: Return 403 Forbidden if user doesn't own the plan
 - **404 vs 403**: Return 404 if plan doesn't exist, 403 if exists but user doesn't own it
 
 ### Input Validation
+
 - **UUID Validation**: Validate planId is proper UUID format before database query
 - **Field Whitelisting**: Only allow updating specific fields (name, budget, note_text, people_count)
 - **Mass Assignment Protection**: Cannot update owner_id, dates, destination, or nested structures
@@ -90,6 +101,7 @@ export type PlanUpdatedDto = Pick<Plan, "id" | "name" | "budget" | "note_text" |
 - **Empty Body Check**: Require at least one field to prevent no-op requests
 
 ### Data Validation
+
 - **Name Length**: 1-140 characters (enforced by Zod and database constraint)
 - **Note Length**: Maximum 20000 characters (enforced by Zod and database constraint)
 - **People Count**: 1-20 range (enforced by Zod and database constraint)
@@ -100,6 +112,7 @@ export type PlanUpdatedDto = Pick<Plan, "id" | "name" | "budget" | "note_text" |
 ### Error Scenarios and Status Codes
 
 **400 Bad Request**:
+
 - Invalid UUID format for planId
 - Empty request body (no fields provided)
 - Validation failure for provided fields:
@@ -109,19 +122,24 @@ export type PlanUpdatedDto = Pick<Plan, "id" | "name" | "budget" | "note_text" |
   - budget not in enum values
 
 **403 Forbidden**:
+
 - User doesn't own the plan (owner_id !== userId)
 - Authenticated but attempting to modify another user's plan
 
 **404 Not Found**:
+
 - Plan with provided planId doesn't exist in database
 
 **500 Internal Server Error**:
+
 - Database connection error
 - Unexpected error during update operation
 - Database constraint violation (shouldn't happen with proper validation)
 
 ### Error Response Format
+
 All errors follow the standard `ErrorDto` structure:
+
 ```json
 {
   "error": {
@@ -138,6 +156,7 @@ All errors follow the standard `ErrorDto` structure:
 ## 8. Performance Considerations
 
 ### Optimizations
+
 - **Single-Row Update**: Updates only one plan record (very fast)
 - **Selective Fields**: Updates only provided fields, not entire row
 - **Indexed Query**: Uses primary key (id) for update (optimal performance)
@@ -145,12 +164,14 @@ All errors follow the standard `ErrorDto` structure:
 - **Minimal Data Return**: Returns only updated fields + id + timestamp
 
 ### Potential Bottlenecks
+
 - **Database Trigger**: `updated_at` trigger adds minimal overhead
 - **Authorization Check**: Requires one additional SELECT before UPDATE
   - Could be optimized by combining SELECT and UPDATE in transaction
 - **Event Logging**: Minimal impact due to fire-and-forget pattern
 
 ### Scalability
+
 - Single-row updates scale well (no joins or complex queries)
 - PostgreSQL handles concurrent updates efficiently with row-level locking
 - Event logging is asynchronous (doesn't impact response time)
@@ -160,6 +181,7 @@ All errors follow the standard `ErrorDto` structure:
 ### Step 1: Extend Plans Service (plans.service.ts)
 
 **Add Zod validation schema:**
+
 ```typescript
 export const updatePlanSchema = z
   .object({
@@ -174,6 +196,7 @@ export const updatePlanSchema = z
 ```
 
 **Implement `updatePlan()` service function:**
+
 - Accept: `SupabaseClient`, `userId`, `planId`, `data: UpdatePlanDto`
 - Validate planId UUID format (reuse existing `isValidUUID()`)
 - Fetch plan to check existence and ownership
@@ -189,6 +212,7 @@ export const updatePlanSchema = z
 **File**: `src/pages/api/plans/[planId].ts` (extend existing file with GET handler)
 
 **Implement PATCH handler:**
+
 - Extract Supabase client from `locals.supabase`
 - Use DEFAULT_USER_ID for development
 - Extract `planId` from `params`
@@ -207,6 +231,7 @@ export const updatePlanSchema = z
 **File**: `src/lib/services/events.service.ts`
 
 **Add or verify `logPlanEdited()` function exists:**
+
 - Event type: `plan_edited`
 - Context: user_id, plan_id
 - Fire-and-forget pattern (log errors but don't block)
@@ -214,12 +239,14 @@ export const updatePlanSchema = z
 ### Step 4: Testing Considerations
 
 **Unit Tests**:
+
 - Test Zod schema validation for each field
 - Test empty body rejection
 - Test field length/range constraints
 - Test enum validation for budget
 
 **Integration Tests**:
+
 - Test updating single field (name only) → 200
 - Test updating multiple fields → 200
 - Test with empty body → 400
@@ -232,6 +259,7 @@ export const updatePlanSchema = z
 - Verify plan_edited event logged
 
 **Manual Testing**:
+
 - Create plan via POST /api/plans
 - Update plan name via PATCH
 - Verify name changed and updated_at updated
@@ -241,18 +269,21 @@ export const updatePlanSchema = z
 ## 10. Notes
 
 ### Important Implementation Details
+
 - This endpoint does NOT modify dates, destination, or itinerary structure
 - For date changes, use POST /api/plans/{planId}/regenerate instead
 - The `updated_at` field is automatically set by database trigger
 - Event logging uses fire-and-forget pattern (don't wait for completion)
 
 ### Future Enhancements
+
 - Add optimistic locking with version/etag header
 - Batch update multiple plans (if needed)
 - Add webhook notifications for plan updates
 - Track field-level change history in events
 
 ### Database Behavior
+
 - `updated_at` trigger automatically sets timestamp on UPDATE
 - Database constraints act as backup validation
 - Cascading relationships not affected (only plan record updates)

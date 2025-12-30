@@ -11,11 +11,13 @@ The implementation uses a modern React form with Astro page routing, Zod validat
 **Path**: `/onboarding/preferences`
 
 **Access Control**:
+
 - Requires authenticated user (checked via middleware)
 - Should be accessible only to users who haven't completed preferences
 - After successful submission, redirect to `/plans/new` (first plan creation)
 
 **Navigation Flow**:
+
 - User registers → First login → Automatically redirected to `/onboarding/preferences`
 - User completes form → Submits → Redirected to `/plans/new` with success toast
 - If user already has preferences and tries to access this URL → Redirect to `/` (dashboard)
@@ -41,6 +43,7 @@ PreferencesOnboardingPage.astro (Astro page)
 ## 4. Component Details
 
 ### PreferencesOnboardingPage.astro
+
 - **Description**: Astro page component that serves as the entry point for the onboarding view. Handles server-side authentication check and preference existence verification.
 - **Main elements**:
   - Layout wrapper with `<Layout>` component
@@ -53,6 +56,7 @@ PreferencesOnboardingPage.astro (Astro page)
 - **Props**: None (page component)
 
 ### PreferencesOnboardingView.tsx
+
 - **Description**: Main React orchestrator component that manages the onboarding flow state, coordinates child components, and handles the overall user experience including loading states, error handling, and navigation.
 - **Main elements**:
   - `<PageHeader />` for title and description
@@ -64,13 +68,14 @@ PreferencesOnboardingPage.astro (Astro page)
   - Form submission success: Navigate to `/plans/new`, show success toast, log `preferences_completed` event
   - Form submission error: Display error alert, keep form data
 - **Handled validation**: None (delegated to form component)
-- **Types**: 
+- **Types**:
   - `CreateUserPreferencesDto` (form data type)
   - `UserPreferencesDto` (response type)
   - `ErrorDto` (error response type)
 - **Props**: None (top-level view component)
 
 ### PageHeader.tsx
+
 - **Description**: Displays the onboarding header with welcoming message, step indicator, and instructions. Provides context about why preferences are needed.
 - **Main elements**:
   - `<h1>` with main heading: "Welcome to VibeTravels!"
@@ -83,6 +88,7 @@ PreferencesOnboardingPage.astro (Astro page)
 - **Props**: None
 
 ### PreferencesForm.tsx
+
 - **Description**: Main form component using react-hook-form and Zod validation. Orchestrates all form fields, manages form state, handles validation errors, and coordinates submission with the API mutation hook.
 - **Main elements**:
   - `<Form>` wrapper from Shadcn/ui
@@ -104,11 +110,12 @@ PreferencesOnboardingPage.astro (Astro page)
 - **Types**:
   - `CreateUserPreferencesDto` (form data)
   - `PreferencesFormSchema` (Zod schema)
-- **Props**: 
+- **Props**:
   - `onSubmitSuccess: (data: UserPreferencesDto) => void` - Callback on successful submission
   - `onSubmitError: (error: ErrorDto) => void` - Callback on submission error
 
 ### PeopleCountField.tsx
+
 - **Description**: Number input field with increment/decrement buttons for selecting the number of travelers. Provides an intuitive interface for adjusting the count without manual typing.
 - **Main elements**:
   - `<FormField>` wrapper from react-hook-form
@@ -132,6 +139,7 @@ PreferencesOnboardingPage.astro (Astro page)
 - **Props**: Controlled by `useFormContext()` from react-hook-form
 
 ### TripTypeField.tsx
+
 - **Description**: Radio group for selecting the primary trip type. Uses clear visual distinction between leisure (vacation) and business travel types.
 - **Main elements**:
   - `<FormField>` wrapper
@@ -152,6 +160,7 @@ PreferencesOnboardingPage.astro (Astro page)
 - **Props**: Controlled by `useFormContext()`
 
 ### AgeField.tsx
+
 - **Description**: Simple number input for user's age. Used by AI to tailor activity recommendations appropriately.
 - **Main elements**:
   - `<FormField>` wrapper
@@ -170,6 +179,7 @@ PreferencesOnboardingPage.astro (Astro page)
 - **Props**: Controlled by `useFormContext()`
 
 ### CountryField.tsx
+
 - **Description**: Text input with optional autocomplete for country of origin. Helps AI understand travel context and distance considerations.
 - **Main elements**:
   - `<FormField>` wrapper
@@ -189,6 +199,7 @@ PreferencesOnboardingPage.astro (Astro page)
 - **Props**: Controlled by `useFormContext()`
 
 ### ComfortField.tsx
+
 - **Description**: Radio group for selecting travel comfort level. Provides clear descriptions of what each comfort level means in terms of activity intensity.
 - **Main elements**:
   - `<FormField>` wrapper
@@ -210,6 +221,7 @@ PreferencesOnboardingPage.astro (Astro page)
 - **Props**: Controlled by `useFormContext()`
 
 ### BudgetField.tsx
+
 - **Description**: Radio group for selecting typical budget level. Helps AI recommend appropriately priced activities and accommodations.
 - **Main elements**:
   - `<FormField>` wrapper
@@ -231,6 +243,7 @@ PreferencesOnboardingPage.astro (Astro page)
 - **Props**: Controlled by `useFormContext()`
 
 ### FormActions.tsx
+
 - **Description**: Form action buttons at the bottom of the form. Contains the primary submit button with loading state indication.
 - **Main elements**:
   - `<div>` with horizontal layout (flex, justify between)
@@ -247,6 +260,7 @@ PreferencesOnboardingPage.astro (Astro page)
   - `disabled?: boolean` - Additional disabled state (e.g., no changes made)
 
 ### LoadingOverlay.tsx
+
 - **Description**: Full-screen overlay with loading spinner displayed during API submission. Prevents user interaction while preferences are being saved and provides clear feedback.
 - **Main elements**:
   - `<div>` with fixed positioning, full viewport coverage, backdrop blur
@@ -261,6 +275,7 @@ PreferencesOnboardingPage.astro (Astro page)
   - `isVisible: boolean` - Whether to show the overlay
 
 ### ErrorAlert.tsx
+
 - **Description**: Alert component for displaying API errors in a user-friendly format. Provides clear error messages with retry options.
 - **Main elements**:
   - `<Alert variant="destructive">` from Shadcn/ui
@@ -384,6 +399,7 @@ const form = useForm<PreferencesFormValues>({
 ```
 
 **Key Features**:
+
 - **Field-level validation**: Validates individual fields on blur
 - **Form-level validation**: Validates all fields on submit
 - **Error display**: Automatically populates `<FormMessage>` components with error text
@@ -402,7 +418,7 @@ Create a custom hook `useCreateUserPreferences` for the API mutation:
  */
 export function useCreateUserPreferences() {
   const navigate = useNavigate();
-  
+
   return useMutation<UserPreferencesDto, ErrorDto, CreateUserPreferencesDto>({
     mutationFn: async (data: CreateUserPreferencesDto) => {
       const response = await fetch("/api/users/me/preferences", {
@@ -421,7 +437,7 @@ export function useCreateUserPreferences() {
     onSuccess: (data) => {
       // Show success toast
       toast.success("Preferences saved successfully!");
-      
+
       // Navigate to create first plan
       navigate("/plans/new");
     },
@@ -434,6 +450,7 @@ export function useCreateUserPreferences() {
 ```
 
 **State Variables**:
+
 - `isLoading`: Boolean indicating if mutation is in progress
 - `isSuccess`: Boolean indicating successful completion
 - `isError`: Boolean indicating error state
@@ -456,6 +473,7 @@ const [apiError, setApiError] = useState<ErrorDto | null>(null);
 **Endpoint**: `POST /api/users/me/preferences`
 
 **Request**:
+
 ```typescript
 // Headers
 {
@@ -475,6 +493,7 @@ const [apiError, setApiError] = useState<ErrorDto | null>(null);
 ```
 
 **Success Response** (201 Created):
+
 ```typescript
 // Response Type: UserPreferencesDto
 {
@@ -538,12 +557,12 @@ The API integration is handled through the `useCreateUserPreferences` hook:
 2. **Client Validation**: Zod schema validates all fields
 3. **API Call**: If valid, mutation hook sends POST request to `/api/users/me/preferences`
 4. **Loading State**: `LoadingOverlay` displays while waiting for response
-5. **Success Handling**: 
+5. **Success Handling**:
    - Store preferences in UserPreferencesContext
    - Show success toast
    - Log `preferences_completed` event (handled by backend)
    - Navigate to `/plans/new`
-6. **Error Handling**: 
+6. **Error Handling**:
    - Display `ErrorAlert` with error message
    - Keep form data so user can retry
    - Specific handling for 409 (redirect to dashboard if preferences exist)
@@ -592,7 +611,7 @@ The API integration is handled through the `useCreateUserPreferences` hook:
 
 ### Keyboard Navigation
 
-- **Tab Order**: 
+- **Tab Order**:
   1. People count minus button
   2. People count input
   3. People count plus button
@@ -629,14 +648,14 @@ The API integration is handled through the `useCreateUserPreferences` hook:
 
 All validations are defined in `preferencesFormSchema` and enforced before API call:
 
-| Field | Validation Rules | Error Messages |
-|-------|-----------------|----------------|
-| `people_count` | - Type: number (integer)<br>- Min: 1<br>- Max: 20<br>- Required | - "Number of travelers must be a whole number"<br>- "At least 1 traveler is required"<br>- "Maximum 20 travelers allowed" |
-| `trip_type` | - Type: enum<br>- Values: 'leisure' \| 'business'<br>- Required | - "Please select a trip type" |
-| `age` | - Type: number (integer)<br>- Min: 13<br>- Max: 120<br>- Required | - "Age must be a whole number"<br>- "Minimum age is 13 years"<br>- "Maximum age is 120 years" |
-| `country` | - Type: string<br>- Min length: 2<br>- Max length: 120<br>- Required | - "Country name must be at least 2 characters"<br>- "Country name must not exceed 120 characters" |
-| `comfort` | - Type: enum<br>- Values: 'relax' \| 'balanced' \| 'intense'<br>- Required | - "Please select a comfort level" |
-| `budget` | - Type: enum<br>- Values: 'budget' \| 'moderate' \| 'luxury'<br>- Required | - "Please select a budget level" |
+| Field          | Validation Rules                                                           | Error Messages                                                                                                            |
+| -------------- | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `people_count` | - Type: number (integer)<br>- Min: 1<br>- Max: 20<br>- Required            | - "Number of travelers must be a whole number"<br>- "At least 1 traveler is required"<br>- "Maximum 20 travelers allowed" |
+| `trip_type`    | - Type: enum<br>- Values: 'leisure' \| 'business'<br>- Required            | - "Please select a trip type"                                                                                             |
+| `age`          | - Type: number (integer)<br>- Min: 13<br>- Max: 120<br>- Required          | - "Age must be a whole number"<br>- "Minimum age is 13 years"<br>- "Maximum age is 120 years"                             |
+| `country`      | - Type: string<br>- Min length: 2<br>- Max length: 120<br>- Required       | - "Country name must be at least 2 characters"<br>- "Country name must not exceed 120 characters"                         |
+| `comfort`      | - Type: enum<br>- Values: 'relax' \| 'balanced' \| 'intense'<br>- Required | - "Please select a comfort level"                                                                                         |
+| `budget`       | - Type: enum<br>- Values: 'budget' \| 'moderate' \| 'luxury'<br>- Required | - "Please select a budget level"                                                                                          |
 
 ### Server-Side Validation (API Endpoint)
 
@@ -654,34 +673,37 @@ export const createUserPreferencesSchema = z.object({
 ```
 
 **Backend-Specific Validations**:
+
 - **User Authentication**: Verified via JWT token in request
 - **Duplicate Check**: Ensures user doesn't already have preferences (409 Conflict)
 - **Event Logging**: Automatically logs `preferences_completed` event on success
 
 ### UI State Conditions
 
-| Condition | Component State | UI Effect |
-|-----------|----------------|-----------|
-| Form is pristine (no changes) | `form.formState.isDirty === false` | Submit button possibly disabled (optional) |
-| Field has error | `form.formState.errors[fieldName]` | Red border, error message below field |
-| Form is submitting | `isLoading === true` | Loading overlay visible, submit button disabled |
-| API returned error | `apiError !== null` | Error alert displayed at top of form |
-| User already has preferences | Detected on page load | Redirect to dashboard |
-| User not authenticated | Detected in middleware | Redirect to login page |
+| Condition                     | Component State                    | UI Effect                                       |
+| ----------------------------- | ---------------------------------- | ----------------------------------------------- |
+| Form is pristine (no changes) | `form.formState.isDirty === false` | Submit button possibly disabled (optional)      |
+| Field has error               | `form.formState.errors[fieldName]` | Red border, error message below field           |
+| Form is submitting            | `isLoading === true`               | Loading overlay visible, submit button disabled |
+| API returned error            | `apiError !== null`                | Error alert displayed at top of form            |
+| User already has preferences  | Detected on page load              | Redirect to dashboard                           |
+| User not authenticated        | Detected in middleware             | Redirect to login page                          |
 
 ## 10. Error Handling
 
 ### Client-Side Errors
 
 **Validation Errors** (before API call):
+
 - **Trigger**: User submits form with invalid/missing fields
-- **Handling**: 
+- **Handling**:
   - Display inline error messages below each invalid field
   - Focus first invalid field
   - Prevent API call until all fields valid
 - **User Recovery**: User corrects fields, errors disappear on valid input
 
 **Network Errors**:
+
 - **Trigger**: Network request fails (timeout, offline, DNS failure)
 - **Handling**:
   - Hide loading overlay
@@ -692,6 +714,7 @@ export const createUserPreferencesSchema = z.object({
 ### Server-Side Errors
 
 **400 Validation Error**:
+
 - **Scenario**: Client validation missed something, server rejects invalid data
 - **Handling**:
   - Parse error details from response
@@ -700,6 +723,7 @@ export const createUserPreferencesSchema = z.object({
 - **User Recovery**: User corrects the specific field and resubmits
 
 **401 Unauthorized**:
+
 - **Scenario**: User's session expired during onboarding
 - **Handling**:
   - Display error: "Your session has expired. Please log in again."
@@ -707,6 +731,7 @@ export const createUserPreferencesSchema = z.object({
 - **User Recovery**: User logs in again, redirected back to onboarding
 
 **409 Conflict**:
+
 - **Scenario**: User already has preferences (edge case: duplicate tab, race condition)
 - **Handling**:
   - Display info message: "You've already completed onboarding."
@@ -714,6 +739,7 @@ export const createUserPreferencesSchema = z.object({
 - **User Recovery**: User proceeds to dashboard, can edit preferences from profile
 
 **500 Internal Server Error**:
+
 - **Scenario**: Server-side error during database insert or event logging
 - **Handling**:
   - Display error: "Something went wrong. Please try again."
@@ -724,24 +750,27 @@ export const createUserPreferencesSchema = z.object({
 ### Error Display Components
 
 **ErrorAlert Component**:
+
 ```typescript
 // Displays at top of form, dismissible
-<ErrorAlert 
-  error={apiError} 
+<ErrorAlert
+  error={apiError}
   onDismiss={() => setApiError(null)}
 />
 ```
 
 **Inline Field Errors**:
+
 ```typescript
 // Automatically rendered by FormMessage from react-hook-form
-<FormMessage /> 
+<FormMessage />
 // Displays error text from Zod validation
 ```
 
 ### Error Logging
 
 All errors should be logged for debugging:
+
 ```typescript
 console.error("Preferences creation failed:", {
   code: error.error.code,
@@ -757,6 +786,7 @@ console.error("Preferences creation failed:", {
 ### Phase 1: Setup and Routing (Steps 1-3)
 
 **Step 1: Create Astro Page Route**
+
 - Create file: `src/pages/onboarding/preferences.astro`
 - Add Layout wrapper
 - Implement server-side authentication check using `context.locals.supabase`
@@ -764,12 +794,14 @@ console.error("Preferences creation failed:", {
 - Add client:load directive for React component
 
 **Step 2: Define Types and Schemas**
+
 - Create file: `src/components/onboarding/validation.ts`
 - Define `preferencesFormSchema` using Zod (matching API validation exactly)
 - Export `PreferencesFormValues` type inferred from schema
 - Define prop types for view and form components
 
 **Step 3: Create React Query Hook**
+
 - Create file: `src/components/onboarding/hooks/useCreateUserPreferences.ts`
 - Implement `useCreateUserPreferences` mutation hook
 - Configure success handler: toast, navigation, context update
@@ -778,6 +810,7 @@ console.error("Preferences creation failed:", {
 ### Phase 2: View Components (Steps 4-6)
 
 **Step 4: Implement Main View Component**
+
 - Create file: `src/components/onboarding/PreferencesOnboardingView.tsx`
 - Add QueryClientProvider wrapper
 - Implement loading overlay state management
@@ -786,6 +819,7 @@ console.error("Preferences creation failed:", {
 - Add navigation logic after success
 
 **Step 5: Create PageHeader Component**
+
 - Create file: `src/components/onboarding/PageHeader.tsx`
 - Implement heading: "Welcome to VibeTravels!"
 - Add description paragraph
@@ -793,6 +827,7 @@ console.error("Preferences creation failed:", {
 - Style with Tailwind for responsive layout
 
 **Step 6: Create Supporting Components**
+
 - Create `LoadingOverlay.tsx`: Full-screen loading indicator with spinner
 - Create `ErrorAlert.tsx`: Reusable error display with dismiss action
 - Add ARIA attributes for accessibility
@@ -800,6 +835,7 @@ console.error("Preferences creation failed:", {
 ### Phase 3: Form Structure (Steps 7-9)
 
 **Step 7: Create Main Form Component**
+
 - Create file: `src/components/onboarding/PreferencesForm.tsx`
 - Initialize react-hook-form with zodResolver
 - Set up default values for all fields
@@ -808,6 +844,7 @@ console.error("Preferences creation failed:", {
 - Implement FormActions integration
 
 **Step 8: Implement FormActions Component**
+
 - Create file: `src/components/onboarding/FormActions.tsx`
 - Add submit button with loading state
 - Style with primary variant
@@ -815,6 +852,7 @@ console.error("Preferences creation failed:", {
 - Display loading spinner when `isLoading` is true
 
 **Step 9: Add Basic Form Structure**
+
 - In `PreferencesForm.tsx`, add fieldset/section structure
 - Create placeholder divs for each of 6 form fields
 - Verify form submission flow without actual fields
@@ -822,6 +860,7 @@ console.error("Preferences creation failed:", {
 ### Phase 4: Form Fields (Steps 10-15)
 
 **Step 10: Implement PeopleCountField**
+
 - Create file: `src/components/onboarding/PeopleCountField.tsx`
 - Add FormField wrapper connected to react-hook-form
 - Implement number input with +/- buttons
@@ -830,6 +869,7 @@ console.error("Preferences creation failed:", {
 - Test validation for boundary cases (0, 21, non-integer)
 
 **Step 11: Implement TripTypeField**
+
 - Create file: `src/components/onboarding/TripTypeField.tsx`
 - Add RadioGroup from Shadcn/ui
 - Add two radio options: leisure and business
@@ -838,6 +878,7 @@ console.error("Preferences creation failed:", {
 - Test keyboard navigation (arrow keys)
 
 **Step 12: Implement AgeField**
+
 - Create file: `src/components/onboarding/AgeField.tsx`
 - Add number input field
 - Connect to form state
@@ -845,6 +886,7 @@ console.error("Preferences creation failed:", {
 - Test edge cases and error messages
 
 **Step 13: Implement CountryField**
+
 - Create file: `src/components/onboarding/CountryField.tsx`
 - Add text input field
 - Optional: Add Combobox for autocomplete (can be deferred)
@@ -853,6 +895,7 @@ console.error("Preferences creation failed:", {
 - Test with various country names (short and long)
 
 **Step 14: Implement ComfortField**
+
 - Create file: `src/components/onboarding/ComfortField.tsx`
 - Add RadioGroup with 3 options: relax, balanced, intense
 - Add descriptive labels for each option explaining what it means
@@ -860,6 +903,7 @@ console.error("Preferences creation failed:", {
 - Test keyboard navigation and visual feedback
 
 **Step 15: Implement BudgetField**
+
 - Create file: `src/components/onboarding/BudgetField.tsx`
 - Add RadioGroup with 3 options: budget, moderate, luxury
 - Add descriptive labels for each option
@@ -869,6 +913,7 @@ console.error("Preferences creation failed:", {
 ### Phase 5: Integration and Flow (Steps 16-18)
 
 **Step 16: Connect Form to API**
+
 - In PreferencesForm, integrate mutation hook
 - Implement onSubmit handler:
   - Validate form
@@ -879,6 +924,7 @@ console.error("Preferences creation failed:", {
 - Test with API endpoint (may need to mock initially)
 
 **Step 17: Implement Success Flow**
+
 - In PreferencesOnboardingView, handle success callback
 - Show success toast notification
 - Navigate to `/plans/new` using navigation utility
@@ -886,6 +932,7 @@ console.error("Preferences creation failed:", {
 - Test event logging: verify `preferences_completed` event in database
 
 **Step 18: Implement Error Handling**
+
 - Handle all error scenarios:
   - Display 400 validation errors with specific messages
   - Handle 401 with redirect to login
@@ -897,6 +944,7 @@ console.error("Preferences creation failed:", {
 ### Phase 6: Polish and Accessibility (Steps 19-21)
 
 **Step 19: Styling and Responsiveness**
+
 - Apply Tailwind CSS for consistent spacing
 - Ensure mobile-first responsive design:
   - Stack fields vertically on mobile
@@ -906,6 +954,7 @@ console.error("Preferences creation failed:", {
 - Ensure form fits without horizontal scrolling
 
 **Step 20: Accessibility Enhancements**
+
 - Add aria-labels to all interactive elements
 - Ensure proper tab order (test with keyboard only)
 - Add focus indicators with high contrast
@@ -914,6 +963,7 @@ console.error("Preferences creation failed:", {
 - Verify color contrast meets WCAG AA standards
 
 **Step 21: Loading States and Feedback**
+
 - Polish loading overlay with smooth transitions
 - Add skeleton loaders if fetching initial data (not applicable for this view)
 - Ensure loading states don't block navigation (can user cancel?)
@@ -923,6 +973,7 @@ console.error("Preferences creation failed:", {
 ### Phase 7: Testing and Validation (Steps 22-24)
 
 **Step 22: Form Validation Testing**
+
 - Test all validation rules for each field:
   - Empty fields (all required)
   - Boundary values (min/max for numbers)
@@ -933,6 +984,7 @@ console.error("Preferences creation failed:", {
 - Test error message dismissal on field correction
 
 **Step 23: API Integration Testing**
+
 - Test successful preference creation:
   - Verify 201 response
   - Verify preferences saved in database
@@ -947,6 +999,7 @@ console.error("Preferences creation failed:", {
 - Verify retry functionality works
 
 **Step 24: User Flow Testing**
+
 - Test complete happy path:
   1. New user registers
   2. Redirected to onboarding
@@ -965,6 +1018,7 @@ console.error("Preferences creation failed:", {
 ### Phase 8: Final Polish (Steps 25-26)
 
 **Step 25: Performance Optimization**
+
 - Minimize re-renders in form fields
 - Lazy load non-critical components if needed
 - Ensure form validation is debounced for expensive checks
@@ -972,6 +1026,7 @@ console.error("Preferences creation failed:", {
 - Optimize bundle size (check imports)
 
 **Step 26: Documentation and Code Review**
+
 - Add JSDoc comments to all components and hooks
 - Document prop types and expected behavior
 - Add inline comments for complex logic
@@ -982,6 +1037,7 @@ console.error("Preferences creation failed:", {
 ### Phase 9: Deployment Preparation (Steps 27-28)
 
 **Step 27: Integration with Existing App**
+
 - Verify middleware redirects new users to onboarding
 - Verify onboarding redirects users with preferences
 - Test integration with auth flow (register → onboard → create plan)
@@ -989,6 +1045,7 @@ console.error("Preferences creation failed:", {
 - Test onboarding appears correctly in navigation flow
 
 **Step 28: Final Testing and Launch**
+
 - Perform end-to-end testing on staging environment
 - Test with real database and API (not mocks)
 - Verify event logging works in production environment
@@ -1006,6 +1063,7 @@ console.error("Preferences creation failed:", {
 This implementation plan provides a comprehensive guide for building the User Preferences Onboarding view for VibeTravels. The view is designed as a mandatory first-time flow that captures essential travel preferences to enable personalized AI-generated travel plans.
 
 **Key Features**:
+
 - Single-page form with 6 required fields
 - Client-side validation with Zod
 - Server-side validation and conflict checking
@@ -1015,6 +1073,7 @@ This implementation plan provides a comprehensive guide for building the User Pr
 - Automatic navigation to plan creation after completion
 
 **Tech Stack**:
+
 - Astro 5 for page routing
 - React 19 for interactive form
 - TypeScript 5 for type safety

@@ -5,6 +5,7 @@
 The Update Activity endpoint allows authenticated users to modify details of a specific activity within their travel plan. Users can update the activity title, duration, and transport time. The endpoint verifies plan ownership and logs all modifications for analytics purposes.
 
 **Key Features**:
+
 - Partial updates (all fields optional, at least one required)
 - Plan ownership verification
 - Activity-level modifications without affecting plan structure
@@ -22,9 +23,9 @@ The Update Activity endpoint allows authenticated users to modify details of a s
 - **Request Body** (JSON, all fields optional but at least one required):
   ```json
   {
-    "title": "Updated Activity Title",           // Optional: string, 1-200 characters
-    "duration_minutes": 90,                      // Optional: integer, 5-720 minutes
-    "transport_minutes": 20                      // Optional: integer, 0-600 minutes, nullable
+    "title": "Updated Activity Title", // Optional: string, 1-200 characters
+    "duration_minutes": 90, // Optional: integer, 5-720 minutes
+    "transport_minutes": 20 // Optional: integer, 0-600 minutes, nullable
   }
   ```
 
@@ -69,6 +70,7 @@ export const updateActivitySchema = z
 ## 4. Response Details
 
 ### Success Response (200 OK)
+
 ```json
 {
   "id": "550e8400-e29b-41d4-a716-446655440000",
@@ -84,6 +86,7 @@ export const updateActivitySchema = z
 ### Error Responses
 
 **400 Bad Request** (Validation failure):
+
 ```json
 {
   "error": {
@@ -102,6 +105,7 @@ export const updateActivitySchema = z
 ```
 
 **403 Forbidden** (Not plan owner):
+
 ```json
 {
   "error": {
@@ -112,6 +116,7 @@ export const updateActivitySchema = z
 ```
 
 **404 Not Found** (Plan or activity not found):
+
 ```json
 {
   "error": {
@@ -122,6 +127,7 @@ export const updateActivitySchema = z
 ```
 
 **500 Internal Server Error**:
+
 ```json
 {
   "error": {
@@ -163,7 +169,7 @@ export const updateActivitySchema = z
 
 ```sql
 -- Step 1: Verify ownership (single query with joins)
-SELECT 
+SELECT
   a.id,
   a.block_id,
   p.id as plan_id,
@@ -178,7 +184,7 @@ WHERE a.id = :activityId
 
 -- Step 2: Update activity
 UPDATE plan_activities
-SET 
+SET
   title = COALESCE(:title, title),
   duration_minutes = COALESCE(:duration_minutes, duration_minutes),
   transport_minutes = COALESCE(:transport_minutes, transport_minutes),
@@ -194,17 +200,20 @@ VALUES (:userId, :planId, 'plan_edited', NOW());
 ## 6. Security Considerations
 
 ### Authentication
+
 - **Requirement**: Valid Bearer token required for all requests
 - **Implementation**: Extract `auth.uid()` from Supabase context
 - **Validation**: Reject requests without valid authentication (401)
 
 ### Authorization
+
 - **Ownership Verification**: Must verify plan ownership through full chain:
   - activity → block → day → plan → owner_id
 - **Implementation**: Use join query to verify ownership in single database call
 - **Threat**: Users attempting to modify activities in plans they don't own
 
 ### Input Validation
+
 - **UUID Validation**: Verify planId and activityId are valid UUIDs before database queries
 - **Data Validation**: Use Zod schema to validate request body
 - **SQL Injection**: Supabase uses parameterized queries (built-in protection)
@@ -227,20 +236,20 @@ VALUES (:userId, :planId, 'plan_edited', NOW());
 
 ### Error Scenarios and Responses
 
-| Scenario | Status Code | Error Code | Message |
-|----------|-------------|------------|---------|
-| No fields provided | 400 | VALIDATION_ERROR | At least one field must be provided |
-| Invalid UUID format | 400 | VALIDATION_ERROR | Invalid activity ID format |
-| Title too short/long | 400 | VALIDATION_ERROR | String must contain between 1 and 200 characters |
-| Duration out of range | 400 | VALIDATION_ERROR | Number must be between 5 and 720 |
-| Transport minutes out of range | 400 | VALIDATION_ERROR | Number must be between 0 and 600 |
-| Invalid JSON | 400 | VALIDATION_ERROR | Invalid JSON in request body |
-| Plan not found | 404 | NOT_FOUND | Plan not found |
-| Activity not found | 404 | NOT_FOUND | Activity not found |
-| Activity doesn't belong to plan | 404 | NOT_FOUND | Activity not found |
-| User doesn't own plan | 403 | FORBIDDEN | You don't have permission to access this plan |
-| Database error | 500 | INTERNAL_ERROR | Failed to update activity |
-| Unexpected error | 500 | INTERNAL_ERROR | An unexpected error occurred |
+| Scenario                        | Status Code | Error Code       | Message                                          |
+| ------------------------------- | ----------- | ---------------- | ------------------------------------------------ |
+| No fields provided              | 400         | VALIDATION_ERROR | At least one field must be provided              |
+| Invalid UUID format             | 400         | VALIDATION_ERROR | Invalid activity ID format                       |
+| Title too short/long            | 400         | VALIDATION_ERROR | String must contain between 1 and 200 characters |
+| Duration out of range           | 400         | VALIDATION_ERROR | Number must be between 5 and 720                 |
+| Transport minutes out of range  | 400         | VALIDATION_ERROR | Number must be between 0 and 600                 |
+| Invalid JSON                    | 400         | VALIDATION_ERROR | Invalid JSON in request body                     |
+| Plan not found                  | 404         | NOT_FOUND        | Plan not found                                   |
+| Activity not found              | 404         | NOT_FOUND        | Activity not found                               |
+| Activity doesn't belong to plan | 404         | NOT_FOUND        | Activity not found                               |
+| User doesn't own plan           | 403         | FORBIDDEN        | You don't have permission to access this plan    |
+| Database error                  | 500         | INTERNAL_ERROR   | Failed to update activity                        |
+| Unexpected error                | 500         | INTERNAL_ERROR   | An unexpected error occurred                     |
 
 ### Error Handling Strategy
 
@@ -440,7 +449,7 @@ export async function updateActivity(
 
     // Extract plan info from nested structure
     const planInfo = verification.plan_blocks?.plan_days?.plans;
-    
+
     // Step 3: Verify activity belongs to specified plan
     if (planInfo?.id !== planId) {
       return createErrorResult("NOT_FOUND", "Activity not found");
@@ -642,6 +651,7 @@ export type { ServiceResult };
 ### Step 6: Testing Checklist
 
 **Unit Tests**:
+
 - [ ] Validate Zod schema with valid data
 - [ ] Validate Zod schema rejects invalid data
 - [ ] Test updateActivity with valid data
@@ -650,6 +660,7 @@ export type { ServiceResult };
 - [ ] Test updateActivity with wrong plan owner
 
 **Integration Tests**:
+
 - [ ] PATCH with valid data returns 200
 - [ ] PATCH with no fields returns 400
 - [ ] PATCH with invalid UUID returns 400
@@ -658,6 +669,7 @@ export type { ServiceResult };
 - [ ] PATCH logs plan_edited event
 
 **Manual Testing**:
+
 1. Update activity title only
 2. Update duration only
 3. Update transport_minutes to null

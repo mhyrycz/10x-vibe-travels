@@ -2,26 +2,28 @@
 
 ## 1. Resources
 
-| Resource | Database Table(s) | Description |
-|----------|------------------|-------------|
-| Authentication | auth.users (Supabase) | User authentication and session management |
-| User Preferences | user_preferences | Travel preference profiles for users |
-| User Account | auth.users, user_roles | User account information and role management |
-| Plans | plans, plan_days, plan_blocks, plan_activities | Travel itineraries with hierarchical structure |
-| Activities | plan_activities | Individual activities within plan blocks |
-| Events | events | Analytics event tracking |
-| Admin | user_roles, events (read-only) | Administrative operations and statistics |
+| Resource         | Database Table(s)                              | Description                                    |
+| ---------------- | ---------------------------------------------- | ---------------------------------------------- |
+| Authentication   | auth.users (Supabase)                          | User authentication and session management     |
+| User Preferences | user_preferences                               | Travel preference profiles for users           |
+| User Account     | auth.users, user_roles                         | User account information and role management   |
+| Plans            | plans, plan_days, plan_blocks, plan_activities | Travel itineraries with hierarchical structure |
+| Activities       | plan_activities                                | Individual activities within plan blocks       |
+| Events           | events                                         | Analytics event tracking                       |
+| Admin            | user_roles, events (read-only)                 | Administrative operations and statistics       |
 
 ## 2. Endpoints
 
 ### 2.2 User Preferences
 
 #### Create User Preferences (Onboarding)
+
 - **Method**: `POST`
 - **Path**: `/api/users/me/preferences`
 - **Description**: Create initial travel preferences during onboarding
 - **Authentication**: Required (Bearer token)
 - **Request Body**:
+
 ```json
 {
   "people_count": 2,
@@ -32,7 +34,9 @@
   "budget": "moderate"
 }
 ```
+
 - **Response** (201 Created):
+
 ```json
 {
   "user_id": "uuid",
@@ -46,6 +50,7 @@
   "updated_at": "2025-12-08T10:00:00Z"
 }
 ```
+
 - **Validation**:
   - people_count: integer between 1 and 20
   - trip_type: enum ['leisure', 'business']
@@ -62,11 +67,13 @@
   - 409: Preferences already exist (use PATCH to update)
 
 #### Get User Preferences
+
 - **Method**: `GET`
 - **Path**: `/api/users/me/preferences`
 - **Description**: Retrieve current user's travel preferences
 - **Authentication**: Required (Bearer token)
 - **Response** (200 OK):
+
 ```json
 {
   "user_id": "uuid",
@@ -80,22 +87,27 @@
   "updated_at": "2025-12-08T10:00:00Z"
 }
 ```
+
 - **Errors**:
   - 404: Preferences not found (user hasn't completed onboarding)
 
 #### Update User Preferences
+
 - **Method**: `PATCH`
 - **Path**: `/api/users/me/preferences`
 - **Description**: Update one or more preference fields
 - **Authentication**: Required (Bearer token)
 - **Request Body** (all fields optional):
+
 ```json
 {
   "people_count": 3,
   "comfort": "intense"
 }
 ```
+
 - **Response** (200 OK):
+
 ```json
 {
   "user_id": "uuid",
@@ -109,6 +121,7 @@
   "updated_at": "2025-12-08T11:00:00Z"
 }
 ```
+
 - **Validation**: Same as Create endpoint for provided fields
 - **Errors**:
   - 400: Validation failure
@@ -117,11 +130,13 @@
 ### 2.3 User Account
 
 #### Get Current User
+
 - **Method**: `GET`
 - **Path**: `/api/users/me`
 - **Description**: Get current authenticated user information
 - **Authentication**: Required (Bearer token)
 - **Response** (200 OK):
+
 ```json
 {
   "id": "uuid",
@@ -130,10 +145,12 @@
   "created_at": "2025-12-08T10:00:00Z"
 }
 ```
+
 - **Errors**:
   - 401: Unauthorized
 
 #### Delete User Account
+
 - **Method**: `DELETE`
 - **Path**: `/api/users/me`
 - **Description**: Permanently delete user account and all associated data
@@ -151,12 +168,14 @@
 ### 2.4 Plans
 
 #### Create Plan (AI Generation)
+
 - **Method**: `POST`
 - **Path**: `/api/plans`
 - **Description**: Create a new travel plan with AI-generated itinerary
 - **Authentication**: Required (Bearer token)
 - **Rate Limit**: 10 requests per hour per user
 - **Request Body**:
+
 ```json
 {
   "destination_text": "Kraków, Poland",
@@ -170,7 +189,9 @@
   "transport_modes": ["walk", "public"]
 }
 ```
+
 - **Response** (201 Created):
+
 ```json
 {
   "id": "uuid",
@@ -221,6 +242,7 @@
   ]
 }
 ```
+
 - **Validation**:
   - destination_text: string, length between 1 and 160
   - date_start: date, not in the past
@@ -245,6 +267,7 @@
   - 503: AI generation timeout
 
 #### List Plans
+
 - **Method**: `GET`
 - **Path**: `/api/plans`
 - **Description**: List all plans for current user
@@ -254,6 +277,7 @@
   - `offset` (optional, default: 0): Pagination offset
   - `sort` (optional, default: '-created_at'): Sort field (prefix '-' for descending)
 - **Response** (200 OK):
+
 ```json
 {
   "data": [
@@ -273,6 +297,7 @@
   }
 }
 ```
+
 - **Business Logic**:
   - Filter by owner_id = auth.uid()
   - Default sort by created_at descending (newest first)
@@ -280,6 +305,7 @@
   - 400: Invalid query parameters
 
 #### Get Plan Details
+
 - **Method**: `GET`
 - **Path**: `/api/plans/{planId}`
 - **Description**: Retrieve complete plan with nested structure and warnings
@@ -287,6 +313,7 @@
 - **Path Parameters**:
   - `planId`: UUID of the plan
 - **Response** (200 OK):
+
 ```json
 {
   "id": "uuid",
@@ -338,6 +365,7 @@
   ]
 }
 ```
+
 - **Business Logic**:
   - Verify owner_id = auth.uid() for authorization
   - Calculate warnings for blocks/days where total time (activities + transport) exceeds thresholds:
@@ -350,6 +378,7 @@
   - 404: Plan not found
 
 #### Update Plan
+
 - **Method**: `PATCH`
 - **Path**: `/api/plans/{planId}`
 - **Description**: Update plan metadata (name, budget, preferences, note)
@@ -357,6 +386,7 @@
 - **Path Parameters**:
   - `planId`: UUID of the plan
 - **Request Body** (all fields optional):
+
 ```json
 {
   "name": "Updated Plan Name",
@@ -365,7 +395,9 @@
   "people_count": 3
 }
 ```
+
 - **Response** (200 OK):
+
 ```json
 {
   "id": "uuid",
@@ -376,6 +408,7 @@
   "updated_at": "2025-12-08T12:00:00Z"
 }
 ```
+
 - **Validation**:
   - name: string, length between 1 and 140
   - note_text: string, max length 20000
@@ -390,6 +423,7 @@
   - 404: Plan not found
 
 #### Regenerate Plan
+
 - **Method**: `POST`
 - **Path**: `/api/plans/{planId}/regenerate`
 - **Description**: Regenerate plan itinerary using AI with updated parameters
@@ -398,16 +432,19 @@
 - **Path Parameters**:
   - `planId`: UUID of the plan
 - **Request Body** (all fields optional, uses existing values if not provided):
+
 ```json
 {
   "date_start": "2025-06-16",
   "date_end": "2025-06-21",
   "note_text": "Updated travel notes...",
   "comfort": "intense",
-  "transport_modes": ["car", "walk"] 
+  "transport_modes": ["car", "walk"]
 }
 ```
+
 - **Response** (200 OK):
+
 ```json
 {
   "id": "uuid",
@@ -420,6 +457,7 @@
   "days": []
 }
 ```
+
 - **Validation**:
   - date_start: date, not in the past
   - date_end: date, >= date_start, max 30 days from date_start
@@ -441,6 +479,7 @@
   - 500: AI service unavailable
 
 #### Delete Plan
+
 - **Method**: `DELETE`
 - **Path**: `/api/plans/{planId}`
 - **Description**: Permanently delete a plan
@@ -459,6 +498,7 @@
 ### 2.5 Activities
 
 #### Update Activity
+
 - **Method**: `PATCH`
 - **Path**: `/api/plans/{planId}/activities/{activityId}`
 - **Description**: Update activity details (title, duration, transport time)
@@ -467,6 +507,7 @@
   - `planId`: UUID of the plan
   - `activityId`: UUID of the activity
 - **Request Body** (all fields optional):
+
 ```json
 {
   "title": "Updated Activity Title",
@@ -474,7 +515,9 @@
   "transport_minutes": 20
 }
 ```
+
 - **Response** (200 OK):
+
 ```json
 {
   "id": "uuid",
@@ -486,6 +529,7 @@
   "updated_at": "2025-12-08T14:00:00Z"
 }
 ```
+
 - **Validation**:
   - title: string, length between 1 and 200
   - duration_minutes: integer between 5 and 720
@@ -499,6 +543,7 @@
   - 404: Plan or activity not found
 
 #### Move Activity
+
 - **Method**: `POST`
 - **Path**: `/api/plans/{planId}/activities/{activityId}/move`
 - **Description**: Move activity to a different block and/or position
@@ -507,13 +552,16 @@
   - `planId`: UUID of the plan
   - `activityId`: UUID of the activity
 - **Request Body**:
+
 ```json
 {
   "target_block_id": "uuid",
   "target_order_index": 2
 }
 ```
+
 - **Response** (200 OK):
+
 ```json
 {
   "id": "uuid",
@@ -525,6 +573,7 @@
   "updated_at": "2025-12-08T14:30:00Z"
 }
 ```
+
 - **Validation**:
   - target_block_id: must belong to same plan
   - target_order_index: integer between 1 and 50
@@ -543,11 +592,13 @@
 ### 2.6 Admin
 
 #### Get Statistics
+
 - **Method**: `GET`
 - **Path**: `/api/admin/stats`
 - **Description**: Retrieve platform-wide statistics
 - **Authentication**: Required (Bearer token with admin role)
 - **Response** (200 OK):
+
 ```json
 {
   "total_users": 1523,
@@ -555,6 +606,7 @@
   "generated_at": "2025-12-08T15:00:00Z"
 }
 ```
+
 - **Business Logic**:
   - Verify user has role = 'admin' in user_roles table
   - Count users from auth.users
@@ -563,6 +615,7 @@
   - 403: User is not an admin
 
 #### List Users (Admin)
+
 - **Method**: `GET`
 - **Path**: `/api/admin/users`
 - **Description**: List all users with basic information
@@ -572,6 +625,7 @@
   - `offset` (optional, default: 0)
   - `search` (optional): Search by email
 - **Response** (200 OK):
+
 ```json
 {
   "data": [
@@ -591,6 +645,7 @@
   }
 }
 ```
+
 - **Business Logic**:
   - Verify user has role = 'admin'
   - Join auth.users with user_roles and aggregate plan counts
@@ -598,6 +653,7 @@
   - 403: User is not an admin
 
 #### List All Plans (Admin)
+
 - **Method**: `GET`
 - **Path**: `/api/admin/plans`
 - **Description**: List all plans across all users
@@ -607,6 +663,7 @@
   - `offset` (optional, default: 0)
   - `user_id` (optional): Filter by specific user
 - **Response** (200 OK):
+
 ```json
 {
   "data": [
@@ -626,6 +683,7 @@
   }
 }
 ```
+
 - **Business Logic**:
   - Verify user has role = 'admin'
   - Join plans with auth.users to get owner email
@@ -639,6 +697,7 @@
 **Implementation**: Supabase Auth with JWT (JSON Web Tokens)
 
 **Flow**:
+
 1. User registers or logs in via Supabase Auth endpoints
 2. Supabase returns access_token (JWT) and refresh_token
 3. Client includes access_token in Authorization header: `Authorization: Bearer {access_token}`
@@ -646,38 +705,45 @@
 5. Authenticated user ID extracted from JWT via `auth.uid()` helper
 
 **Token Lifecycle**:
+
 - Access tokens expire after 1 hour (configurable in Supabase)
 - Refresh tokens used to obtain new access tokens without re-authentication
 - Tokens automatically invalidated on logout
 
 **Protected Endpoints**:
 All endpoints except the following require valid Bearer token:
+
 - `POST /api/auth/register`
 - `POST /api/auth/login`
 
 ### 3.2 Authorization Rules
 
 #### Owner-Based Access (Plans and Activities)
+
 - Users can only access plans where `owner_id = auth.uid()`
 - Enforced at application layer before database queries
 - Applies to: GET, PATCH, DELETE on `/api/plans/{planId}` and nested resources
 
 #### Role-Based Access (Admin)
+
 - Admin endpoints require `role = 'admin'` in user_roles table
 - Check performed via database query: `SELECT role FROM user_roles WHERE user_id = auth.uid()`
 - Applies to: all `/api/admin/*` endpoints
 
 #### Resource Limits
+
 - 10-plan limit per user enforced in `POST /api/plans`
 - Check via: `SELECT COUNT(*) FROM plans WHERE owner_id = auth.uid()`
 
 ### 3.3 Rate Limiting
 
 **AI-Powered Endpoints**:
+
 - `POST /api/plans`: 10 requests per hour per user
 - `POST /api/plans/{planId}/regenerate`: 10 requests per hour per user
 
 **Implementation**:
+
 - Track requests in Redis/memory cache keyed by user_id + endpoint
 - Return 429 Too Many Requests when limit exceeded
 - Include rate limit headers in responses:
@@ -692,40 +758,44 @@ All endpoints except the following require valid Bearer token:
 ### 4.1 Input Validation Rules
 
 #### User Preferences
-| Field | Validation |
-|-------|-----------|
-| people_count | Required, integer, 1 ≤ value ≤ 20 |
-| trip_type | Required, enum: ['leisure', 'business'] |
-| age | Required, integer, 13 ≤ value ≤ 120 |
-| country | Required, string, 2 ≤ length ≤ 120 |
-| comfort | Required, enum: ['relax', 'balanced', 'intense'] |
-| budget | Required, enum: ['budget', 'moderate', 'luxury'] |
+
+| Field        | Validation                                       |
+| ------------ | ------------------------------------------------ |
+| people_count | Required, integer, 1 ≤ value ≤ 20                |
+| trip_type    | Required, enum: ['leisure', 'business']          |
+| age          | Required, integer, 13 ≤ value ≤ 120              |
+| country      | Required, string, 2 ≤ length ≤ 120               |
+| comfort      | Required, enum: ['relax', 'balanced', 'intense'] |
+| budget       | Required, enum: ['budget', 'moderate', 'luxury'] |
 
 #### Plans
-| Field | Validation |
-|-------|-----------|
-| name | Required, string, 1 ≤ length ≤ 140 |
-| destination_text | Required, string, 1 ≤ length ≤ 160 |
-| date_start | Required, date, not in past |
-| date_end | Required, date, ≥ date_start, ≤ date_start + 30 days |
-| note_text | Required, string, length ≤ 20000 |
-| people_count | Required, integer, 1 ≤ value ≤ 20 |
-| trip_type | Required, enum: ['leisure', 'business'] |
-| comfort | Required, enum: ['relax', 'balanced', 'intense'] |
-| budget | Required, enum: ['budget', 'moderate', 'luxury'] |
-| transport_modes | Optional, array of enum: ['car', 'walk', 'public'] |
+
+| Field            | Validation                                           |
+| ---------------- | ---------------------------------------------------- |
+| name             | Required, string, 1 ≤ length ≤ 140                   |
+| destination_text | Required, string, 1 ≤ length ≤ 160                   |
+| date_start       | Required, date, not in past                          |
+| date_end         | Required, date, ≥ date_start, ≤ date_start + 30 days |
+| note_text        | Required, string, length ≤ 20000                     |
+| people_count     | Required, integer, 1 ≤ value ≤ 20                    |
+| trip_type        | Required, enum: ['leisure', 'business']              |
+| comfort          | Required, enum: ['relax', 'balanced', 'intense']     |
+| budget           | Required, enum: ['budget', 'moderate', 'luxury']     |
+| transport_modes  | Optional, array of enum: ['car', 'walk', 'public']   |
 
 #### Activities
-| Field | Validation |
-|-------|-----------|
-| title | Required, string, 1 ≤ length ≤ 200 |
-| duration_minutes | Required, integer, 5 ≤ value ≤ 720 |
+
+| Field             | Validation                         |
+| ----------------- | ---------------------------------- |
+| title             | Required, string, 1 ≤ length ≤ 200 |
+| duration_minutes  | Required, integer, 5 ≤ value ≤ 720 |
 | transport_minutes | Optional, integer, 0 ≤ value ≤ 600 |
-| order_index | Required, integer, 1 ≤ value ≤ 50 |
+| order_index       | Required, integer, 1 ≤ value ≤ 50  |
 
 ### 4.2 Business Logic Implementation
 
 #### Plan Creation
+
 1. **Pre-validation**:
    - Check user's plan count < 10
    - Validate date range ≤ 30 days
@@ -757,6 +827,7 @@ All endpoints except the following require valid Bearer token:
      ```
 
 #### Plan Regeneration
+
 1. **Parameter Merging**:
    - Fetch existing plan
    - Merge provided updates with existing values
@@ -770,6 +841,7 @@ All endpoints except the following require valid Bearer token:
    - Log `plan_regenerated` event with updated context
 
 #### Activity Movement
+
 1. **Reordering Logic**:
    - Fetch activities in source block ordered by order_index
    - For items after moved activity: decrement order_index
@@ -782,6 +854,7 @@ All endpoints except the following require valid Bearer token:
    - Handle edge cases (moving within same block)
 
 #### Overload Warnings Calculation
+
 Calculate total time per block/day when fetching plan details:
 
 ```
@@ -789,7 +862,7 @@ block_total = SUM(activity.duration_minutes + COALESCE(activity.transport_minute
 
 Warning thresholds:
 - morning: > 240 minutes (4 hours)
-- afternoon: > 300 minutes (5 hours)  
+- afternoon: > 300 minutes (5 hours)
 - evening: > 240 minutes (4 hours)
 - full day: > 720 minutes (12 hours)
 ```
@@ -814,6 +887,7 @@ All error responses follow consistent structure:
 ```
 
 **Common Error Codes**:
+
 - `VALIDATION_ERROR` (400): Input validation failed
 - `UNAUTHORIZED` (401): Missing or invalid authentication token
 - `FORBIDDEN` (403): Authenticated but not authorized for this resource
@@ -827,29 +901,32 @@ All error responses follow consistent structure:
 
 Events are logged asynchronously after successful operations:
 
-| Event Type | Trigger | Context Fields |
-|------------|---------|----------------|
-| account_created | User registration | user_id |
-| preferences_completed | Onboarding completion | user_id |
-| plan_generated | New plan creation | user_id, plan_id, destination_text, transport_modes, trip_length_days |
-| plan_regenerated | Plan regeneration | user_id, plan_id, destination_text, transport_modes, trip_length_days |
-| plan_edited | Plan/activity update | user_id, plan_id |
-| plan_deleted | Plan deletion | user_id, plan_id (retained even after plan deleted) |
+| Event Type            | Trigger               | Context Fields                                                        |
+| --------------------- | --------------------- | --------------------------------------------------------------------- |
+| account_created       | User registration     | user_id                                                               |
+| preferences_completed | Onboarding completion | user_id                                                               |
+| plan_generated        | New plan creation     | user_id, plan_id, destination_text, transport_modes, trip_length_days |
+| plan_regenerated      | Plan regeneration     | user_id, plan_id, destination_text, transport_modes, trip_length_days |
+| plan_edited           | Plan/activity update  | user_id, plan_id                                                      |
+| plan_deleted          | Plan deletion         | user_id, plan_id (retained even after plan deleted)                   |
 
 **Implementation Note**: Event logging failures should not block primary operation (fire-and-forget pattern with error logging).
 
 ### 4.5 Database Transaction Guidelines
 
 **Single Resource Updates**: Use single transaction
+
 - User preferences update
 - Plan metadata update
 - Activity update
 
 **Complex Operations**: Use transaction with rollback on failure
+
 - Plan creation (plan + days + blocks + activities + event)
 - Plan regeneration (delete old + create new + event)
 - Activity movement (reorder source + reorder target + update)
 
 **Non-Transactional**: Independent operations
+
 - Event logging (fire-and-forget)
 - Statistics queries (read-only, eventual consistency acceptable)

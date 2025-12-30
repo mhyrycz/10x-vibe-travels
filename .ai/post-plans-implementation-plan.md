@@ -1,9 +1,11 @@
 # API Endpoint Implementation Plan: Create Plan with AI Generation
 
 ## 1. Endpoint Overview
+
 This document outlines the implementation plan for the `POST /api/plans` endpoint. This is the core feature of the VibeTravels application, responsible for creating a new travel plan with an AI-generated itinerary. The endpoint orchestrates multiple operations: user validation, rate limiting, AI service communication, hierarchical database insertions, and analytics logging.
 
 ## 2. Request Details
+
 - **HTTP Method**: `POST`
 - **URL Structure**: `/api/plans`
 - **Parameters**: None (user ID derived from authentication context)
@@ -23,6 +25,7 @@ This document outlines the implementation plan for the `POST /api/plans` endpoin
   ```
 
 **Required Fields:**
+
 - `destination_text` - string, 1-160 characters
 - `date_start` - ISO date string, not in the past
 - `date_end` - ISO date string, >= date_start, max 30 days span
@@ -33,21 +36,26 @@ This document outlines the implementation plan for the `POST /api/plans` endpoin
 - `budget` - enum: "budget" | "moderate" | "luxury"
 
 **Optional Fields:**
+
 - `transport_modes` - array of enum: "car" | "walk" | "public", nullable (null or empty array lets AI decide)
 
 ## 3. Used Types
+
 The implementation will use the following TypeScript types defined in `src/types.ts`:
+
 - **Request Validation**: `CreatePlanDto`
 - **Response**: `PlanDto` (Plan with nested DayDto, BlockDto, ActivityDto)
 - **Error Response**: `ErrorDto`
 - **Event Logging**: `CreateEventDto`
 
 Additional types needed:
+
 - `ActivityDto` - Activity without block_id
 - `BlockDto` - Block with activities array, total_duration_minutes, warning
 - `DayDto` - Day with blocks array
 
 ## 4. Response Details
+
 - **Success (201 Created)**: Returns the complete plan with full nested structure (days -> blocks -> activities).
   ```json
   {
@@ -98,6 +106,7 @@ Additional types needed:
 ## 5. Data Flow
 
 ### Phase 1: Request Validation & User Checks
+
 1. **Request Reception**: Astro server endpoint at `src/pages/api/plans.ts` receives POST request.
 2. **Authentication**: For development, uses `DEFAULT_USER_ID`. In production, validates JWT Bearer token from Astro middleware.
 3. **Input Validation**: Zod schema validates all fields including:
@@ -109,11 +118,13 @@ Additional types needed:
 4. **Plan Limit Check**: Query database to count user's existing plans. If count >= 10, return 403 Forbidden.
 
 ### Phase 2: Rate Limiting
+
 5. **Rate Limit Check**: Implement in-memory or Redis-based rate limiter checking if user has exceeded 10 requests per hour for this endpoint. Return 429 if exceeded.
 
 ### Phase 3: AI Service Integration
+
 6. **Generate Plan Name**: Create automatic plan name in format: `"{destination_text}, {date_start} – {date_end}"`.
-7. **Call AI Service**: 
+7. **Call AI Service**:
    - **Development Mode**: Use mock response generator with realistic sample itineraries (controlled by `USE_MOCK_AI` environment variable)
    - **Production Mode**: Send request to AI service (via OpenRouter.ai) with all parameters:
      - Destination, dates, user note
@@ -123,6 +134,7 @@ Additional types needed:
 9. **Handle AI Errors**: Catch timeout errors (503), service unavailable (500), or malformed responses.
 
 ### Phase 4: Database Transaction
+
 10. **Begin Transaction**: Use Supabase transaction or multiple sequential inserts with error rollback.
 11. **Insert Plan Record**: Create main plan record with generated name and all metadata.
 12. **Insert Plan Days**: For each day in date range, create plan_day records with sequential day_index and day_date.
@@ -130,6 +142,7 @@ Additional types needed:
 14. **Insert Plan Activities**: For each activity from AI response, insert into appropriate block with order_index.
 
 ### Phase 5: Response & Logging
+
 15. **Fetch Complete Plan**: Query database with nested joins to retrieve the full plan structure.
 16. **Log Event**: Fire-and-forget logging of `plan_generated` event with context (destination_text, transport_modes, trip_length_days).
 17. **Return Response**: Send 201 Created with complete `PlanDto`.
@@ -137,11 +150,13 @@ Additional types needed:
 ## 6. Security Considerations
 
 ### Authentication & Authorization
+
 - **Authentication**: JWT Bearer token validation (TODO: currently using DEFAULT_USER_ID for development).
 - **Authorization**: User can only create plans for themselves (owner_id = authenticated user ID).
 - **No IDOR Vulnerability**: User ID comes from secure server-side session, not from request body.
 
 ### Input Validation
+
 - **Zod Schema Validation**: All inputs validated with strict type, range, and length constraints.
 - **Date Security**: Ensure date_start is not in the past to prevent historical spam.
 - **Date Range Limit**: Max 30 days prevents excessive AI computation and database load.
@@ -149,10 +164,12 @@ Additional types needed:
 - **SQL Injection**: Supabase SDK uses parameterized queries, no raw SQL.
 
 ### Rate Limiting
+
 - **Per-User Rate Limit**: 10 requests/hour prevents abuse of expensive AI service.
 - **Plan Count Limit**: 10 plans per user prevents storage abuse.
 
 ### AI Service Security
+
 - **API Key Management**: OpenRouter.ai API key stored in environment variables, never exposed to client.
 - **Input Sanitization**: Sanitize user-provided text before sending to AI to prevent prompt injection.
 - **Response Validation**: Validate AI response structure before inserting into database.
@@ -161,11 +178,13 @@ Additional types needed:
 ## 7. Performance Considerations
 
 ### Bottlenecks
+
 1. **AI Generation**: 10-30 seconds for AI to generate itinerary (main bottleneck).
 2. **Database Insertions**: Multiple sequential inserts for hierarchical structure.
 3. **Rate Limiting**: Need fast in-memory or Redis-based rate limiter.
 
 ### Optimizations
+
 - **AI Service**: Use streaming responses if supported by OpenRouter.ai to provide progress feedback.
 - **Database**: Use batch inserts where possible (e.g., insert all days in one query).
 - **Indexing**: Ensure `plans.owner_id` has index for fast plan count queries.
@@ -173,6 +192,7 @@ Additional types needed:
 - **Async Event Logging**: Fire-and-forget pattern for event logging to not block response.
 
 ### Scalability
+
 - **AI Service**: OpenRouter.ai handles scaling, but monitor costs and set budget limits.
 - **Database**: PostgreSQL can handle thousands of concurrent inserts, Supabase manages scaling.
 - **Rate Limiter**: Use Redis for distributed rate limiting if deploying multiple instances.
@@ -180,7 +200,9 @@ Additional types needed:
 ## 8. Implementation Steps
 
 ### Step 1: Create AI Service Module
+
 **File**: `src/lib/services/ai.service.ts`
+
 - Define TypeScript interfaces for AI request/response structure
 - Implement `generateMockItinerary()` function for development:
   - Accept CreatePlanDto parameters
@@ -204,7 +226,9 @@ Additional types needed:
   - `import.meta.env.OPENROUTER_API_KEY` - required for production mode
 
 ### Step 2: Create Plans Service Module
+
 **File**: `src/lib/services/plans.service.ts`
+
 - Define Zod schema `createPlanSchema` with all validations:
   - String length constraints
   - Custom date validations (not in past, date range)
@@ -228,7 +252,9 @@ Additional types needed:
   - Return ServiceResult<PlanDto>
 
 ### Step 3: Implement Rate Limiting
+
 **File**: `src/lib/services/rateLimiter.service.ts`
+
 - Implement in-memory rate limiter for development:
   - Use Map<userId, { count: number, resetTime: number }>
   - `checkRateLimit(userId, limit, windowMs): Promise<{ allowed: boolean, remaining: number }>`
@@ -236,7 +262,9 @@ Additional types needed:
 - TODO: Replace with Redis-based rate limiter for production
 
 ### Step 4: Create POST /api/plans Endpoint
+
 **File**: `src/pages/api/plans.ts`
+
 - Add `export const prerender = false` for SSR
 - Implement `POST: APIRoute` handler:
   - Extract Supabase client from `locals.supabase`
@@ -255,13 +283,16 @@ Additional types needed:
 - Add comprehensive error handling and logging
 
 ### Step 5: Add Event Logging Helper
+
 **File**: `src/lib/services/events.service.ts` (update existing)
+
 - Add `logPlanGenerated()` function:
   - Accept userId, planId, destination_text, transport_modes, trip_length_days
   - Insert event with event_type = 'plan_generated'
   - Fire-and-forget (catch and log errors, don't throw)
 
 ### Step 6: Testing Considerations
+
 - **Unit Tests**:
   - Test Zod schema validation with valid/invalid inputs
   - Test date validation logic (past dates, invalid ranges)
@@ -280,7 +311,9 @@ Additional types needed:
   - Check database for proper foreign key relationships
 
 ### Step 7: Environment Configuration
+
 **File**: `.env`
+
 - Add required environment variables:
   ```
   # AI Service Configuration
@@ -294,6 +327,7 @@ Additional types needed:
 ## 9. AI Service Integration Details
 
 ### OpenRouter.ai API Structure
+
 - **Endpoint**: `POST https://openrouter.ai/api/v1/chat/completions`
 - **Headers**:
   - `Authorization: Bearer ${OPENROUTER_API_KEY}`
@@ -318,12 +352,14 @@ Additional types needed:
   ```
 
 ### Prompt Engineering
+
 - Include all plan parameters in prompt (destination, dates, preferences)
 - Request structured JSON response with specific schema
 - Example prompt structure:
+
   ```
   Create a detailed {trip_length_days}-day travel itinerary for {destination_text}.
-  
+
   Trip Details:
   - Dates: {date_start} to {date_end}
   - Travelers: {people_count} people
@@ -331,13 +367,14 @@ Additional types needed:
   - Comfort Level: {comfort}
   - Budget: {budget}
   - Preferred Transport: {transport_modes}
-  
+
   User Notes: {note_text}
-  
+
   Return a JSON array of days, where each day has morning, afternoon, and evening blocks...
   ```
 
 ### Response Parsing
+
 - Expected AI response structure:
   ```json
   {
@@ -357,18 +394,19 @@ Additional types needed:
 
 ## 10. Error Codes & Status Mapping
 
-| Error Scenario | Error Code | HTTP Status | Message |
-|----------------|------------|-------------|---------|
-| Validation failure | VALIDATION_ERROR | 400 | "Invalid plan data" |
-| Date in past | VALIDATION_ERROR | 400 | "Start date cannot be in the past" |
-| Date range > 30 days | VALIDATION_ERROR | 400 | "Trip duration cannot exceed 30 days" |
-| Plan limit reached | FORBIDDEN | 403 | "Plan limit reached (maximum 10 plans)" |
-| Rate limit exceeded | RATE_LIMIT_EXCEEDED | 429 | "Too many requests. Try again in X minutes" |
-| AI service error | INTERNAL_ERROR | 500 | "Failed to generate itinerary" |
-| AI timeout | SERVICE_UNAVAILABLE | 503 | "Itinerary generation timed out. Please try again" |
-| Database error | INTERNAL_ERROR | 500 | "Failed to create plan" |
+| Error Scenario       | Error Code          | HTTP Status | Message                                            |
+| -------------------- | ------------------- | ----------- | -------------------------------------------------- |
+| Validation failure   | VALIDATION_ERROR    | 400         | "Invalid plan data"                                |
+| Date in past         | VALIDATION_ERROR    | 400         | "Start date cannot be in the past"                 |
+| Date range > 30 days | VALIDATION_ERROR    | 400         | "Trip duration cannot exceed 30 days"              |
+| Plan limit reached   | FORBIDDEN           | 403         | "Plan limit reached (maximum 10 plans)"            |
+| Rate limit exceeded  | RATE_LIMIT_EXCEEDED | 429         | "Too many requests. Try again in X minutes"        |
+| AI service error     | INTERNAL_ERROR      | 500         | "Failed to generate itinerary"                     |
+| AI timeout           | SERVICE_UNAVAILABLE | 503         | "Itinerary generation timed out. Please try again" |
+| Database error       | INTERNAL_ERROR      | 500         | "Failed to create plan"                            |
 
 ## 11. Notes
+
 - This is the most complex endpoint in the application, involving AI integration, rate limiting, and hierarchical database insertions.
 - Consider implementing optimistic UI updates on frontend (show loading state with progress indicators).
 - Monitor AI service costs closely and set budget alerts in OpenRouter.ai dashboard.

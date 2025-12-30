@@ -369,18 +369,18 @@ async function insertPlanItineraryData(
  * @returns ServiceResult containing either the created plan or an error
  *
  * Business Logic Flow:
- * 1. Check user's plan count (max 10 plans per user)
- * 2. Generate plan name from destination and dates
- * 3. Call AI service to generate itinerary
- * 4. Insert plan record
- * 5. Insert plan_days records for each day
- * 6. Insert plan_blocks (morning, afternoon, evening) for each day
- * 7. Insert plan_activities for each activity from AI response
- * 8. Fetch complete plan with nested structure
- * 9. Log plan_generated event
- * 10. Return complete PlanDto
+ * 1. Check rate limit (10 plans per hour)
+ * 2. Check user's plan count (max 10 plans total per user)
+ * 3. Generate plan name from destination and dates
+ * 4. Call AI service to generate itinerary
+ * 5. Insert plan record
+ * 6. Insert plan_days, plan_blocks, and plan_activities
+ * 7. Fetch complete plan with nested structure
+ * 8. Log plan_generated event
+ * 9. Return complete PlanDto
  *
  * Error Codes:
+ * - RATE_LIMIT_EXCEEDED: User has exceeded 10 plans per hour
  * - FORBIDDEN: User has reached 10-plan limit
  * - INTERNAL_ERROR: Database or AI service error
  */
@@ -396,18 +396,27 @@ export async function createPlan(
       return createErrorResult("RATE_LIMIT_EXCEEDED", "Rate limit exceeded. You can create up to 10 plans per hour");
     }
 
-    // Step 2: Generate plan name
+    // Step 2: Check user's plan count (max 10 plans total)
+    const currentPlanCount = await getUserPlanCount(supabase, userId);
+    if (currentPlanCount >= 10) {
+      return createErrorResult(
+        "FORBIDDEN",
+        "You have reached the maximum limit of 10 plans. Please delete an existing plan to create a new one."
+      );
+    }
+
+    // Step 3: Generate plan name
     const planName = generatePlanName(data.destination_text, data.date_start, data.date_end);
     const tripLengthDays = calculateTripLengthDays(data.date_start, data.date_end);
 
-    // Step 3: Call AI service to generate itinerary
+    // Step 4: Call AI service to generate itinerary
     const aiResult = await generateAIItinerary(supabase, userId, data);
     if (!aiResult.success) {
       return aiResult;
     }
     const aiItinerary = aiResult.data;
 
-    // Step 4: Insert plan record
+    // Step 5: Insert plan record
     const { data: plan, error: planError } = await supabase
       .from("plans")
       .insert({
@@ -431,7 +440,7 @@ export async function createPlan(
       return createErrorResult("INTERNAL_ERROR", "Failed to create plan");
     }
 
-    // Step 5: Insert plan days, blocks, and activities
+    // Step 6: Insert plan days, blocks, and activities
     const insertionResult = await insertPlanItineraryData(supabase, plan.id, aiItinerary, data.date_start);
     if (!insertionResult.success) {
       // Rollback: delete plan (cascade will handle any partially inserted data)
@@ -439,7 +448,7 @@ export async function createPlan(
       return insertionResult;
     }
 
-    // Step 6: Fetch complete plan with nested structure
+    // Step 7: Fetch complete plan with nested structure
     const { data: completePlan, error: fetchError } = await fetchCompletePlan(supabase, plan.id);
 
     if (fetchError || !completePlan) {
@@ -447,10 +456,10 @@ export async function createPlan(
       return createErrorResult("INTERNAL_ERROR", "Plan created but failed to retrieve complete data");
     }
 
-    // Step 9: Log plan_generated event (fire-and-forget)
+    // Step 8: Log plan_generated event (fire-and-forget)
     logPlanGenerated(supabase, userId, plan.id, data.destination_text, data.transport_modes || null, tripLengthDays);
 
-    // Step 10: Return complete plan
+    // Step 9: Return complete plan
     return {
       success: true,
       data: completePlan,

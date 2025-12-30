@@ -5,6 +5,7 @@
 VibeTravels to webowa aplikacja (MVP) w języku polskim, która pomaga w planowaniu angażujących podróży poprzez przekształcanie prostych notatek użytkownika w szczegółowe plany wycieczek z wykorzystaniem AI. Produkt jest przeznaczony dla indywidualnych podróżników, par oraz rodzin, które samodzielnie organizują wyjazdy i chcą szybko uzyskać dopasowany do ich preferencji harmonogram podróży.
 
 Aplikacja umożliwia:
+
 - tworzenie konta użytkownika z profilem preferencji podróżniczych,
 - zapis, podgląd, edycję i usuwanie planów podróży,
 - wprowadzenie jednej notatki opisującej pomysł na wyjazd,
@@ -14,6 +15,7 @@ Aplikacja umożliwia:
 MVP ma być zrealizowane w ciągu 4 tygodni przez jednego programistę i pełni funkcję projektu edukacyjnego, z naciskiem na prostą, działającą wersję produktu.
 
 Cele biznesowo‑produktowe:
+
 - Uproszczenie procesu planowania podróży.
 - Uzyskanie podstawowych danych o zachowaniu użytkowników (liczba planów, wypełnienie profilu).
 <!-- - Sprawdzenie atrakcyjności pomysłu i jakości doświadczenia użytkownika. -->
@@ -21,17 +23,20 @@ Cele biznesowo‑produktowe:
 ## 2. Problem użytkownika
 
 Planowanie ciekawych i dobrze zorganizowanych wycieczek jest czasochłonne i wymaga:
+
 - szukania inspiracji i atrakcji,
 - dopasowania planu do długości wyjazdu,
 - uwzględnienia liczby osób, budżetu, stylu podróży i preferowanego środka transportu,
 - rozpisania harmonogramu dni na konkretne aktywności.
 
 Użytkownicy (solo, pary, rodziny):
+
 - często zaczynają od luźnych notatek (linki, pomysły, nazwy miejsc),
 - nie mają czasu lub umiejętności, aby przekształcić to w gotowy, szczegółowy plan,
 - chcą otrzymać szybko „gotowiec”: plan na konkretne dni, z rozbiciem na bloki czasowe i uwzględnieniem ich stylu podróżowania.
 
 VibeTravels rozwiązuje ten problem, pozwalając użytkownikowi:
+
 - wprowadzić jedną prostą notatkę + parametry podróży,
 - jednym kliknięciem wygenerować harmonogram wyjazdu, który:
   - jest dopasowany do liczby dni i dat,
@@ -43,12 +48,14 @@ VibeTravels rozwiązuje ten problem, pozwalając użytkownikowi:
 3.1. Konta użytkowników i profil
 
 3.1.1. Rejestracja i logowanie
+
 - Użytkownik może:
   - zarejestrować konto poprzez e‑mail i hasło,
   - zalogować się na swoje konto przy użyciu zarejestrowanych danych.
 - Po założeniu konta użytkownik przechodzi przez onboarding preferencji.
 
-3.1.2. Preferencje podróżnicze (profil)
+  3.1.2. Preferencje podróżnicze (profil)
+
 - Przy pierwszym logowaniu użytkownik wypełnia obowiązkowe preferencje:
   - liczba osób,
   - typ podróży: prywatny / służbowy,
@@ -62,15 +69,17 @@ VibeTravels rozwiązuje ten problem, pozwalając użytkownikowi:
   - zapisać zaktualizowane wartości.
 - Preferencje z profilu mogą być nadpisane dla konkretnego planu (np. inny styl podróży dla wyjazdu służbowego).
 
-3.1.3. Ustawienia konta
+  3.1.3. Ustawienia konta
+
 - Użytkownik może:
   - zmienić hasło (podając obecne hasło oraz nowe, z podstawową walidacją),
   - usunąć swoje konto (co powoduje usunięcie powiązanych planów zgodnie z polityką aplikacji).
 
-3.2. Tworzenie planów podróży (AI „na jedno kliknięcie”)
+  3.2. Tworzenie planów podróży (AI „na jedno kliknięcie”)
 
-3.2.1. Formularz tworzenia nowego planu
-Formularz zawiera:
+  3.2.1. Formularz tworzenia nowego planu
+  Formularz zawiera:
+
 - pole tekstowe „Notatka o podróży”
   - jedno duże pole tekstowe w języku polskim,
   - użytkownik może wprowadzić luźny opis, listę pomysłów, linki do artykułów, nazw atrakcji itp.
@@ -83,23 +92,24 @@ Formularz zawiera:
   - walidacje:
     - data startu i data końca nie mogą być w przeszłości względem dnia tworzenia,
     - różnica między datą końca a datą startu nie może przekraczać 30 dni.
- - sekcja „Preferencje podróży dla tego planu”
-  - pola domyślnie wypełnione wartościami z profilu użytkownika:
-    - liczba osób,
-    - typ podróży,
-    - komfort zwiedzania,
-    - budżet,
-  - użytkownik może zmienić wartości na potrzeby danego planu.
-  - w ramach transportu użytkownik może zaznaczyć wiele akceptowanych środków (samochód/pieszo/transport publiczny), aby AI dobrało optymalny sposób przemieszczania między atrakcjami.
- - sekcja „Preferowany transport w tej podróży”
-   - preferencje środków transportu na poziomie planu (wielo‑wybór):
-     - samochód,
-     - pieszo,
-     - transport publiczny.
-   - zaznaczenie wielu opcji sygnalizuje AI, że może dobrać najbardziej rozsądny środek transportu między atrakcjami.
-   - pieszo jest ignorowane między dużymi odległościami (np. między miastami/krajami), ale może być stosowane lokalnie.
+- sekcja „Preferencje podróży dla tego planu”
+- pola domyślnie wypełnione wartościami z profilu użytkownika:
+  - liczba osób,
+  - typ podróży,
+  - komfort zwiedzania,
+  - budżet,
+- użytkownik może zmienić wartości na potrzeby danego planu.
+- w ramach transportu użytkownik może zaznaczyć wiele akceptowanych środków (samochód/pieszo/transport publiczny), aby AI dobrało optymalny sposób przemieszczania między atrakcjami.
+- sekcja „Preferowany transport w tej podróży”
+  - preferencje środków transportu na poziomie planu (wielo‑wybór):
+    - samochód,
+    - pieszo,
+    - transport publiczny.
+  - zaznaczenie wielu opcji sygnalizuje AI, że może dobrać najbardziej rozsądny środek transportu między atrakcjami.
+  - pieszo jest ignorowane między dużymi odległościami (np. między miastami/krajami), ale może być stosowane lokalnie.
 
 3.2.2. Generowanie planu
+
 - Po wypełnieniu formularza użytkownik klika przycisk „Generuj plan”.
 - Aplikacja:
   - przekazuje notatkę, daty, destynację i parametry do warstwy AI,
@@ -117,14 +127,16 @@ Formularz zawiera:
     - orientacyjny czas transportu między atrakcjami lub blokami, zgodnie z wybraną opcją transportu,
     - dopasowanie intensywności do komfortu zwiedzania (np. mniej atrakcji przy trybie „relaks”, więcej przy „intensywne zwiedzanie”).
 
-3.2.3. Nazwa planu
+  3.2.3. Nazwa planu
+
 - Po wygenerowaniu planu aplikacja automatycznie nadaje nazwę, na przykład:
   - „[Destynacja], [data_start] – [data_koniec]”.
 - Użytkownik może ręcznie zmienić nazwę planu w widoku szczegółowym.
 
-3.3. Przeglądanie i zarządzanie planami
+  3.3. Przeglądanie i zarządzanie planami
 
-3.3.1. Lista planów
+  3.3.1. Lista planów
+
 - Użytkownik ma dostęp do ekranu „Moje plany”, gdzie widzi listę wszystkich swoich planów.
 - Dane wyświetlane na liście:
   - nazwa podróży,
@@ -136,13 +148,14 @@ Formularz zawiera:
   - jeśli użytkownik próbuje stworzyć nowy plan, mając już 10:
     - aplikacja wyświetla komunikat informujący, że należy najpierw usunąć istniejący plan.
 
-3.3.2. Szczegóły planu
+  3.3.2. Szczegóły planu
+
 - Po kliknięciu planu na liście użytkownik przechodzi do widoku szczegółowego.
 - Widok szczegółowy zawiera:
   - nazwę planu (z możliwością edycji),
   - destynację,
   - zakres dat,
-   - preferencje środków transportu (wybrane opcje),
+  - preferencje środków transportu (wybrane opcje),
   - parametry podróży użyte dla planu (liczba osób, typ, komfort, budżet),
   - plan dzienny:
     - każdy dzień wyświetlony w osobnej sekcji,
@@ -153,7 +166,8 @@ Formularz zawiera:
       - opcjonalnie informacja o czasie transportu,
   - dostęp (bez konieczności eksponowania UI) do pierwotnej notatki, powiązanej z planem, do celów ponownego generowania.
 
-3.3.3. Edycja planu
+  3.3.3. Edycja planu
+
 - Użytkownik może w widoku szczegółowym:
   - edytować nazwę planu,
   - zmienić budżet przypisany do planu,
@@ -166,7 +180,8 @@ Formularz zawiera:
   - uruchomić ponowne generowanie planu na podstawie zaktualizowanej notatki i parametrów:
     - nowy plan zastępuje poprzednią wersję (brak wersjonowania w MVP).
 
-3.3.4. Ostrzeżenia o „przeładowaniu” planu
+  3.3.4. Ostrzeżenia o „przeładowaniu” planu
+
 - Po wygenerowaniu planu:
   - system może obliczyć sumaryczny czas atrakcji oraz transportu dla danego bloku/dnia.
   - jeśli czas przekracza określony próg (np. znacznie więcej niż typowy dzień wycieczkowy), system wyświetla informację ostrzegawczą (np. „Ten dzień może być zbyt intensywny”).
@@ -176,7 +191,8 @@ Formularz zawiera:
   - nie blokują zapisu planu,
   - nie powodują automatycznych korekt planu.
 
-3.3.5. Usuwanie planów
+  3.3.5. Usuwanie planów
+
 - Użytkownik może usunąć plan z:
   - widoku listy,
   - widoku szczegółowego.
@@ -186,7 +202,7 @@ Formularz zawiera:
   - plan jest trwale usuwany z konta użytkownika.
   - jeśli użytkownik był przy limicie 10 planów, po usunięciu może utworzyć nowy plan.
 
-3.4. Panel admina
+  3.4. Panel admina
 
 - Dla kont z rolą admin dostępny jest prosty panel administracyjny.
 - Funkcjonalności panelu admina:
@@ -196,7 +212,7 @@ Formularz zawiera:
     - bez rozbudowanego filtrowania, sortowania i wykresów,
   - dane prezentowane w ujęciu „od początku działania systemu” (all‑time).
 
-3.5. Analityka i logowanie zdarzeń
+  3.5. Analityka i logowanie zdarzeń
 
 - System powinien rejestrować co najmniej następujące zdarzenia:
   - account_created
@@ -219,6 +235,7 @@ Formularz zawiera:
 4.1. Zakres MVP
 
 Wchodzą w zakres:
+
 - proste konta użytkowników (rejestracja, logowanie, zmiana hasła, usunięcie konta),
 - ekran profilu z preferencjami podróżniczymi,
 - tworzenie notatek (jedno pole tekstowe) i parametrów podróży,
@@ -233,9 +250,10 @@ Wchodzą w zakres:
 - responsywny layout działający na urządzeniach mobilnych i desktopie,
 - tylko język polski.
 
-4.2. Poza zakresem MVP
+  4.2. Poza zakresem MVP
 
 Poza zakresem są:
+
 - współdzielenie planów między kontami (np. zapraszanie innych użytkowników),
 - zaawansowane planowanie logistyki:
   - integracje z mapami,
@@ -261,6 +279,7 @@ Opis:
 Jako nowy użytkownik chcę zarejestrować konto, aby móc tworzyć i zapisywać swoje plany podróży.
 
 Kryteria akceptacji:
+
 - Użytkownik może otworzyć formularz rejestracji.
 - Formularz wymaga co najmniej adresu e‑mail i hasła (min. 10 znaków, jedna duża litera i znak specjalny).
 - Po poprawnym wypełnieniu formularza i wysłaniu:
@@ -277,6 +296,7 @@ Opis:
 Jako istniejący użytkownik chcę się zalogować, aby mieć dostęp do swoich planów podróży i profilu.
 
 Kryteria akceptacji:
+
 - Użytkownik może otworzyć formularz logowania.
 - Formularz wymaga wpisania e‑maila i hasła.
 - Po poprawnym podaniu danych użytkownik zostaje zalogowany i przekierowany do głównego widoku aplikacji - lista planów.
@@ -290,6 +310,7 @@ Opis:
 Jako nowy użytkownik po założeniu konta chcę szybko wypełnić swoje preferencje podróżnicze, aby aplikacja mogła generować lepiej dopasowane plany.
 
 Kryteria akceptacji:
+
 - Po pierwszym zalogowaniu użytkownik jest przekierowywany do ekranu wypełnienia preferencji.
 - Formularz zawiera pola:
   - liczba osób,
@@ -312,6 +333,7 @@ Opis:
 Jako zalogowany użytkownik chcę móc edytować swoje preferencje podróżnicze, aby aktualizować styl i sposób podróżowania, który ma być brany pod uwagę przy generowaniu nowych planów.
 
 Kryteria akceptacji:
+
 - Użytkownik może przejść do ekranu profilu.
 - Ekran profilu pokazuje aktualne preferencje (liczba osób, typ podróży, komfort, budżet, wiek, kraj).
 - Użytkownik może zmienić wartości i zapisać zmiany.
@@ -327,6 +349,7 @@ Opis:
 Jako zalogowany użytkownik chcę móc zmienić swoje hasło, aby zadbać o bezpieczeństwo konta.
 
 Kryteria akceptacji:
+
 - Użytkownik w profilu ma dostęp do sekcji „Zmiana hasła”.
 - Formularz zmiany hasła wymaga:
   - obecnego hasła,
@@ -344,6 +367,7 @@ Opis:
 Jako zalogowany użytkownik chcę móc usunąć swoje konto, aby mieć kontrolę nad swoimi danymi.
 
 Kryteria akceptacji:
+
 - Użytkownik może zainicjować proces usuwania konta z poziomu profilu.
 - Przed usunięciem konta wyświetlany jest modal potwierdzający operację.
 - Po potwierdzeniu:
@@ -360,6 +384,7 @@ Opis:
 Jako zalogowany użytkownik chcę utworzyć nowy plan podróży na podstawie mojej notatki i parametrów, aby szybko uzyskać szczegółowy harmonogram wyjazdu.
 
 Kryteria akceptacji:
+
 - Użytkownik może przejść do formularza „Nowy plan”.
 - Formularz zawiera:
   - pole notatki (tekst),
@@ -382,6 +407,7 @@ Opis:
 Jako zalogowany użytkownik chcę zobaczyć listę moich planów podróży, aby móc wybrać i edytować którykolwiek z nich.
 
 Kryteria akceptacji:
+
 - Po zalogowaniu użytkownik ma dostęp do ekranu „Moje plany”.
 - Lista wyświetla maksymalnie 10 planów (tyle, ile użytkownik posiada).
 - Dla każdego planu wyświetlane są:
@@ -399,6 +425,7 @@ Opis:
 Jako zalogowany użytkownik chcę zobaczyć szczegóły mojego planu podróży, aby przejrzeć zaplanowane atrakcje w każdym dniu.
 
 Kryteria akceptacji:
+
 - Po wybraniu planu z listy użytkownik widzi:
   - nazwę planu,
   - destynację,
@@ -420,6 +447,7 @@ Opis:
 Jako zalogowany użytkownik chcę edytować szczegóły mojego planu (czasy, budżet, blok dnia, nazwa), aby dopasować go do moich potrzeb.
 
 Kryteria akceptacji:
+
 - Na widoku szczegółów planu użytkownik może:
   - zmienić nazwę planu,
   - zmienić budżet przypisany do planu,
@@ -440,6 +468,7 @@ Opis:
 Jako użytkownik chcę móc ponownie wygenerować plan na podstawie zaktualizowanej notatki i parametrów, aby otrzymać lepiej dopasowaną propozycję.
 
 Kryteria akceptacji:
+
 - W widoku szczegółowego planu użytkownik może:
   - zaktualizować notatkę,
   - zmienić daty podróży (z zachowaniem walidacji do 30 dni),
@@ -458,6 +487,7 @@ Opis:
 Jako użytkownik chcę być ostrzegany, gdy plan dnia jest zbyt przeładowany atrakcjami, aby móc świadomie go skorygować.
 
 Kryteria akceptacji:
+
 - Po wygenerowaniu planu system oblicza orientacyjny sumaryczny czas atrakcji i transportu dla każdego dnia/bloku.
 - Jeśli sumaryczny czas przekracza określony próg:
   - na ekranie planu pojawia się komunikat ostrzegawczy dla danego dnia/bloku.
@@ -473,6 +503,7 @@ Opis:
 Jako zalogowany użytkownik chcę usunąć wybrany plan, aby zwolnić miejsce na nowe plany lub pozbyć się nieaktualnych wyjazdów.
 
 Kryteria akceptacji:
+
 - Użytkownik może kliknąć „Usuń plan”:
   - z listy planów,
   - z widoku szczegółowego.
@@ -491,6 +522,7 @@ Opis:
 Jako administrator chcę mieć dostęp do prostego panelu z łącznymi statystykami użytkowników i planów, aby obserwować wykorzystanie aplikacji.
 
 Kryteria akceptacji:
+
 - Administrator (konto z rolą admin) ma dostęp do panelu admina.
 - Panel wyświetla:
   - łączną liczbę zarejestrowanych użytkowników,
@@ -507,6 +539,7 @@ Opis:
 Jako użytkownik chcę wiedzieć, że mam limit liczby planów, aby rozumieć, dlaczego nie mogę stworzyć więcej niż 10.
 
 Kryteria akceptacji:
+
 - Gdy użytkownik posiada mniej niż 10 planów:
   - może tworzyć nowe plany bez dodatkowych komunikatów o limicie.
 - Gdy użytkownik ma 10 planów i próbuje utworzyć kolejny:
@@ -531,7 +564,7 @@ Kryteria akceptacji:
   - Sposób pomiaru:
     - analiza eventów plan_generated.
 
-6.2. Metryki pomocnicze
+  6.2. Metryki pomocnicze
 
 - Średnia liczba planów na użytkownika:
   - liczba wszystkich planów / liczba wszystkich użytkowników.
@@ -540,9 +573,10 @@ Kryteria akceptacji:
 - Częstość ponownego generowania:
   - liczba zdarzeń plan_regenerated / liczba planów lub użytkowników.
 
-6.3. Weryfikacja jakości doświadczenia
+  6.3. Weryfikacja jakości doświadczenia
 
 Choć MVP nie zakłada formalnych badań zewnętrznych, wewnętrzne testy powinny sprawdzić:
+
 - czy użytkownik jest w stanie:
   - założyć konto,
   - wypełnić preferencje,

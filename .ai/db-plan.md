@@ -1,4 +1,5 @@
 1. List of tables with their columns, data types, and constraints
+
 - **auth.users** (Supabase managed)
 
   Supabase Auth manages this table and stores the canonical user identity (`id`, `email`, timestamps). Treat it as read-only from the public schema and hydrate profile data through companion tables.
@@ -92,6 +93,7 @@
   - `created_at timestamptz` — not null default `now()`
 
 2. Relationships between tables
+
 - auth.users 1↔1 user_roles via user_id primary/foreign key
 - auth.users 1↔1 user_preferences via user_id primary/foreign key
 - auth.users 1↔n plans via plans.owner_id
@@ -102,6 +104,7 @@
 - plans 1↔n events via events.plan_id (nullable, retains analytics after plan deletion)
 
 3. Indexes
+
 - `create index user_roles_role_idx on user_roles(role)` — quick lookups for admin role membership
 - `create index plans_owner_created_idx on plans(owner_id, created_at desc)` — list plans per user ordered by recency
 - `create unique index plan_days_plan_day_index_idx on plan_days(plan_id, day_index)` — enforce single row per day number
@@ -112,6 +115,7 @@
 - `create index events_type_created_idx on events(event_type, created_at desc)` — aggregate events by type
 
 4. PostgreSQL policies (RLS)
+
 - Enable row level security on `user_roles`, `user_preferences`, `plans`, `plan_days`, `plan_blocks`, `plan_activities`, `events`
 - `user_roles`: allow select/update where `user_id = auth.uid()`; permit inserts/updates via service role; allow admins (`role = 'admin'`) to select all
 - `user_preferences`: allow select/insert/update/delete where `user_id = auth.uid()`; allow service role maintenance
@@ -122,6 +126,7 @@
 - `events`: allow insert/select where `user_id = auth.uid()`; allow admins select all; optionally allow analytics service role to select/export
 
 5. Additional notes or explanations
+
 - Enumerated types: create type user_role_enum as enum('user','admin'); trip_type_enum as enum('leisure','business'); comfort_level_enum as enum('relax','balanced','intense'); budget_level_enum as enum('budget','moderate','luxury'); block_type_enum as enum('morning','afternoon','evening'); event_type_enum as enum('account_created','preferences_completed','plan_generated','plan_regenerated','plan_edited','plan_deleted'); transport_mode_enum as enum('car','walk','public')
 - Enable pgcrypto extension (or use uuid-ossp) for gen_random_uuid(); apply trigger to auto-update updated_at columns (e.g., using trigger function set_updated_at)
 - Enforce 10-plan-per-user limit and max 30-day range in application/service layer as planned; database checks prevent inverted date ranges but not duration

@@ -1,6 +1,7 @@
 # AI Rules for VibeTravels
 
 Welcome to the VibeTravels project! This document outlines the coding practices, tech stack, and project structure to ensure consistency and maintainability across the codebase. Please adhere to these guidelines when contributing to the project.
+
 ## Tech Stack
 
 - Astro 5
@@ -80,7 +81,7 @@ When modifying the directory structure, always update this section.
 - Leverage View Transitions API for smooth page transitions (use ClientRouter)
 - Use content collections with type safety for blog posts, documentation, etc.
 - Leverage Server Endpoints for API routes
-- Use POST, GET  - uppercase format for endpoint handlers
+- Use POST, GET - uppercase format for endpoint handlers
 - Use `export const prerender = false` for API routes
 - Use zod for input validation in API routes
 - Extract logic into services in `src/lib/services`

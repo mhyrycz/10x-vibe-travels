@@ -5,6 +5,7 @@
 The Edit User Preferences view allows authenticated users to modify their travel preferences after completing the initial onboarding. This view fetches current preferences from the API, displays them in an editable form, and saves updates via a PATCH request. The view reuses all field components from the onboarding flow to maintain consistency and reduce code duplication.
 
 **Primary Purpose:**
+
 - Display current user preferences in an editable form
 - Allow users to modify one or more preference fields
 - Validate changes according to the same rules as onboarding
@@ -18,6 +19,7 @@ The Edit User Preferences view allows authenticated users to modify their travel
 **Alternative Route:** `/settings/preferences` (if settings section exists)
 
 **Access Control:**
+
 - Requires authentication (uses DEFAULT_USER_ID in development)
 - Accessible from user profile/settings navigation
 - Redirect to `/onboarding/preferences` if preferences don't exist (404 response)
@@ -32,8 +34,8 @@ The Edit Preferences page should be accessible from multiple locations in the ap
    - Menu items:
      - "My Plans" → `/`
      - "Profile" (with nested items)
-        - "Preferences"  → `/profile/preferences`
-        - "Settings" → `/profile/settings`
+       - "Preferences" → `/profile/preferences`
+       - "Settings" → `/profile/settings`
      - "Logout" → logout action
    - Location: Persistent across all pages in main layout
    - Icon: User circle or Settings icon
@@ -50,6 +52,7 @@ The Edit Preferences page should be accessible from multiple locations in the ap
      - Optional: Link directly to `/profile/preferences`
 
 **Recommended Implementation for MVP:**
+
 - Add simple user menu dropdown in main Layout header
 - Include "Edit Preferences" as first menu item
 - Ensures consistent access from any page in the application
@@ -84,6 +87,7 @@ The Edit Preferences page should be accessible from multiple locations in the ap
 Top-level wrapper component that provides QueryClient context for React Query. Similar to PreferencesOnboardingView, this component sets up the query infrastructure.
 
 **Main Elements:**
+
 - `QueryClientProvider` wrapper
 - `EditPreferencesContainer` child component
 
@@ -92,11 +96,13 @@ Top-level wrapper component that provides QueryClient context for React Query. S
 **Validation:** None
 
 **Types Required:**
+
 - None (wrapper only)
 
 **Props:** None
 
 **Implementation Notes:**
+
 - Create single QueryClient instance
 - Configure: `refetchOnWindowFocus: false`, `retry: 1`
 - Wrap entire view in provider
@@ -109,6 +115,7 @@ Top-level wrapper component that provides QueryClient context for React Query. S
 Main container component that orchestrates data fetching, loading states, error handling, and rendering the edit form. Handles the complete lifecycle of preference editing.
 
 **Main Elements:**
+
 - Container div with responsive padding
 - Conditional rendering:
   - Loading skeleton (while fetching)
@@ -116,18 +123,21 @@ Main container component that orchestrates data fetching, loading states, error 
   - Edit form (when data loaded)
 
 **Handled Events:**
+
 - Mount: Trigger preferences fetch
 - Retry: Re-fetch preferences on error
 
 **Validation:** None (delegates to form)
 
 **Types Required:**
+
 - `UserPreferencesDto` (API response)
 - `ErrorDto` (error responses)
 
 **Props:** None
 
 **Implementation Notes:**
+
 - Use `useUserPreferences()` hook for data fetching
 - Show loading skeleton matching form structure
 - Handle 404 error specially (redirect to onboarding)
@@ -141,6 +151,7 @@ Main container component that orchestrates data fetching, loading states, error 
 Simple header component displaying the page title and description. Provides context for the edit operation.
 
 **Main Elements:**
+
 - `<header>` semantic HTML tag
 - `<h1>` with title "Edit Your Travel Preferences"
 - `<p>` with description text
@@ -154,6 +165,7 @@ Simple header component displaying the page title and description. Provides cont
 **Props:** None
 
 **Example Content:**
+
 ```
 Title: "Edit Your Travel Preferences"
 Description: "Update your default travel settings. These preferences will be used when creating new travel plans."
@@ -167,6 +179,7 @@ Description: "Update your default travel settings. These preferences will be use
 Displays loading skeleton while preferences are being fetched from the API. Matches the structure of the edit form to prevent layout shift.
 
 **Main Elements:**
+
 - Card container
 - 6 skeleton blocks (matching form fields)
 - Skeleton for action buttons
@@ -180,6 +193,7 @@ Displays loading skeleton while preferences are being fetched from the API. Matc
 **Props:** None
 
 **Implementation Notes:**
+
 - Use Shadcn/ui Skeleton component
 - Match heights and spacing of actual form
 - Animate with pulse effect
@@ -192,6 +206,7 @@ Displays loading skeleton while preferences are being fetched from the API. Matc
 Displays error message when preferences cannot be fetched. Includes contextual messaging and recovery options.
 
 **Main Elements:**
+
 - Alert component (destructive variant)
 - Error icon
 - Error message text
@@ -199,15 +214,18 @@ Displays error message when preferences cannot be fetched. Includes contextual m
 - "Complete Onboarding" button (for 404 errors)
 
 **Handled Events:**
+
 - Retry button click: Re-trigger fetch
 - Complete Onboarding button click: Navigate to `/onboarding/preferences`
 
 **Validation:** None
 
 **Types Required:**
+
 - `ErrorDto` (to extract error message)
 
 **Props:**
+
 ```typescript
 interface ErrorStateProps {
   error: Error & { status?: number; code?: string };
@@ -216,6 +234,7 @@ interface ErrorStateProps {
 ```
 
 **Error Message Mapping:**
+
 - 404: "Preferences not found. Please complete your profile setup first."
 - 401: "Your session has expired. Please log in again."
 - Network error: "Unable to load preferences. Please check your connection."
@@ -229,19 +248,22 @@ interface ErrorStateProps {
 Main form component that displays all editable preference fields and handles form submission. Pre-fills form with current preferences and submits only changed fields to the API.
 
 **Main Elements:**
+
 - `Form` wrapper (react-hook-form provider)
 - `<form>` element with submit handler
 - 6 field components (reused from onboarding)
 - FormActions component
 
 **Handled Events:**
+
 - Form submit: Validate and save changes
 - Field changes: Track dirty state
 - Form blur: Validate individual fields
 
 **Validation:**
 All validation rules match onboarding (enforced by shared Zod schema):
-- **people_count:** 
+
+- **people_count:**
   - Required: Yes
   - Type: integer
   - Range: 1-20
@@ -273,6 +295,7 @@ All validation rules match onboarding (enforced by shared Zod schema):
   - Error: "Please select a budget level"
 
 **Types Required:**
+
 ```typescript
 import { PreferencesFormValues } from "@/components/onboarding/validation";
 import { UserPreferencesDto, UpdateUserPreferencesDto } from "@/types";
@@ -283,9 +306,11 @@ interface EditPreferencesFormProps {
 ```
 
 **Props:**
+
 - `initialData: UserPreferencesDto` - Current preferences to pre-fill form
 
 **Implementation Notes:**
+
 - Use react-hook-form with zodResolver
 - Pre-fill defaultValues with initialData
 - Validation mode: "onBlur"
@@ -300,29 +325,35 @@ interface EditPreferencesFormProps {
 All six field components are reused directly from the onboarding implementation:
 
 **PeopleCountField**
+
 - Number input with +/- buttons
 - Range: 1-20
 - Location: `@/components/onboarding/PeopleCountField`
 
 **TripTypeField**
+
 - Radio group with 2 options (leisure, business)
 - Location: `@/components/onboarding/TripTypeField`
 
 **AgeField**
+
 - Number input
 - Range: 13-120
 - Location: `@/components/onboarding/AgeField`
 
 **CountryField**
+
 - Text input
 - Length: 2-120 characters
 - Location: `@/components/onboarding/CountryField`
 
 **ComfortField**
+
 - Radio group with 3 options (relax, balanced, intense)
 - Location: `@/components/onboarding/ComfortField`
 
 **BudgetField**
+
 - Radio group with 3 options (budget, moderate, luxury)
 - Location: `@/components/onboarding/BudgetField`
 
@@ -342,21 +373,25 @@ All six field components are reused directly from the onboarding implementation:
 Action buttons for saving changes or canceling the edit operation. Manages button states during submission.
 
 **Main Elements:**
+
 - Container div with flex layout
 - Cancel button (secondary)
 - Save button (primary)
 
 **Handled Events:**
+
 - Cancel click: Reset form or navigate back
 - Save click: Triggers form submission
 
 **Validation:**
+
 - Save button disabled when:
   - Form is submitting (isPending)
   - Form is invalid (hasErrors)
   - Form is not dirty (no changes)
 
 **Types Required:**
+
 ```typescript
 interface FormActionsProps {
   isLoading: boolean;
@@ -367,12 +402,14 @@ interface FormActionsProps {
 ```
 
 **Props:**
+
 - `isLoading: boolean` - Mutation pending state
 - `isDirty: boolean` - Form has changes
 - `isValid: boolean` - Form passes validation
 - `onCancel: () => void` - Cancel handler
 
 **Implementation Notes:**
+
 - Cancel button: type="button", variant="outline"
 - Save button: type="submit", variant="default", shows Loader2 icon when loading
 - Responsive: full-width on mobile, auto-width on desktop
@@ -383,21 +420,23 @@ interface FormActionsProps {
 ### 5.1 Existing Types (from types.ts)
 
 **UserPreferencesDto** (API Response)
+
 ```typescript
 {
-  user_id: string;           // UUID
-  people_count: number;      // 1-20
+  user_id: string; // UUID
+  people_count: number; // 1-20
   trip_type: "leisure" | "business";
-  age: number;              // 13-120
-  country: string;          // 2-120 chars
+  age: number; // 13-120
+  country: string; // 2-120 chars
   comfort: "relax" | "balanced" | "intense";
   budget: "budget" | "moderate" | "luxury";
-  created_at: string;       // ISO timestamp
-  updated_at: string;       // ISO timestamp
+  created_at: string; // ISO timestamp
+  updated_at: string; // ISO timestamp
 }
 ```
 
 **UpdateUserPreferencesDto** (API Request)
+
 ```typescript
 Partial<{
   people_count: number;
@@ -406,10 +445,11 @@ Partial<{
   country: string;
   comfort: "relax" | "balanced" | "intense";
   budget: "budget" | "moderate" | "luxury";
-}>
+}>;
 ```
 
 **ErrorDto** (Error Response)
+
 ```typescript
 {
   error: {
@@ -426,6 +466,7 @@ Partial<{
 ### 5.2 Form Types (from onboarding validation.ts)
 
 **PreferencesFormValues** (Form State)
+
 ```typescript
 // Inferred from Zod schema
 {
@@ -441,6 +482,7 @@ Partial<{
 ### 5.3 Component-Specific Types
 
 **EditPreferencesFormProps**
+
 ```typescript
 interface EditPreferencesFormProps {
   initialData: UserPreferencesDto;
@@ -448,17 +490,19 @@ interface EditPreferencesFormProps {
 ```
 
 **ErrorStateProps**
+
 ```typescript
 interface ErrorStateProps {
-  error: Error & { 
-    status?: number; 
-    code?: string; 
+  error: Error & {
+    status?: number;
+    code?: string;
   };
   onRetry: () => void;
 }
 ```
 
 **FormActionsProps**
+
 ```typescript
 interface FormActionsProps {
   isLoading: boolean;
@@ -471,6 +515,7 @@ interface FormActionsProps {
 ### 5.4 Hook Return Types
 
 **useUserPreferences() Return**
+
 ```typescript
 {
   data: UserPreferencesDto | undefined;
@@ -482,6 +527,7 @@ interface FormActionsProps {
 ```
 
 **useUpdateUserPreferences() Return**
+
 ```typescript
 {
   mutate: (data: UpdateUserPreferencesDto) => void;
@@ -494,7 +540,9 @@ interface FormActionsProps {
 ## 6. State Management
 
 ### 6.1 Global State
+
 No global state required. All state is managed through:
+
 - React Query cache (for fetched preferences)
 - Form state (react-hook-form)
 - Component local state (minimal)
@@ -508,28 +556,29 @@ No global state required. All state is managed through:
 **Purpose:** Fetch current user preferences from API
 
 **Implementation:**
+
 ```typescript
 export function useUserPreferences() {
   return useQuery({
     queryKey: ["user", "preferences"],
     queryFn: async () => {
       const response = await fetch("/api/users/me/preferences");
-      
+
       if (!response.ok) {
         const error = (await response.json()) as ErrorDto;
-        const errorWithStatus = new Error(error.error.message) as Error & { 
-          status: number; 
-          code: string; 
+        const errorWithStatus = new Error(error.error.message) as Error & {
+          status: number;
+          code: string;
         };
         errorWithStatus.status = response.status;
         errorWithStatus.code = error.error.code;
         throw errorWithStatus;
       }
-      
+
       return response.json() as Promise<UserPreferencesDto>;
     },
-    staleTime: 5 * 60 * 1000,  // 5 minutes
-    gcTime: 10 * 60 * 1000,    // 10 minutes
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
     retry: 1,
   });
 }
@@ -544,6 +593,7 @@ export function useUserPreferences() {
 **Purpose:** Update user preferences via PATCH request
 
 **Implementation:**
+
 ```typescript
 export function useUpdateUserPreferences() {
   const queryClient = useQueryClient();
@@ -558,9 +608,9 @@ export function useUpdateUserPreferences() {
 
       if (!response.ok) {
         const error = (await response.json()) as ErrorDto;
-        const errorWithStatus = new Error(error.error.message) as Error & { 
-          status: number; 
-          code: string; 
+        const errorWithStatus = new Error(error.error.message) as Error & {
+          status: number;
+          code: string;
         };
         errorWithStatus.status = response.status;
         errorWithStatus.code = error.error.code;
@@ -572,10 +622,10 @@ export function useUpdateUserPreferences() {
     onSuccess: (updatedPreferences) => {
       // Update cache with new data
       queryClient.setQueryData(["user", "preferences"], updatedPreferences);
-      
+
       // Invalidate related queries
       queryClient.invalidateQueries({ queryKey: ["user", "preferences"] });
-      
+
       // Show success toast
       toast.success("Preferences updated successfully!", {
         description: "Your changes have been saved.",
@@ -598,6 +648,7 @@ export function useUpdateUserPreferences() {
 **Managed by:** `useForm` hook from react-hook-form
 
 **Configuration:**
+
 ```typescript
 const form = useForm<PreferencesFormValues>({
   resolver: zodResolver(preferencesFormSchema),
@@ -614,6 +665,7 @@ const form = useForm<PreferencesFormValues>({
 ```
 
 **State Tracked:**
+
 - Field values (all 6 preferences)
 - Validation errors (per field)
 - Dirty state (form.formState.isDirty)
@@ -629,6 +681,7 @@ const form = useForm<PreferencesFormValues>({
 **When:** Component mount (EditPreferencesContainer)
 
 **Request:**
+
 - Method: GET
 - Headers: None (authentication handled by middleware)
 - Body: None
@@ -636,6 +689,7 @@ const form = useForm<PreferencesFormValues>({
 **Response Type:** `UserPreferencesDto`
 
 **Success Response (200):**
+
 ```json
 {
   "user_id": "550e8400-e29b-41d4-a716-446655440000",
@@ -651,6 +705,7 @@ const form = useForm<PreferencesFormValues>({
 ```
 
 **Error Responses:**
+
 - **404 Not Found:** Preferences don't exist
   ```json
   {
@@ -664,6 +719,7 @@ const form = useForm<PreferencesFormValues>({
 - **500 Internal Server Error:** Server error
 
 **Error Handling:**
+
 - 404: Show message + redirect to onboarding
 - 401: Show message + redirect to login
 - Other: Show retry option
@@ -677,11 +733,13 @@ const form = useForm<PreferencesFormValues>({
 **When:** Form submission (Save button clicked)
 
 **Request:**
+
 - Method: PATCH
 - Headers: `Content-Type: application/json`
 - Body Type: `UpdateUserPreferencesDto` (only changed fields)
 
 **Request Body Example:**
+
 ```json
 {
   "people_count": 4,
@@ -692,6 +750,7 @@ const form = useForm<PreferencesFormValues>({
 **Response Type:** `UserPreferencesDto`
 
 **Success Response (200):**
+
 ```json
 {
   "user_id": "550e8400-e29b-41d4-a716-446655440000",
@@ -707,6 +766,7 @@ const form = useForm<PreferencesFormValues>({
 ```
 
 **Error Responses:**
+
 - **400 Bad Request:** Validation error
   ```json
   {
@@ -725,6 +785,7 @@ const form = useForm<PreferencesFormValues>({
 - **500 Internal Server Error:** Server error
 
 **Error Handling:**
+
 - 400: Parse field error, show under specific field
 - 404: Redirect to onboarding
 - 401: Redirect to login
@@ -735,21 +796,22 @@ const form = useForm<PreferencesFormValues>({
 ### 7.3 Building Update Request
 
 **Logic to Extract Changed Fields:**
+
 ```typescript
 const onSubmit = (formValues: PreferencesFormValues) => {
   // Get dirty fields from react-hook-form
   const dirtyFields = form.formState.dirtyFields;
-  
+
   // Build update object with only changed fields
   const updateData: UpdateUserPreferencesDto = {};
-  
+
   if (dirtyFields.people_count) updateData.people_count = formValues.people_count;
   if (dirtyFields.trip_type) updateData.trip_type = formValues.trip_type;
   if (dirtyFields.age) updateData.age = formValues.age;
   if (dirtyFields.country) updateData.country = formValues.country;
   if (dirtyFields.comfort) updateData.comfort = formValues.comfort;
   if (dirtyFields.budget) updateData.budget = formValues.budget;
-  
+
   // Submit only changed fields
   mutation.mutate(updateData);
 };
@@ -760,6 +822,7 @@ const onSubmit = (formValues: PreferencesFormValues) => {
 ### 8.1 Page Load Sequence
 
 **Steps:**
+
 1. User navigates to `/profile/preferences`
 2. EditPreferencesContainer mounts
 3. useUserPreferences() hook triggers GET request
@@ -773,16 +836,19 @@ const onSubmit = (formValues: PreferencesFormValues) => {
    - Retry or navigation option shown
 
 **Loading UI:**
+
 - Skeleton matching form layout
 - Pulse animation
 - "Loading preferences..." text
 
 **Error UI (404):**
+
 - Alert with warning icon
 - Message: "Preferences not found. Please complete your profile setup first."
 - Button: "Complete Profile" → `/onboarding/preferences`
 
 **Error UI (Network):**
+
 - Alert with error icon
 - Message: "Unable to load preferences. Please check your connection."
 - Button: "Retry"
@@ -792,6 +858,7 @@ const onSubmit = (formValues: PreferencesFormValues) => {
 ### 8.2 Editing Fields
 
 **Interaction Flow:**
+
 1. Form displays with current values
 2. User clicks/taps into field
 3. User modifies value
@@ -806,6 +873,7 @@ const onSubmit = (formValues: PreferencesFormValues) => {
    - Form isDirty becomes true
 
 **Visual Feedback:**
+
 - Changed fields: Show subtle indicator (e.g., asterisk or badge)
 - Validation errors: Red border + error text
 - Focus state: Blue ring
@@ -816,6 +884,7 @@ const onSubmit = (formValues: PreferencesFormValues) => {
 ### 8.3 Saving Changes
 
 **Interaction Flow:**
+
 1. User clicks "Save Changes" button
 2. Form validation runs on all fields
 3. If form invalid:
@@ -841,6 +910,7 @@ const onSubmit = (formValues: PreferencesFormValues) => {
    - Form remains dirty (user can retry)
 
 **Button States:**
+
 - Normal: "Save Changes" (enabled when form dirty and valid)
 - Loading: "Saving..." with spinner (during API call)
 - Disabled: Grayed out (when not dirty or invalid or loading)
@@ -850,6 +920,7 @@ const onSubmit = (formValues: PreferencesFormValues) => {
 ### 8.4 Canceling Changes
 
 **Interaction Flow:**
+
 1. User clicks "Cancel" button
 2. If form not dirty:
    - Navigate back immediately (to profile or previous page)
@@ -871,6 +942,7 @@ const onSubmit = (formValues: PreferencesFormValues) => {
 ### 8.5 Keyboard Interactions
 
 **Supported:**
+
 - Tab: Navigate between fields
 - Shift+Tab: Navigate backwards
 - Enter: Submit form (when not in textarea)
@@ -879,6 +951,7 @@ const onSubmit = (formValues: PreferencesFormValues) => {
 - Space: Toggle radio button
 
 **Accessibility:**
+
 - All interactive elements keyboard accessible
 - Focus visible states
 - Screen reader announcements for validation errors
@@ -905,11 +978,12 @@ const onSubmit = (formValues: PreferencesFormValues) => {
    - Check: `!mutation.isPending`
 
 **Save Button Disabled When:**
+
 ```typescript
-const isSaveDisabled = 
-  !form.formState.isDirty ||          // No changes made
-  !form.formState.isValid ||          // Form has errors
-  mutation.isPending;                  // Already submitting
+const isSaveDisabled =
+  !form.formState.isDirty || // No changes made
+  !form.formState.isValid || // Form has errors
+  mutation.isPending; // Already submitting
 ```
 
 ---
@@ -919,6 +993,7 @@ const isSaveDisabled =
 Each field validates independently on blur. Validation rules:
 
 **people_count (PeopleCountField):**
+
 - Validates on: blur, value change
 - Rules:
   - Must be integer
@@ -928,6 +1003,7 @@ Each field validates independently on blur. Validation rules:
 - Components affected: Input, decrement button (disabled at 1), increment button (disabled at 20)
 
 **trip_type (TripTypeField):**
+
 - Validates on: selection
 - Rules:
   - Must be enum value: "leisure" | "business"
@@ -936,6 +1012,7 @@ Each field validates independently on blur. Validation rules:
 - Components affected: RadioGroupItem (leisure), RadioGroupItem (business)
 
 **age (AgeField):**
+
 - Validates on: blur
 - Rules:
   - Must be integer
@@ -945,6 +1022,7 @@ Each field validates independently on blur. Validation rules:
 - Components affected: Input field
 
 **country (CountryField):**
+
 - Validates on: blur
 - Rules:
   - Trimmed automatically
@@ -954,6 +1032,7 @@ Each field validates independently on blur. Validation rules:
 - Components affected: Input field
 
 **comfort (ComfortField):**
+
 - Validates on: selection
 - Rules:
   - Must be enum value: "relax" | "balanced" | "intense"
@@ -962,6 +1041,7 @@ Each field validates independently on blur. Validation rules:
 - Components affected: RadioGroupItem (relax), RadioGroupItem (balanced), RadioGroupItem (intense)
 
 **budget (BudgetField):**
+
 - Validates on: selection
 - Rules:
   - Must be enum value: "budget" | "moderate" | "luxury"
@@ -976,12 +1056,14 @@ Each field validates independently on blur. Validation rules:
 **API validates same rules on PATCH request.**
 
 **Handling 400 Validation Error:**
+
 1. Parse `error.details.field` to identify which field
 2. Use `form.setError()` to mark field as invalid
 3. Display error message under specific field
 4. Show generic toast: "Please fix validation errors"
 
 **Example:**
+
 ```typescript
 if (error.status === 400 && error.details?.field) {
   form.setError(error.details.field as keyof PreferencesFormValues, {
@@ -996,21 +1078,25 @@ if (error.status === 400 && error.details?.field) {
 ### 9.4 UI State Conditions
 
 **Loading State (Initial Load):**
+
 - Condition: `isLoading === true`
 - UI: LoadingState component (skeleton)
 - Components affected: Entire view
 
 **Error State (Fetch Failed):**
+
 - Condition: `isError === true`
 - UI: ErrorState component with message and retry
 - Components affected: Entire view
 
 **Form State (Data Loaded):**
+
 - Condition: `data !== undefined && !isError`
 - UI: EditPreferencesForm with all fields
 - Components affected: All form components
 
 **Submitting State:**
+
 - Condition: `mutation.isPending === true`
 - UI Effects:
   - Save button: Disabled, shows spinner
@@ -1019,6 +1105,7 @@ if (error.status === 400 && error.details?.field) {
 - Components affected: FormActions, all input fields
 
 **Form Dirty State:**
+
 - Condition: `form.formState.isDirty === true`
 - UI Effects:
   - Save button: Enabled (if valid)
@@ -1030,6 +1117,7 @@ if (error.status === 400 && error.details?.field) {
 ### 10.1 Fetch Errors (GET Request)
 
 **Error: 404 Not Found**
+
 - **Meaning:** User hasn't completed onboarding
 - **UI Response:**
   - Show alert: "Preferences not found. Please complete your profile setup first."
@@ -1038,6 +1126,7 @@ if (error.status === 400 && error.details?.field) {
 - **Recovery:** Redirect to onboarding flow
 
 **Error: 401 Unauthorized**
+
 - **Meaning:** Session expired or invalid token
 - **UI Response:**
   - Toast: "Your session has expired. Please log in again."
@@ -1045,6 +1134,7 @@ if (error.status === 400 && error.details?.field) {
 - **Recovery:** User must re-authenticate
 
 **Error: 500 Internal Server Error**
+
 - **Meaning:** Server-side issue
 - **UI Response:**
   - Show alert: "Unable to load preferences. Please try again later."
@@ -1053,6 +1143,7 @@ if (error.status === 400 && error.details?.field) {
 - **Recovery:** Retry, if persists suggest checking status page
 
 **Error: Network Error (Timeout, No Connection)**
+
 - **Meaning:** Client can't reach server
 - **UI Response:**
   - Show alert: "Unable to load preferences. Please check your connection."
@@ -1065,6 +1156,7 @@ if (error.status === 400 && error.details?.field) {
 ### 10.2 Update Errors (PATCH Request)
 
 **Error: 400 Validation Error**
+
 - **Meaning:** One or more fields failed validation
 - **UI Response:**
   - Parse `error.details.field` to identify invalid field
@@ -1074,11 +1166,13 @@ if (error.status === 400 && error.details?.field) {
 - **Recovery:** User corrects invalid fields and retries
 
 **Example Field Errors:**
+
 - age < 13: "Minimum age is 13 years"
 - people_count > 20: "Maximum 20 travelers allowed"
 - country too short: "Country name must be at least 2 characters"
 
 **Error: 404 Not Found**
+
 - **Meaning:** Preferences were deleted between fetch and update
 - **UI Response:**
   - Toast: "Preferences not found. Redirecting to profile setup..."
@@ -1086,6 +1180,7 @@ if (error.status === 400 && error.details?.field) {
 - **Recovery:** User completes onboarding again
 
 **Error: 401 Unauthorized**
+
 - **Meaning:** Session expired during edit
 - **UI Response:**
   - Toast: "Your session has expired. Please log in again."
@@ -1093,6 +1188,7 @@ if (error.status === 400 && error.details?.field) {
 - **Recovery:** User must re-authenticate (form data lost)
 
 **Error: 409 Conflict (unlikely)**
+
 - **Meaning:** Concurrent update conflict
 - **UI Response:**
   - Toast: "Preferences were updated elsewhere. Reloading..."
@@ -1101,6 +1197,7 @@ if (error.status === 400 && error.details?.field) {
 - **Recovery:** User sees latest data, can make changes again
 
 **Error: 500 Internal Server Error**
+
 - **Meaning:** Server couldn't process update
 - **UI Response:**
   - Toast: "Failed to save preferences. Please try again."
@@ -1109,6 +1206,7 @@ if (error.status === 400 && error.details?.field) {
 - **Recovery:** User can retry immediately
 
 **Error: Network Error**
+
 - **Meaning:** Request didn't reach server
 - **UI Response:**
   - Toast: "Connection error. Please check your network and try again."
@@ -1121,6 +1219,7 @@ if (error.status === 400 && error.details?.field) {
 ### 10.3 Edge Cases
 
 **Edge Case: User Has No Preferences (404 on Load)**
+
 - **Scenario:** User navigated directly to edit page without completing onboarding
 - **Handling:**
   - ErrorState with specific message
@@ -1128,6 +1227,7 @@ if (error.status === 400 && error.details?.field) {
   - Don't show form at all
 
 **Edge Case: All Fields Same (No Changes)**
+
 - **Scenario:** User submits without changing anything
 - **Handling:**
   - Save button disabled when `!form.formState.isDirty`
@@ -1135,6 +1235,7 @@ if (error.status === 400 && error.details?.field) {
   - Optional: Show tooltip "No changes to save"
 
 **Edge Case: Session Expires During Edit**
+
 - **Scenario:** User spends long time editing, session times out
 - **Handling:**
   - 401 error on submit
@@ -1143,6 +1244,7 @@ if (error.status === 400 && error.details?.field) {
   - User loses unsaved changes (acceptable for MVP)
 
 **Edge Case: Validation Passes Client but Fails Server**
+
 - **Scenario:** Mismatch between client/server validation (shouldn't happen)
 - **Handling:**
   - Show server error message
@@ -1150,6 +1252,7 @@ if (error.status === 400 && error.details?.field) {
   - Log discrepancy for debugging
 
 **Edge Case: Network Failure Mid-Submit**
+
 - **Scenario:** Request times out or connection drops during PATCH
 - **Handling:**
   - Show network error toast
@@ -1163,18 +1266,19 @@ if (error.status === 400 && error.details?.field) {
 
 **User-Friendly Messages:**
 
-| Error Code | Message | Action |
-|------------|---------|--------|
-| VALIDATION_ERROR | "Please fix validation errors" | Show under fields |
-| NOT_FOUND (GET) | "Preferences not found. Please complete your profile setup first." | Redirect to onboarding |
-| NOT_FOUND (PATCH) | "Preferences not found. Redirecting to profile setup..." | Redirect to onboarding |
-| UNAUTHORIZED | "Your session has expired. Please log in again." | Redirect to login |
-| INTERNAL_ERROR | "An error occurred. Please try again later." | Allow retry |
-| Network error | "Connection error. Please check your network and try again." | Allow retry |
+| Error Code        | Message                                                            | Action                 |
+| ----------------- | ------------------------------------------------------------------ | ---------------------- |
+| VALIDATION_ERROR  | "Please fix validation errors"                                     | Show under fields      |
+| NOT_FOUND (GET)   | "Preferences not found. Please complete your profile setup first." | Redirect to onboarding |
+| NOT_FOUND (PATCH) | "Preferences not found. Redirecting to profile setup..."           | Redirect to onboarding |
+| UNAUTHORIZED      | "Your session has expired. Please log in again."                   | Redirect to login      |
+| INTERNAL_ERROR    | "An error occurred. Please try again later."                       | Allow retry            |
+| Network error     | "Connection error. Please check your network and try again."       | Allow retry            |
 
 ## 11. Implementation Steps
 
 ### Step 1: Create Directory Structure
+
 ```
 src/components/profile/
 ├── EditPreferencesView.tsx
@@ -1190,12 +1294,14 @@ src/components/profile/
 ```
 
 ### Step 2: Create useUserPreferences Hook
+
 - File: `src/components/profile/hooks/useUserPreferences.ts`
 - Implement useQuery for GET /api/users/me/preferences
 - Configure: queryKey, queryFn, staleTime, retry
 - Error handling with status codes
 
 ### Step 3: Create useUpdateUserPreferences Hook
+
 - File: `src/components/profile/hooks/useUpdateUserPreferences.ts`
 - Implement useMutation for PATCH /api/users/me/preferences
 - onSuccess: invalidate query, show toast
@@ -1203,6 +1309,7 @@ src/components/profile/
 - networkMode: "always", retry: false
 
 ### Step 4: Create PageHeader Component
+
 - File: `src/components/profile/PageHeader.tsx`
 - Simple semantic HTML
 - Heading: "Edit Your Travel Preferences"
@@ -1210,12 +1317,14 @@ src/components/profile/
 - Responsive typography
 
 ### Step 5: Create LoadingState Component
+
 - File: `src/components/profile/LoadingState.tsx`
 - Use Shadcn/ui Skeleton component
 - Match form field layout (6 fields)
 - Card wrapper with padding
 
 ### Step 6: Create ErrorState Component
+
 - File: `src/components/profile/ErrorState.tsx`
 - Props: error, onRetry
 - Alert component (destructive variant)
@@ -1223,6 +1332,7 @@ src/components/profile/
 - Error icon from lucide-react
 
 ### Step 7: Create FormActions Component
+
 - File: `src/components/profile/FormActions.tsx`
 - Props: isLoading, isDirty, isValid, onCancel
 - Two buttons: Cancel (outline) and Save (primary)
@@ -1230,6 +1340,7 @@ src/components/profile/
 - Responsive layout (flex)
 
 ### Step 8: Create EditPreferencesForm Component
+
 - File: `src/components/profile/EditPreferencesForm.tsx`
 - Props: initialData (UserPreferencesDto)
 - useForm with zodResolver, defaultValues from initialData
@@ -1239,6 +1350,7 @@ src/components/profile/
 - Integrate FormActions with proper props
 
 ### Step 9: Create EditPreferencesContainer Component
+
 - File: `src/components/profile/EditPreferencesContainer.tsx`
 - Use useUserPreferences hook
 - Conditional rendering:
@@ -1249,6 +1361,7 @@ src/components/profile/
 - Container layout (max-w-2xl, padding, card)
 
 ### Step 10: Create EditPreferencesView Component
+
 - File: `src/components/profile/EditPreferencesView.tsx`
 - Create QueryClient instance
 - QueryClientProvider wrapper
@@ -1256,6 +1369,7 @@ src/components/profile/
 - Export as default
 
 ### Step 11: Create Astro Page Route
+
 - File: `src/pages/profile/preferences.astro`
 - Import EditPreferencesView
 - Render with client:load directive
@@ -1263,6 +1377,7 @@ src/components/profile/
 - Authentication check (DEFAULT_USER_ID)
 
 ### Step 12: Add Navigation Menu
+
 - **Option A: User Menu Dropdown (Recommended for MVP)**
   - Add user menu button to main Layout header
   - Location: Top-right corner of navigation bar
@@ -1278,7 +1393,6 @@ src/components/profile/
   - Add settings gear icon to plans page header
   - Direct link to `/profile/preferences`
   - Tooltip: "Edit travel preferences"
-  
 - **Implementation:**
   - File: `src/layouts/Layout.astro` or create `src/components/navigation/UserMenu.tsx`
   - Use Astro's client:load directive for React dropdown
@@ -1286,6 +1400,7 @@ src/components/profile/
   - Test navigation from plans list page
 
 ### Step 13: Test Fetch Flow
+
 - Navigate to page
 - Verify loading state appears
 - Verify data fetches and form pre-fills
@@ -1293,6 +1408,7 @@ src/components/profile/
 - Test network error (offline mode)
 
 ### Step 14: Test Edit Flow
+
 - Change single field, verify dirty state
 - Change multiple fields
 - Verify validation on blur
@@ -1300,6 +1416,7 @@ src/components/profile/
 - Verify error messages appear correctly
 
 ### Step 15: Test Save Flow
+
 - Submit valid changes
 - Verify only changed fields sent to API
 - Verify success toast appears
@@ -1307,6 +1424,7 @@ src/components/profile/
 - Verify form resets to clean state
 
 ### Step 16: Test Error Scenarios
+
 - Submit with validation errors (client-side)
 - Trigger 400 from server (modify request)
 - Test 404 during update (delete preferences mid-edit)
@@ -1314,12 +1432,14 @@ src/components/profile/
 - Test network failure (throttle/offline)
 
 ### Step 17: Test Cancel Flow
+
 - Click cancel with no changes → navigate back
 - Click cancel with changes → show confirmation
 - Test confirmation dialog buttons
 - Verify form state on cancel
 
 ### Step 18: Accessibility Testing
+
 - Test keyboard navigation (tab through all fields)
 - Test screen reader announcements
 - Verify focus visible states
@@ -1327,6 +1447,7 @@ src/components/profile/
 - Validate ARIA attributes
 
 ### Step 19: Responsive Testing
+
 - Test on mobile viewport (320px-768px)
 - Test on tablet viewport (768px-1024px)
 - Test on desktop viewport (1024px+)
@@ -1334,6 +1455,7 @@ src/components/profile/
 - Test form layout on different screen sizes
 
 ### Step 20: Integration Testing
+
 - Create preferences via onboarding
 - Edit preferences
 - Create new plan (verify new defaults used)
@@ -1341,12 +1463,14 @@ src/components/profile/
 - Verify changes persist across sessions
 
 ### Step 21: Error Recovery Testing
+
 - Test retry button on network error
 - Test "Complete Profile" button on 404
 - Verify form data preserved on soft errors
 - Test concurrent update scenario (unlikely but possible)
 
 ### Step 22: Polish and Refinement
+
 - Add loading skeletons animation
 - Fine-tune toast messages
 - Add subtle transitions
@@ -1355,12 +1479,14 @@ src/components/profile/
 - Add any missing aria-labels
 
 ### Step 23: Documentation
+
 - Add JSDoc comments to hooks
 - Document component props
 - Add inline comments for complex logic
 - Update README if needed
 
 ### Step 24: Code Review
+
 - Check for console.errors in production
 - Verify no unused imports
 - Check TypeScript strict mode compliance
@@ -1368,6 +1494,7 @@ src/components/profile/
 - Verify consistent naming conventions
 
 ### Step 25: Performance Check
+
 - Verify query cache working (no duplicate fetches)
 - Check bundle size impact
 - Test with React DevTools Profiler
@@ -1375,6 +1502,7 @@ src/components/profile/
 - Check network tab for API calls
 
 ### Step 26: Final QA Pass
+
 - Test all user flows end-to-end
 - Verify all acceptance criteria met (US-004)
 - Test edge cases one more time
@@ -1417,12 +1545,14 @@ src/components/profile/
 **Estimated Implementation Time:** 8-12 hours for experienced React developer
 
 **Key Dependencies:**
+
 - Onboarding components (field components reused)
 - Shared validation schema (preferencesFormSchema)
 - API endpoint functional (/api/users/me/preferences)
 - Authentication middleware working
 
 **Success Criteria:**
+
 - User can view current preferences
 - User can edit and save changes
 - Only changed fields sent to API

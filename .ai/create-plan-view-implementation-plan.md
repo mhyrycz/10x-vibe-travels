@@ -58,9 +58,10 @@ The view follows a hierarchical structure with Astro for the page container and 
 ## 4. Component Details
 
 ### CreatePlanView
+
 - **Component Description**: The main orchestrator component that manages the entire form state, handles API calls, and coordinates the creation flow. It fetches user preferences to pre-fill form fields and manages the plan creation lifecycle.
 - **Main Elements**: A container `div` with `max-w-4xl mx-auto` wrapper containing `PageHeader`, `CreatePlanForm`, `LoadingOverlay`, and `PlanLimitAlert`.
-- **Handled Interactions**: 
+- **Handled Interactions**:
   - Fetches user preferences on mount
   - Fetches current plan count on mount
   - Handles form submission
@@ -71,6 +72,7 @@ The view follows a hierarchical structure with Astro for the page container and 
 - **Props**: None (receives user context from AuthContext)
 
 ### PageHeader
+
 - **Component Description**: Displays the breadcrumb navigation and page heading.
 - **Main Elements**: Shadcn/ui `Breadcrumb` component showing path from Home to current page, followed by an `h1` element with page title.
 - **Handled Interactions**: Breadcrumb links for navigation back to dashboard.
@@ -79,6 +81,7 @@ The view follows a hierarchical structure with Astro for the page container and 
 - **Props**: None.
 
 ### CreatePlanForm
+
 - **Component Description**: The main form container managing all input fields and form state using react-hook-form with Zod validation schema.
 - **Main Elements**: An HTML `<form>` element containing all form sections, wrapped in a Shadcn/ui `Card` for visual grouping.
 - **Handled Interactions**:
@@ -95,10 +98,11 @@ The view follows a hierarchical structure with Astro for the page container and 
   - `onCancel: () => void`
 
 ### DestinationSection
+
 - **Component Description**: Input field for the destination with label and validation feedback.
 - **Main Elements**: Shadcn/ui `Label` and `Input` components, `FormDescription` for helper text, `FormMessage` for error display.
 - **Handled Interactions**: Text input with debounced validation.
-- **Handled Validation**: 
+- **Handled Validation**:
   - Required field
   - Length: 1-160 characters
   - Shows error immediately on blur if empty or exceeds length
@@ -106,9 +110,10 @@ The view follows a hierarchical structure with Astro for the page container and 
 - **Props**: Receives control from parent form via react-hook-form context.
 
 ### DateRangeSection
+
 - **Component Description**: Two date picker fields for selecting travel date range with validation rules displayed as helper text.
 - **Main Elements**: Two Shadcn/ui `DatePicker` components (based on `Popover` and `Calendar`), `FormDescription` with validation rules, `FormMessage` for errors.
-- **Handled Interactions**: 
+- **Handled Interactions**:
   - Date selection from calendar UI
   - Manual date input
   - Cross-field validation (date_end >= date_start)
@@ -122,9 +127,10 @@ The view follows a hierarchical structure with Astro for the page container and 
 - **Props**: Receives control from parent form via react-hook-form context.
 
 ### TravelNoteSection
+
 - **Component Description**: Large textarea for users to enter freeform travel notes, ideas, links, and activity suggestions with character counter.
 - **Main Elements**: Shadcn/ui `Label`, `Textarea` component with resizable height, character counter display showing "X / 20000", `FormMessage` for errors.
-- **Handled Interactions**: 
+- **Handled Interactions**:
   - Multi-line text input
   - Auto-resize behavior (optional)
 - **Handled Validation**:
@@ -136,6 +142,7 @@ The view follows a hierarchical structure with Astro for the page container and 
 - **Props**: Receives control from parent form via react-hook-form context.
 
 ### PreferencesSection
+
 - **Component Description**: Group of form fields for travel preferences, pre-filled with user profile preferences but editable for this specific plan.
 - **Main Elements**: Container `div` with grid layout, containing:
   - `PeopleCountInput`: Number input field (1-20)
@@ -149,22 +156,23 @@ The view follows a hierarchical structure with Astro for the page container and 
   - `comfort`: Enum validation (relax | balanced | intense), required
   - `budget`: Enum validation (budget | moderate | luxury), required
   - All fields show error messages on invalid values
-- **Types**: 
+- **Types**:
   - `people_count`: number
   - `trip_type`: TripTypeEnum
   - `comfort`: ComfortLevelEnum
   - `budget`: BudgetLevelEnum
-- **Props**: 
+- **Props**:
   - `defaultValues: UserPreferencesDto` (pre-filled values)
   - Receives control from parent form via react-hook-form context
 
 ### TransportSection
+
 - **Component Description**: Multi-select checkbox group for preferred transport modes with clear explanation of how selections influence AI decisions.
 - **Main Elements**: Container with `Label`, `FormDescription` ("Select one or more transport options. AI will optimize between selected modes."), and `CheckboxGroup` with three options:
   - Car
   - Walk
   - Public Transport
-- **Handled Interactions**: 
+- **Handled Interactions**:
   - Multiple checkbox selections
   - Can be left unselected (null) to let AI decide
 - **Handled Validation**:
@@ -175,6 +183,7 @@ The view follows a hierarchical structure with Astro for the page container and 
 - **Props**: Receives control from parent form via react-hook-form context
 
 ### FormActions
+
 - **Component Description**: Action buttons section at the bottom of the form.
 - **Main Elements**: Flex container with two Shadcn/ui `Button` components:
   - Cancel button (variant: "outline", navigates to "/")
@@ -190,6 +199,7 @@ The view follows a hierarchical structure with Astro for the page container and 
   - `onCancel: () => void`
 
 ### LoadingOverlay
+
 - **Component Description**: Full-screen overlay displayed during AI plan generation, preventing user interaction and showing generation progress.
 - **Main Elements**: Fixed positioned `div` with backdrop blur, centered content containing:
   - Shadcn/ui `Spinner` or custom loading animation
@@ -204,6 +214,7 @@ The view follows a hierarchical structure with Astro for the page container and 
   - `message?: string` (optional custom loading message)
 
 ### PlanLimitAlert
+
 - **Component Description**: Alert banner displayed at top of page when user has reached the 10-plan limit, blocking plan creation.
 - **Main Elements**: Shadcn/ui `Alert` component (variant: "destructive") with:
   - Alert icon
@@ -221,7 +232,9 @@ The view follows a hierarchical structure with Astro for the page container and 
 ## 5. Types
 
 ### CreatePlanDto (from API - Request Type)
+
 Already defined in `src/types.ts`. This is the exact structure sent to `POST /api/plans`:
+
 ```typescript
 export type CreatePlanDto = Pick<
   TablesInsert<"plans">,
@@ -238,6 +251,7 @@ export type CreatePlanDto = Pick<
 ```
 
 **Fields:**
+
 - `destination_text`: string (1-160 chars)
 - `date_start`: string (ISO date YYYY-MM-DD)
 - `date_end`: string (ISO date YYYY-MM-DD)
@@ -249,16 +263,21 @@ export type CreatePlanDto = Pick<
 - `transport_modes`: ("car" | "walk" | "public")[] | null
 
 ### PlanDto (from API - Response Type)
+
 Already defined in `src/types.ts`. This is returned by `POST /api/plans` on success (201):
+
 ```typescript
 export type PlanDto = Plan & {
   days: DayDto[];
 };
 ```
+
 Contains complete plan with nested days, blocks, and activities structure.
 
 ### CreatePlanFormData (Client-side View Model)
+
 New type needed for react-hook-form state. Matches CreatePlanDto structure but may include additional UI state:
+
 ```typescript
 export interface CreatePlanFormData {
   destination_text: string;
@@ -276,7 +295,9 @@ export interface CreatePlanFormData {
 **Note**: This type is identical to `CreatePlanDto` for this view, but we define it separately to allow for future UI-specific fields (like temporary UI state, field touch tracking, etc.) without polluting the API DTO.
 
 ### CreatePlanViewModel
+
 New type needed to represent the full view state:
+
 ```typescript
 export interface CreatePlanViewModel {
   userPreferences: UserPreferencesDto | null;
@@ -291,6 +312,7 @@ export interface CreatePlanViewModel {
 ```
 
 **Field Explanations:**
+
 - `userPreferences`: User's saved travel preferences fetched from API to pre-fill form
 - `isLoadingPreferences`: Loading state for preferences fetch
 - `planCount`: Current number of plans user has (for limit enforcement)
@@ -301,14 +323,19 @@ export interface CreatePlanViewModel {
 - `formErrors`: Form validation errors from react-hook-form
 
 ### UserPreferencesDto (from API)
+
 Already defined in `src/types.ts`, used to pre-fill form:
+
 ```typescript
 export type UserPreferencesDto = UserPreferences;
 ```
+
 Contains fields: `people_count`, `trip_type`, `age`, `country`, `comfort`, `budget`.
 
 ### ErrorDto (from API)
+
 Already defined in `src/types.ts`, used for error handling:
+
 ```typescript
 export interface ErrorDto {
   error: {
@@ -324,16 +351,19 @@ export interface ErrorDto {
 State management for this view uses a combination of React hooks and React Query:
 
 ### Local Component State (useState)
+
 - `planCount: number` - Fetched on mount, determines if user can create new plan
 - `isLoadingPlanCount: boolean` - Loading state for plan count fetch
 
 ### React Hook Form State
+
 - Form field values managed by `useForm<CreatePlanFormData>()`
 - Default values populated from `UserPreferencesDto` on mount
 - Field-level errors tracked automatically
 - Form validation state (`isValid`, `isDirty`) tracked by react-hook-form
 
 ### React Query State
+
 1. **useUserPreferences()** - Custom hook to fetch user preferences
    - Query Key: `['user', 'preferences']`
    - Endpoint: `GET /api/users/me/preferences`
@@ -344,7 +374,7 @@ State management for this view uses a combination of React hooks and React Query
    - Mutation: `POST /api/plans`
    - Request: `CreatePlanDto`
    - Response: `PlanDto`
-   - On Success: 
+   - On Success:
      - Invalidate plans list query cache
      - Navigate to new plan detail page or dashboard
      - Show success toast notification
@@ -353,11 +383,13 @@ State management for this view uses a combination of React hooks and React Query
      - Re-enable form for corrections
 
 ### Derived State
+
 - `canCreatePlan = planCount < 10` - Controls form submission availability
 - `formDefaultValues` - Computed from `UserPreferencesDto` when loaded
 - `tripDurationDays` - Computed from date_start and date_end for display
 
 ### State Flow
+
 1. **Component Mount**:
    - Fetch user preferences via `useUserPreferences()`
    - Fetch plan count via separate API call to `GET /api/plans?limit=1` and extract `pagination.total`
@@ -384,7 +416,7 @@ State management for this view uses a combination of React hooks and React Query
      - Prevent submission
 
 5. **API Response**:
-   - **Success**: 
+   - **Success**:
      - Hide `LoadingOverlay`
      - Invalidate plans cache
      - Navigate to `/plans/[newPlanId]` or back to dashboard with success message
@@ -397,6 +429,7 @@ State management for this view uses a combination of React hooks and React Query
 ## 7. API Integration
 
 ### Primary Endpoint: Create Plan
+
 - **Method**: `POST`
 - **Path**: `/api/plans`
 - **Request Type**: `CreatePlanDto`
@@ -410,6 +443,7 @@ State management for this view uses a combination of React hooks and React Query
   - `503 Service Unavailable`: AI generation timeout
 
 ### Supporting Endpoint: Get User Preferences
+
 - **Method**: `GET`
 - **Path**: `/api/users/me/preferences`
 - **Request Type**: None
@@ -417,6 +451,7 @@ State management for this view uses a combination of React hooks and React Query
 - **Purpose**: Pre-fill form fields with user's saved preferences
 
 ### Supporting Endpoint: Get Plans (for count)
+
 - **Method**: `GET`
 - **Path**: `/api/plans?limit=1`
 - **Request Type**: None
@@ -426,13 +461,14 @@ State management for this view uses a combination of React hooks and React Query
 ### React Query Integration
 
 **Custom Hook: useUserPreferences()**
+
 ```typescript
 export function useUserPreferences() {
   return useQuery({
-    queryKey: ['user', 'preferences'],
+    queryKey: ["user", "preferences"],
     queryFn: async () => {
-      const response = await fetch('/api/users/me/preferences');
-      if (!response.ok) throw new Error('Failed to fetch preferences');
+      const response = await fetch("/api/users/me/preferences");
+      if (!response.ok) throw new Error("Failed to fetch preferences");
       return response.json() as Promise<UserPreferencesDto>;
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
@@ -442,31 +478,32 @@ export function useUserPreferences() {
 ```
 
 **Custom Hook: useCreatePlan()**
+
 ```typescript
 export function useCreatePlan() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async (data: CreatePlanDto) => {
-      const response = await fetch('/api/plans', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/plans", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
-      
+
       if (!response.ok) {
-        const error = await response.json() as ErrorDto;
+        const error = (await response.json()) as ErrorDto;
         throw new Error(error.error.message);
       }
-      
+
       return response.json() as Promise<PlanDto>;
     },
     onSuccess: (newPlan) => {
       // Invalidate plans list to refetch with new plan
-      queryClient.invalidateQueries({ queryKey: ['plans'] });
-      
+      queryClient.invalidateQueries({ queryKey: ["plans"] });
+
       // Optionally set new plan in cache
-      queryClient.setQueryData(['plan', newPlan.id], newPlan);
+      queryClient.setQueryData(["plan", newPlan.id], newPlan);
     },
     retry: false, // Don't retry plan creation (expensive AI operation)
     networkMode: "always", // Fail immediately if offline
@@ -477,14 +514,16 @@ export function useCreatePlan() {
 ## 8. User Interactions
 
 ### 1. Page Load
+
 - **Action**: User navigates to `/plans/new` from dashboard
-- **Expected Outcome**: 
+- **Expected Outcome**:
   - Page loads with skeleton form
   - Preferences fetched and form pre-filled
   - Plan count fetched to determine limit status
   - If plan limit reached, show `PlanLimitAlert` and disable form
 
 ### 2. Form Field Editing
+
 - **Action**: User types or selects values in any form field
 - **Expected Outcome**:
   - Field value updates in real-time
@@ -494,6 +533,7 @@ export function useCreatePlan() {
   - Submit button enabled when form becomes valid
 
 ### 3. Date Selection
+
 - **Action**: User clicks date picker and selects start/end dates
 - **Expected Outcome**:
   - Calendar popover opens
@@ -504,6 +544,7 @@ export function useCreatePlan() {
   - Errors shown immediately if constraints violated
 
 ### 4. Form Submission
+
 - **Action**: User clicks "Generate Plan" button
 - **Expected Outcome**:
   - Final validation runs on all fields
@@ -515,6 +556,7 @@ export function useCreatePlan() {
     - User waits 10-30 seconds for AI generation
 
 ### 5. Successful Plan Creation
+
 - **Action**: API responds with 201 Created and `PlanDto`
 - **Expected Outcome**:
   - `LoadingOverlay` disappears
@@ -523,6 +565,7 @@ export function useCreatePlan() {
   - Plan list cache invalidated and refetched
 
 ### 6. Plan Creation Error - Validation
+
 - **Action**: API responds with 400 Bad Request
 - **Expected Outcome**:
   - `LoadingOverlay` disappears
@@ -531,6 +574,7 @@ export function useCreatePlan() {
   - Specific field errors highlighted if available in API response
 
 ### 7. Plan Creation Error - Plan Limit
+
 - **Action**: API responds with 403 Forbidden (plan limit reached)
 - **Expected Outcome**:
   - `LoadingOverlay` disappears
@@ -540,6 +584,7 @@ export function useCreatePlan() {
   - Form remains filled (user can copy note text if needed)
 
 ### 8. Plan Creation Error - Rate Limit
+
 - **Action**: API responds with 429 Too Many Requests
 - **Expected Outcome**:
   - `LoadingOverlay` disappears
@@ -548,6 +593,7 @@ export function useCreatePlan() {
   - User can edit and try again later
 
 ### 9. Plan Creation Error - AI Service
+
 - **Action**: API responds with 500 or 503 (AI service error or timeout)
 - **Expected Outcome**:
   - `LoadingOverlay` disappears
@@ -556,6 +602,7 @@ export function useCreatePlan() {
   - User can retry immediately
 
 ### 10. Cancel Action
+
 - **Action**: User clicks "Cancel" button
 - **Expected Outcome**:
   - If form is dirty (has unsaved changes), show confirmation dialog: "Discard changes?"
@@ -563,6 +610,7 @@ export function useCreatePlan() {
   - Form data not saved
 
 ### 11. Network Offline
+
 - **Action**: User submits form while offline
 - **Expected Outcome**:
   - `LoadingOverlay` appears briefly
@@ -577,68 +625,81 @@ export function useCreatePlan() {
 All validations are defined in a Zod schema that mirrors the API validation:
 
 ```typescript
-export const createPlanFormSchema = z.object({
-  destination_text: z.string()
-    .min(1, "Destination is required")
-    .max(160, "Destination must be 160 characters or less"),
-  
-  date_start: z.string()
-    .refine((date) => {
-      const startDate = new Date(date);
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      return startDate >= today;
-    }, {
-      message: "Start date cannot be in the past"
+export const createPlanFormSchema = z
+  .object({
+    destination_text: z
+      .string()
+      .min(1, "Destination is required")
+      .max(160, "Destination must be 160 characters or less"),
+
+    date_start: z.string().refine(
+      (date) => {
+        const startDate = new Date(date);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        return startDate >= today;
+      },
+      {
+        message: "Start date cannot be in the past",
+      }
+    ),
+
+    date_end: z.string(),
+
+    note_text: z.string().max(20000, "Note must be 20,000 characters or less"),
+
+    people_count: z
+      .number()
+      .int("Must be a whole number")
+      .min(1, "At least 1 person required")
+      .max(20, "Maximum 20 people allowed"),
+
+    trip_type: z.enum(["leisure", "business"], {
+      errorMap: () => ({ message: "Please select a trip type" }),
     }),
-  
-  date_end: z.string(),
-  
-  note_text: z.string()
-    .max(20000, "Note must be 20,000 characters or less"),
-  
-  people_count: z.number()
-    .int("Must be a whole number")
-    .min(1, "At least 1 person required")
-    .max(20, "Maximum 20 people allowed"),
-  
-  trip_type: z.enum(["leisure", "business"], {
-    errorMap: () => ({ message: "Please select a trip type" })
-  }),
-  
-  comfort: z.enum(["relax", "balanced", "intense"], {
-    errorMap: () => ({ message: "Please select a comfort level" })
-  }),
-  
-  budget: z.enum(["budget", "moderate", "luxury"], {
-    errorMap: () => ({ message: "Please select a budget level" })
-  }),
-  
-  transport_modes: z.array(z.enum(["car", "walk", "public"]))
-    .nullable()
-    .optional(),
-    
-}).refine((data) => {
-  const startDate = new Date(data.date_start);
-  const endDate = new Date(data.date_end);
-  return endDate >= startDate;
-}, {
-  message: "End date must be equal to or after start date",
-  path: ["date_end"],
-}).refine((data) => {
-  const startDate = new Date(data.date_start);
-  const endDate = new Date(data.date_end);
-  const daysDiff = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
-  return daysDiff <= 30;
-}, {
-  message: "Trip duration cannot exceed 30 days",
-  path: ["date_end"],
-});
+
+    comfort: z.enum(["relax", "balanced", "intense"], {
+      errorMap: () => ({ message: "Please select a comfort level" }),
+    }),
+
+    budget: z.enum(["budget", "moderate", "luxury"], {
+      errorMap: () => ({ message: "Please select a budget level" }),
+    }),
+
+    transport_modes: z
+      .array(z.enum(["car", "walk", "public"]))
+      .nullable()
+      .optional(),
+  })
+  .refine(
+    (data) => {
+      const startDate = new Date(data.date_start);
+      const endDate = new Date(data.date_end);
+      return endDate >= startDate;
+    },
+    {
+      message: "End date must be equal to or after start date",
+      path: ["date_end"],
+    }
+  )
+  .refine(
+    (data) => {
+      const startDate = new Date(data.date_start);
+      const endDate = new Date(data.date_end);
+      const daysDiff = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+      return daysDiff <= 30;
+    },
+    {
+      message: "Trip duration cannot exceed 30 days",
+      path: ["date_end"],
+    }
+  );
 ```
 
 ### Field-Level Validation Rules
 
 **destination_text:**
+
 - **Required**: Yes
 - **Min Length**: 1 character
 - **Max Length**: 160 characters
@@ -647,6 +708,7 @@ export const createPlanFormSchema = z.object({
 - **Component Affected**: `DestinationSection`
 
 **date_start:**
+
 - **Required**: Yes
 - **Format**: ISO date string (YYYY-MM-DD)
 - **Constraint**: Cannot be in the past (compared to today at midnight)
@@ -655,6 +717,7 @@ export const createPlanFormSchema = z.object({
 - **Component Affected**: `DateRangeSection`
 
 **date_end:**
+
 - **Required**: Yes
 - **Format**: ISO date string (YYYY-MM-DD)
 - **Constraint 1**: Must be >= date_start
@@ -665,6 +728,7 @@ export const createPlanFormSchema = z.object({
 - **Component Affected**: `DateRangeSection`
 
 **note_text:**
+
 - **Required**: No
 - **Max Length**: 20,000 characters
 - **Validation Trigger**: Real-time (on every keystroke for counter), on submit for error
@@ -673,6 +737,7 @@ export const createPlanFormSchema = z.object({
 - **Component Affected**: `TravelNoteSection`
 
 **people_count:**
+
 - **Required**: Yes
 - **Type**: Integer
 - **Min**: 1
@@ -683,6 +748,7 @@ export const createPlanFormSchema = z.object({
 - **Component Affected**: `PreferencesSection`
 
 **trip_type:**
+
 - **Required**: Yes
 - **Valid Values**: "leisure" | "business"
 - **Default**: From user preferences
@@ -691,6 +757,7 @@ export const createPlanFormSchema = z.object({
 - **Component Affected**: `PreferencesSection`
 
 **comfort:**
+
 - **Required**: Yes
 - **Valid Values**: "relax" | "balanced" | "intense"
 - **Default**: From user preferences
@@ -699,6 +766,7 @@ export const createPlanFormSchema = z.object({
 - **Component Affected**: `PreferencesSection`
 
 **budget:**
+
 - **Required**: Yes
 - **Valid Values**: "budget" | "moderate" | "luxury"
 - **Default**: From user preferences
@@ -707,6 +775,7 @@ export const createPlanFormSchema = z.object({
 - **Component Affected**: `PreferencesSection`
 
 **transport_modes:**
+
 - **Required**: No (nullable)
 - **Valid Values**: Array of "car" | "walk" | "public", or null/empty array
 - **Default**: null (let AI decide)
@@ -717,28 +786,32 @@ export const createPlanFormSchema = z.object({
 ### Business Logic Conditions
 
 **Plan Limit Check:**
+
 - **Condition**: `planCount >= 10`
-- **Affected Components**: 
+- **Affected Components**:
   - `CreatePlanView`: Shows `PlanLimitAlert`
   - `CreatePlanForm`: Submit button disabled
 - **Enforcement**: Pre-submission check before API call, API also validates
 - **Error Handling**: Show alert banner, prevent form submission, show link to dashboard
 
 **Rate Limit Check:**
+
 - **Condition**: More than 10 plan creation requests in 1 hour
 - **Affected Components**: `CreatePlanForm`
 - **Enforcement**: API-side only (no client-side tracking)
 - **Error Handling**: 429 response shows error toast with retry message
 
 **Form Valid Check:**
+
 - **Condition**: All fields pass Zod validation
 - **Affected Components**: `FormActions` submit button
 - **Enforcement**: react-hook-form tracks validity
 - **UI Effect**: Submit button disabled when form invalid
 
 **Loading State Check:**
+
 - **Condition**: `isCreatingPlan === true`
-- **Affected Components**: 
+- **Affected Components**:
   - `LoadingOverlay`: Visible
   - `CreatePlanForm`: All inputs disabled
   - `FormActions`: Buttons disabled
@@ -750,6 +823,7 @@ export const createPlanFormSchema = z.object({
 ### Client-Side Errors
 
 **Validation Errors (before API call):**
+
 - **Trigger**: Form submission with invalid data
 - **Handling**:
   - Prevent API call
@@ -759,6 +833,7 @@ export const createPlanFormSchema = z.object({
 - **User Recovery**: User corrects invalid fields and resubmits
 
 **Network Errors (no internet):**
+
 - **Trigger**: Fetch call fails with network error
 - **Handling**:
   - Catch error in mutation's onError
@@ -768,6 +843,7 @@ export const createPlanFormSchema = z.object({
 - **User Recovery**: User checks connection and retries
 
 **Preferences Fetch Failure:**
+
 - **Trigger**: GET /api/users/me/preferences fails
 - **Handling**:
   - Show toast warning: "Could not load preferences. Using defaults."
@@ -780,6 +856,7 @@ export const createPlanFormSchema = z.object({
 - **User Recovery**: User manually fills/edits fields and proceeds
 
 **Plan Count Fetch Failure:**
+
 - **Trigger**: GET /api/plans fails
 - **Handling**:
   - Assume plan count is below limit (optimistic)
@@ -791,6 +868,7 @@ export const createPlanFormSchema = z.object({
 ### API Errors
 
 **400 Bad Request (Validation Error):**
+
 - **Trigger**: API rejects request due to validation failure
 - **Handling**:
   - Parse ErrorDto response
@@ -800,6 +878,7 @@ export const createPlanFormSchema = z.object({
 - **User Recovery**: User corrects fields based on error message and resubmits
 
 **403 Forbidden (Plan Limit Reached):**
+
 - **Trigger**: User has 10 plans, API rejects creation
 - **Handling**:
   - Hide loading overlay
@@ -810,6 +889,7 @@ export const createPlanFormSchema = z.object({
 - **User Recovery**: User navigates to dashboard, deletes a plan, returns to create new plan
 
 **429 Too Many Requests (Rate Limit):**
+
 - **Trigger**: User exceeded 10 requests/hour
 - **Handling**:
   - Hide loading overlay
@@ -819,6 +899,7 @@ export const createPlanFormSchema = z.object({
 - **User Recovery**: User waits for rate limit window to reset and retries
 
 **500 Internal Server Error (AI Service Error):**
+
 - **Trigger**: AI service communication failure or unexpected backend error
 - **Handling**:
   - Hide loading overlay
@@ -829,6 +910,7 @@ export const createPlanFormSchema = z.object({
 - **User Recovery**: User retries immediately or adjusts inputs and retries
 
 **503 Service Unavailable (AI Timeout):**
+
 - **Trigger**: AI generation takes longer than 30-60 second timeout
 - **Handling**:
   - Hide loading overlay
@@ -840,11 +922,13 @@ export const createPlanFormSchema = z.object({
 ### Error Display Patterns
 
 **Inline Field Errors:**
+
 - **Display**: Red text below invalid input field
 - **Icon**: Small error icon next to field label
 - **Example**: "Start date cannot be in the past"
 
 **Toast Notifications:**
+
 - **Display**: Top-right corner toast (using Sonner library)
 - **Duration**: 5 seconds (auto-dismiss), user can dismiss manually
 - **Variants**:
@@ -853,11 +937,13 @@ export const createPlanFormSchema = z.object({
   - Success: Green background, checkmark icon
 
 **Alert Banners:**
+
 - **Display**: Full-width banner at top of form
 - **Persistent**: Stays visible until condition resolved
 - **Example**: `PlanLimitAlert` for plan limit reached
 
 **Error Logging:**
+
 - All errors logged to console with context:
   - Error type
   - User action attempted
@@ -867,7 +953,9 @@ export const createPlanFormSchema = z.object({
 ## 11. Implementation Steps
 
 ### Step 1: Create Page Route and Layout
+
 **File**: `src/pages/plans/new.astro`
+
 - Create Astro page at the correct route path
 - Import and use `MainLayout` from `src/layouts/Layout.astro`
 - Add authentication check in frontmatter (redirect to `/login` if not authenticated)
@@ -875,21 +963,27 @@ export const createPlanFormSchema = z.object({
 - Pass necessary props from Astro context (e.g., user session)
 
 ### Step 2: Define Types and Interfaces
+
 **File**: `src/types.ts` (if not already present) and `src/components/create-plan/types.ts`
+
 - Verify `CreatePlanDto` exists in `src/types.ts`
 - Create `CreatePlanFormData` interface (matches `CreatePlanDto`)
 - Create `CreatePlanViewModel` interface for view state
 - Export all types for component use
 
 ### Step 3: Create Zod Validation Schema
+
 **File**: `src/components/create-plan/validation.ts`
+
 - Define `createPlanFormSchema` using Zod
 - Include all field validations matching API requirements
 - Add cross-field validations (date range, date comparison)
 - Export schema for use in react-hook-form
 
 ### Step 4: Create Custom React Query Hooks
+
 **File**: `src/components/create-plan/hooks/useCreatePlanMutations.ts`
+
 - Implement `useUserPreferences()` query hook
   - Query key: `['user', 'preferences']`
   - Fetch from `GET /api/users/me/preferences`
@@ -901,7 +995,9 @@ export const createPlanFormSchema = z.object({
   - Configure retry: false, networkMode: "always"
 
 ### Step 5: Create Main View Component
+
 **File**: `src/components/create-plan/CreatePlanView.tsx`
+
 - Create React component with client-side rendering
 - Fetch user preferences and plan count on mount
 - Manage loading states for both fetches
@@ -910,21 +1006,27 @@ export const createPlanFormSchema = z.object({
 - Pass appropriate props to child components
 
 ### Step 6: Create PageHeader Component
+
 **File**: `src/components/create-plan/PageHeader.tsx`
+
 - Implement breadcrumb navigation using Shadcn/ui `Breadcrumb`
 - Include links: Home ("/") > My Plans ("/") > New Plan (current)
 - Add page heading: "Create New Travel Plan"
 - Style with appropriate spacing and typography
 
 ### Step 7: Create PlanLimitAlert Component
+
 **File**: `src/components/create-plan/PlanLimitAlert.tsx`
+
 - Use Shadcn/ui `Alert` component with destructive variant
 - Display when `isVisible` prop is true
 - Include alert icon, title, description, and link button
 - Link to dashboard ("/") with text "Go to My Plans"
 
 ### Step 8: Create CreatePlanForm Component
+
 **File**: `src/components/create-plan/CreatePlanForm.tsx`
+
 - Set up react-hook-form with Zod resolver
 - Initialize form with `createPlanFormSchema`
 - Accept `defaultValues` prop and call `form.reset()` when preferences load
@@ -934,7 +1036,9 @@ export const createPlanFormSchema = z.object({
 - Render all form sections as child components
 
 ### Step 9: Create DestinationSection Component
+
 **File**: `src/components/create-plan/DestinationSection.tsx`
+
 - Use Shadcn/ui `FormField`, `FormItem`, `FormLabel`, `FormControl`, `FormMessage`
 - Implement `Input` component for text entry
 - Connect to form control via react-hook-form context
@@ -942,7 +1046,9 @@ export const createPlanFormSchema = z.object({
 - Add helper text: "Where are you planning to travel?"
 
 ### Step 10: Create DateRangeSection Component
+
 **File**: `src/components/create-plan/DateRangeSection.tsx`
+
 - Use Shadcn/ui `DatePicker` components (two instances)
 - Label them clearly: "Start Date" and "End Date"
 - Connect to form control via react-hook-form context
@@ -952,7 +1058,9 @@ export const createPlanFormSchema = z.object({
 - Ensure date picker allows manual input and calendar selection
 
 ### Step 11: Create TravelNoteSection Component
+
 **File**: `src/components/create-plan/TravelNoteSection.tsx`
+
 - Use Shadcn/ui `FormField`, `FormLabel`, `Textarea`
 - Set textarea with `rows={8}` for initial size
 - Make textarea resizable (CSS: `resize: vertical`)
@@ -965,7 +1073,9 @@ export const createPlanFormSchema = z.object({
 - Add helper text: "Share your travel ideas, must-see places, or any specific requests. The AI will use this to create your itinerary."
 
 ### Step 12: Create PreferencesSection Component
+
 **File**: `src/components/create-plan/PreferencesSection.tsx`
+
 - Use grid layout: `grid grid-cols-1 md:grid-cols-2 gap-4`
 - Implement four sub-components or inline fields:
   - **PeopleCountInput**: Number input (1-20)
@@ -979,7 +1089,9 @@ export const createPlanFormSchema = z.object({
 - Add helper text: "These preferences are pre-filled from your profile but can be adjusted for this trip."
 
 ### Step 13: Create TransportSection Component
+
 **File**: `src/components/create-plan/TransportSection.tsx`
+
 - Use Shadcn/ui `Checkbox` components (three instances)
 - Options: "Car", "Walk", "Public Transport"
 - Connect to form control (array field)
@@ -988,7 +1100,9 @@ export const createPlanFormSchema = z.object({
 - Display inline errors if validation fails
 
 ### Step 14: Create FormActions Component
+
 **File**: `src/components/create-plan/FormActions.tsx`
+
 - Use flex layout: `flex justify-end gap-3`
 - Implement two buttons using Shadcn/ui `Button`:
   - **Cancel Button**: variant="outline", onClick navigates to "/"
@@ -998,7 +1112,9 @@ export const createPlanFormSchema = z.object({
 - Show loading spinner on submit button when `isLoading` is true
 
 ### Step 15: Create LoadingOverlay Component
+
 **File**: `src/components/create-plan/LoadingOverlay.tsx`
+
 - Create fixed positioned overlay: `fixed inset-0 z-50 bg-black/50 backdrop-blur-sm`
 - Center content using flexbox
 - Use Shadcn/ui `Spinner` or custom loading animation
@@ -1009,7 +1125,9 @@ export const createPlanFormSchema = z.object({
 - Prevent click-through with `pointer-events-none` on content
 
 ### Step 16: Implement Form Submission Logic
+
 **File**: `src/components/create-plan/CreatePlanForm.tsx`
+
 - In `handleSubmit` function:
   - Validate form with Zod schema
   - Check `canCreatePlan` (plan limit)
@@ -1021,7 +1139,9 @@ export const createPlanFormSchema = z.object({
   - Watch `createPlanMutation.isSuccess` to navigate to new plan or dashboard
 
 ### Step 17: Implement Error Handling
+
 **File**: `src/components/create-plan/hooks/useCreatePlanMutations.ts`
+
 - In `useCreatePlan` mutation:
   - Add `onError` callback to parse ErrorDto
   - Check error status code:
@@ -1033,7 +1153,9 @@ export const createPlanFormSchema = z.object({
   - Re-enable form for all errors
 
 ### Step 18: Implement Success Handling
+
 **File**: `src/components/create-plan/hooks/useCreatePlanMutations.ts`
+
 - In `useCreatePlan` mutation:
   - Add `onSuccess` callback
   - Invalidate plans query cache: `queryClient.invalidateQueries({ queryKey: ['plans'] })`
@@ -1042,13 +1164,16 @@ export const createPlanFormSchema = z.object({
   - Optionally: Cache new plan data for instant loading
 
 ### Step 19: Add Toast Notifications
+
 **File**: Ensure `<Toaster />` is in `src/layouts/Layout.astro`
+
 - Import Sonner's `toast` function in mutation hooks
 - Use `toast.error()` for error notifications
 - Use `toast.success()` for success notifications
 - Configure toast position, duration, and styling
 
 ### Step 20: Style Components with Tailwind
+
 - Apply responsive layout classes (mobile-first)
 - Use Shadcn/ui theme variables for consistent colors
 - Ensure proper spacing between sections
@@ -1057,12 +1182,14 @@ export const createPlanFormSchema = z.object({
 - Ensure form is usable on small screens (single column on mobile)
 
 ### Step 21: Add Loading States
+
 - Implement skeleton loaders for form while preferences loading
 - Show spinner or skeleton for plan count fetch
 - Disable form fields during loading states
 - Ensure loading overlay covers entire viewport
 
 ### Step 22: Test Form Validation
+
 - Test all validation rules:
   - Empty destination
   - Destination > 160 chars
@@ -1076,6 +1203,7 @@ export const createPlanFormSchema = z.object({
 - Test cross-field validations
 
 ### Step 23: Test API Integration
+
 - Test successful plan creation flow end-to-end
 - Test 400 validation error handling
 - Test 403 plan limit error (create 10 plans first)
@@ -1086,6 +1214,7 @@ export const createPlanFormSchema = z.object({
 - Verify all error toasts display correctly
 
 ### Step 24: Test User Experience
+
 - Test form pre-filling from user preferences
 - Test cancel button with dirty form (unsaved changes)
 - Test navigation after successful creation
@@ -1096,6 +1225,7 @@ export const createPlanFormSchema = z.object({
 - Verify responsive layout on mobile/tablet/desktop
 
 ### Step 25: Accessibility Testing
+
 - Test keyboard navigation through entire form
 - Verify all form fields have proper labels
 - Test form submission with Enter key
@@ -1105,6 +1235,7 @@ export const createPlanFormSchema = z.object({
 - Test with screen reader (VoiceOver on Mac, NVDA on Windows)
 
 ### Step 26: Performance Optimization
+
 - Lazy load components if needed (not critical for MVP)
 - Optimize re-renders with React.memo if necessary
 - Ensure form doesn't lag on large note text input
@@ -1112,6 +1243,7 @@ export const createPlanFormSchema = z.object({
 - Optimize bundle size (code splitting if needed)
 
 ### Step 27: Final Integration Testing
+
 - Test complete flow from dashboard -> create plan -> view plan
 - Test with mock AI data (development mode)
 - Test with real AI data (production mode, if available)
@@ -1121,6 +1253,7 @@ export const createPlanFormSchema = z.object({
 - Cross-browser testing (Chrome, Firefox, Safari, Edge)
 
 ### Step 28: Documentation and Code Review
+
 - Add JSDoc comments to all components
 - Document prop types clearly
 - Add README or comments explaining complex validation logic

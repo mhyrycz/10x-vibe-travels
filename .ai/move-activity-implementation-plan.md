@@ -5,12 +5,14 @@
 The Move Activity endpoint enables users to reorganize their travel itinerary by moving activities between different time blocks (morning, afternoon, evening) or changing their position within the same block. This endpoint maintains data integrity through careful order index management and ensures authorization through plan ownership verification.
 
 **Purpose:**
+
 - Allow users to drag-and-drop activities between blocks in the UI
 - Reorder activities within the same block
 - Maintain consistent ordering through automatic reindexing
 - Log modifications for analytics tracking
 
 **Key Challenges:**
+
 - Unique constraint on `(block_id, order_index)` requires careful transaction handling
 - Must prevent race conditions during concurrent reordering operations
 - Need to handle both same-block and cross-block moves efficiently
@@ -18,14 +20,17 @@ The Move Activity endpoint enables users to reorganize their travel itinerary by
 ## 2. Request Details
 
 ### HTTP Method
+
 `POST`
 
 ### URL Structure
+
 `/api/plans/{planId}/activities/{activityId}/move`
 
 ### Path Parameters
 
 **Required:**
+
 - `planId` (string, UUID): The unique identifier of the plan containing the activity
 - `activityId` (string, UUID): The unique identifier of the activity to move
 
@@ -39,16 +44,19 @@ The Move Activity endpoint enables users to reorganize their travel itinerary by
 ```
 
 **Fields:**
+
 - `target_block_id` (string, required): UUID of the destination block. Must belong to the same plan as the activity.
 - `target_order_index` (number, required): Integer between 1 and 50. Indicates the position in the target block where the activity should be placed.
 
 ### Authentication
+
 - **Required**: Bearer token in Authorization header
 - **Format**: `Authorization: Bearer {access_token}`
 - **Source**: Supabase Auth JWT token
 - **User ID extraction**: Via `auth.uid()` in middleware
 
 ### Content-Type
+
 `application/json`
 
 ## 3. Used Types
@@ -132,6 +140,7 @@ export type ErrorCode =
 ```
 
 **Response Headers:**
+
 ```
 Content-Type: application/json
 ```
@@ -139,6 +148,7 @@ Content-Type: application/json
 ### Error Responses
 
 #### 400 Bad Request - Invalid Input
+
 ```json
 {
   "error": {
@@ -153,6 +163,7 @@ Content-Type: application/json
 ```
 
 **Triggers:**
+
 - Invalid UUID format for any parameter
 - Invalid JSON in request body
 - Missing required fields
@@ -160,6 +171,7 @@ Content-Type: application/json
 - `target_block_id` doesn't belong to the same plan
 
 #### 403 Forbidden - Insufficient Permissions
+
 ```json
 {
   "error": {
@@ -170,9 +182,11 @@ Content-Type: application/json
 ```
 
 **Triggers:**
+
 - User is not the owner of the plan
 
 #### 404 Not Found - Resource Missing
+
 ```json
 {
   "error": {
@@ -183,11 +197,13 @@ Content-Type: application/json
 ```
 
 **Triggers:**
+
 - Plan doesn't exist
 - Activity doesn't exist
 - Target block doesn't exist
 
 #### 500 Internal Server Error
+
 ```json
 {
   "error": {
@@ -198,6 +214,7 @@ Content-Type: application/json
 ```
 
 **Triggers:**
+
 - Database transaction failures
 - Unexpected exceptions during processing
 
@@ -235,7 +252,7 @@ async function moveActivity(
   planId: string,
   activityId: string,
   data: MoveActivityDto
-): Promise<ServiceResult<ActivityUpdatedDto>>
+): Promise<ServiceResult<ActivityUpdatedDto>>;
 ```
 
 **Steps:**
@@ -245,6 +262,7 @@ async function moveActivity(
    - Return VALIDATION_ERROR if any UUID is invalid
 
 2. **Verify Activity Exists and Get Current State**
+
    ```sql
    SELECT a.*, b.id as current_block_id, p.owner_id, p.id as plan_id
    FROM plan_activities a
@@ -253,17 +271,20 @@ async function moveActivity(
    INNER JOIN plans p ON d.plan_id = p.id
    WHERE a.id = activityId
    ```
+
    - Return NOT_FOUND if activity doesn't exist
    - Verify plan_id matches provided planId
    - Verify owner_id === userId (return FORBIDDEN if not)
 
 3. **Verify Target Block Belongs to Same Plan**
+
    ```sql
    SELECT b.id
    FROM plan_blocks b
    INNER JOIN plan_days d ON b.day_id = d.id
    WHERE b.id = target_block_id AND d.plan_id = planId
    ```
+
    - Return VALIDATION_ERROR if target block doesn't belong to plan
 
 4. **Execute Reordering Transaction** (PostgreSQL Stored Procedure)
@@ -271,6 +292,7 @@ async function moveActivity(
    **Critical**: Due to the `check (order_index between 1 and 50)` constraint, we cannot use a temporary high value. Instead, use a PostgreSQL stored procedure that handles reordering atomically.
 
    **Stored Procedure Logic**:
+
    ```sql
    -- Call stored procedure
    SELECT * FROM move_activity_transaction(
@@ -295,6 +317,7 @@ async function moveActivity(
    **See Step 2 in Implementation Steps for complete stored procedure code**
 
 5. **Log plan_edited Event** (fire-and-forget)
+
    ```typescript
    logPlanEdited(supabase, userId, planId);
    ```
@@ -308,14 +331,15 @@ async function moveActivity(
 
 ```typescript
 // Pseudocode for transaction
-await supabase.rpc('move_activity_transaction', {
+await supabase.rpc("move_activity_transaction", {
   p_activity_id: activityId,
   p_target_block_id: target_block_id,
-  p_target_order_index: target_order_index
+  p_target_order_index: target_order_index,
 });
 ```
 
 Alternatively, if using raw SQL with transaction support:
+
 ```typescript
 // Use Supabase transaction or stored procedure
 // Ensure all 3 phases execute atomically
@@ -324,17 +348,20 @@ Alternatively, if using raw SQL with transaction support:
 ## 6. Security Considerations
 
 ### Authentication
+
 - **Mechanism**: Supabase Auth JWT tokens
 - **Validation**: Automatic via middleware (`context.locals.supabase`)
 - **User ID**: Extracted from `auth.uid()` in the authenticated session
 - **Token Lifetime**: 1 hour (configurable in Supabase settings)
 
 ### Authorization
+
 - **Plan Ownership**: Verify `owner_id = auth.uid()` through activity chain
 - **Query Pattern**: Join activity → block → day → plan to get owner_id
 - **Enforcement**: At application layer before any modification
 
 ### Input Validation
+
 1. **UUID Validation**: All ID parameters must be valid UUID v4 format
 2. **Range Validation**: `target_order_index` must be 1-50
 3. **Block Validation**: Target block must belong to the same plan
@@ -342,15 +369,16 @@ Alternatively, if using raw SQL with transaction support:
 
 ### Potential Security Threats
 
-| Threat | Mitigation |
-|--------|-----------|
-| **Unauthorized Access** | Verify plan ownership through database joins |
-| **SQL Injection** | Use parameterized queries via Supabase client |
-| **Race Conditions** | Wrap all operations in database transaction |
+| Threat                  | Mitigation                                              |
+| ----------------------- | ------------------------------------------------------- |
+| **Unauthorized Access** | Verify plan ownership through database joins            |
+| **SQL Injection**       | Use parameterized queries via Supabase client           |
+| **Race Conditions**     | Wrap all operations in database transaction             |
 | **Resource Exhaustion** | Limit order_index to maximum of 50 activities per block |
-| **Data Integrity** | Use unique constraint and transaction isolation |
+| **Data Integrity**      | Use unique constraint and transaction isolation         |
 
 ### Rate Limiting
+
 - Not specifically required for this endpoint (no AI generation)
 - Consider implementing if abuse is detected (e.g., 100 requests/minute)
 
@@ -362,44 +390,51 @@ Alternatively, if using raw SQL with transaction support:
 // Service layer returns ServiceResult
 if (!result.success) {
   const statusCode = mapErrorCodeToStatus(result.error.code);
-  return new Response(
-    JSON.stringify({ error: result.error }),
-    { status: statusCode, headers: { "Content-Type": "application/json" } }
-  );
+  return new Response(JSON.stringify({ error: result.error }), {
+    status: statusCode,
+    headers: { "Content-Type": "application/json" },
+  });
 }
 
 function mapErrorCodeToStatus(code: ErrorCode): number {
   switch (code) {
-    case "VALIDATION_ERROR": return 400;
-    case "UNAUTHORIZED": return 401;
-    case "FORBIDDEN": return 403;
-    case "NOT_FOUND": return 404;
-    case "INTERNAL_ERROR": return 500;
-    default: return 500;
+    case "VALIDATION_ERROR":
+      return 400;
+    case "UNAUTHORIZED":
+      return 401;
+    case "FORBIDDEN":
+      return 403;
+    case "NOT_FOUND":
+      return 404;
+    case "INTERNAL_ERROR":
+      return 500;
+    default:
+      return 500;
   }
 }
 ```
 
 ### Error Scenarios Matrix
 
-| Scenario | Error Code | Status Code | Message |
-|----------|-----------|-------------|---------|
-| Invalid planId UUID | VALIDATION_ERROR | 400 | "Invalid plan ID format" |
-| Invalid activityId UUID | VALIDATION_ERROR | 400 | "Invalid activity ID format" |
-| Invalid target_block_id UUID | VALIDATION_ERROR | 400 | "Invalid target block ID format" |
-| Missing request body | VALIDATION_ERROR | 400 | "Invalid JSON in request body" |
-| order_index < 1 or > 50 | VALIDATION_ERROR | 400 | "Order index must be between 1 and 50" |
-| Target block not in plan | VALIDATION_ERROR | 400 | "Target block does not belong to this plan" |
-| Activity not found | NOT_FOUND | 404 | "Activity not found" |
-| Plan not found | NOT_FOUND | 404 | "Plan not found" |
-| Target block not found | NOT_FOUND | 404 | "Target block not found" |
-| User doesn't own plan | FORBIDDEN | 403 | "You don't have permission to access this plan" |
-| Database transaction failure | INTERNAL_ERROR | 500 | "Failed to move activity" |
-| Unexpected exception | INTERNAL_ERROR | 500 | "An unexpected error occurred" |
+| Scenario                     | Error Code       | Status Code | Message                                         |
+| ---------------------------- | ---------------- | ----------- | ----------------------------------------------- |
+| Invalid planId UUID          | VALIDATION_ERROR | 400         | "Invalid plan ID format"                        |
+| Invalid activityId UUID      | VALIDATION_ERROR | 400         | "Invalid activity ID format"                    |
+| Invalid target_block_id UUID | VALIDATION_ERROR | 400         | "Invalid target block ID format"                |
+| Missing request body         | VALIDATION_ERROR | 400         | "Invalid JSON in request body"                  |
+| order_index < 1 or > 50      | VALIDATION_ERROR | 400         | "Order index must be between 1 and 50"          |
+| Target block not in plan     | VALIDATION_ERROR | 400         | "Target block does not belong to this plan"     |
+| Activity not found           | NOT_FOUND        | 404         | "Activity not found"                            |
+| Plan not found               | NOT_FOUND        | 404         | "Plan not found"                                |
+| Target block not found       | NOT_FOUND        | 404         | "Target block not found"                        |
+| User doesn't own plan        | FORBIDDEN        | 403         | "You don't have permission to access this plan" |
+| Database transaction failure | INTERNAL_ERROR   | 500         | "Failed to move activity"                       |
+| Unexpected exception         | INTERNAL_ERROR   | 500         | "An unexpected error occurred"                  |
 
 ### Logging Strategy
 
 **Service Layer Logging:**
+
 ```typescript
 // Log all errors with context
 console.error("Error moving activity:", {
@@ -408,17 +443,19 @@ console.error("Error moving activity:", {
   activityId,
   targetBlockId: data.target_block_id,
   targetOrderIndex: data.target_order_index,
-  error: errorMessage
+  error: errorMessage,
 });
 ```
 
 **Event Logging:**
+
 ```typescript
 // Fire-and-forget analytics event
 logPlanEdited(supabase, userId, planId);
 ```
 
 **Error Details in Response:**
+
 - Include field-specific validation errors in `details` object
 - Never expose internal implementation details or stack traces
 - Use generic messages for unexpected errors
@@ -610,6 +647,7 @@ COMMENT ON FUNCTION move_activity_transaction IS
 ```
 
 **Apply the migration:**
+
 ```bash
 supabase db push
 ```
@@ -672,7 +710,8 @@ export async function moveActivity(
     // Step 2: Verify activity exists and get current state with authorization
     const { data: activityData, error: activityError } = await supabase
       .from("plan_activities")
-      .select(`
+      .select(
+        `
         id,
         block_id,
         order_index,
@@ -686,7 +725,8 @@ export async function moveActivity(
             )
           )
         )
-      `)
+      `
+      )
       .eq("id", activityId)
       .single();
 
@@ -710,12 +750,14 @@ export async function moveActivity(
     // Step 5: Verify target block belongs to same plan
     const { data: targetBlock, error: blockError } = await supabase
       .from("plan_blocks")
-      .select(`
+      .select(
+        `
         id,
         plan_days!inner(
           plan_id
         )
-      `)
+      `
+      )
       .eq("id", data.target_block_id)
       .single();
 
@@ -755,6 +797,7 @@ export async function moveActivity(
 ```
 
 **Important Notes:**
+
 - The stored procedure handles all reordering logic atomically within a single database transaction
 - Row-level locking (`FOR UPDATE`) prevents race conditions during concurrent move operations
 - The procedure intelligently handles three scenarios: cross-block moves, same-block up, same-block down

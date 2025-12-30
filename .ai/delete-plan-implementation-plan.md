@@ -1,9 +1,11 @@
 # API Endpoint Implementation Plan: Delete Plan
 
 ## 1. Endpoint Overview
+
 This document outlines the implementation plan for the `DELETE /api/plans/{planId}` endpoint. This endpoint permanently deletes a travel plan and all associated nested data (days, blocks, activities) through database cascading. The operation is irreversible and requires ownership verification.
 
 ## 2. Request Details
+
 - **HTTP Method**: `DELETE`
 - **URL Structure**: `/api/plans/{planId}`
 - **Path Parameters**:
@@ -12,27 +14,31 @@ This document outlines the implementation plan for the `DELETE /api/plans/{planI
 - **Request Body**: None (DELETE requests have no body)
 
 ## 3. Used Types
+
 The implementation will use the following TypeScript types defined in `src/types.ts`:
+
 - **Response**: None (204 No Content has no response body)
 - **Error Response**: `ErrorDto`
 
 No response DTO needed - successful deletion returns 204 No Content with empty body.
 
 ## 4. Response Details
+
 - **Success (204 No Content)**: Empty response body, plan and nested data deleted
 - **Error**: Returns a standardized `ErrorDto` object with appropriate status code
   \`\`\`json
   {
-    "error": {
-      "code": "NOT_FOUND",
-      "message": "Plan not found"
-    }
+  "error": {
+  "code": "NOT_FOUND",
+  "message": "Plan not found"
+  }
   }
   \`\`\`
 
 ## 5. Data Flow
 
 ### Request Processing Flow:
+
 1. **Request Reception**: Astro server endpoint at `src/pages/api/plans/[planId].ts` receives DELETE request
 2. **Authentication**: For development, uses `DEFAULT_USER_ID`. In production, validates JWT Bearer token
 3. **Path Parameter Extraction**: Extract `planId` from URL path
@@ -53,17 +59,20 @@ No response DTO needed - successful deletion returns 204 No Content with empty b
 ## 6. Security Considerations
 
 ### Authentication & Authorization
+
 - **Authentication**: JWT Bearer token validation (TODO: currently using DEFAULT_USER_ID for development)
 - **Authorization**: Verify `owner_id = authenticated user ID` before allowing deletion
 - **IDOR Prevention**: Return 403 Forbidden if user doesn't own the plan
 - **404 vs 403**: Return 404 if plan doesn't exist, 403 if exists but user doesn't own it
 
 ### Input Validation
+
 - **UUID Validation**: Validate planId is proper UUID format before database query
 - **SQL Injection**: Supabase SDK uses parameterized queries, no raw SQL
 - **No Body Validation**: DELETE has no request body
 
 ### Deletion Safety
+
 - **Irreversible Operation**: No confirmation at API level (frontend responsibility)
 - **Cascading Deletes**: Database handles nested data deletion automatically
 - **Event Preservation**: Events table retains analytics even after plan deletion (plan_id column nullable)
@@ -74,37 +83,43 @@ No response DTO needed - successful deletion returns 204 No Content with empty b
 ### Error Scenarios and Status Codes
 
 **400 Bad Request**:
+
 - Invalid UUID format for planId
 - Malformed request
 
 **403 Forbidden**:
+
 - User doesn't own the plan (owner_id !== userId)
 - Authenticated but attempting to delete another user's plan
 
 **404 Not Found**:
+
 - Plan with provided planId doesn't exist in database
 - Plan was already deleted
 
 **500 Internal Server Error**:
+
 - Database connection error
 - Unexpected error during delete operation
 - Cascading delete failure (should not happen with proper foreign keys)
 - Event logging error (logged but doesn't fail request)
 
 ### Error Response Format
+
 All errors follow the standard `ErrorDto` structure:
 \`\`\`json
 {
-  "error": {
-    "code": "ERROR_CODE",
-    "message": "Human-readable error message"
-  }
+"error": {
+"code": "ERROR_CODE",
+"message": "Human-readable error message"
+}
 }
 \`\`\`
 
 ## 8. Performance Considerations
 
 ### Optimizations
+
 - **Single Transaction**: Entire deletion happens in one database transaction
 - **Cascading Deletes**: PostgreSQL handles nested deletions efficiently
 - **Indexed Queries**: Uses primary key (id) and foreign keys (optimal performance)
@@ -112,6 +127,7 @@ All errors follow the standard `ErrorDto` structure:
 - **No Response Body**: 204 No Content eliminates serialization overhead
 
 ### Potential Bottlenecks
+
 - **Large Plans**: Plans with many days (30) and activities could have 900+ records to delete
   - Cascading deletes still fast (<100ms typically)
   - Locks acquired during deletion might briefly block reads
@@ -119,12 +135,14 @@ All errors follow the standard `ErrorDto` structure:
 - **Event Logging**: Minimal impact due to fire-and-forget pattern
 
 ### Scalability
+
 - PostgreSQL handles cascading deletes efficiently even for large hierarchies
 - Deletes scale well with proper indexing
 - No N+1 query issues (single DELETE with cascades)
 - Foreign key indexes ensure fast cascade lookups
 
 ### Database Impact
+
 - **Locks**: Row-level locks during deletion (minimal contention)
 - **Indexes**: Foreign key indexes make cascading fast
 - **Constraints**: Ensures referential integrity during cascades
@@ -137,13 +155,14 @@ All errors follow the standard `ErrorDto` structure:
 **Implement `deletePlan()` service function:**
 \`\`\`typescript
 export async function deletePlan(
-  supabase: SupabaseClient<Database>,
-  userId: string,
-  planId: string
+supabase: SupabaseClient<Database>,
+userId: string,
+planId: string
 ): Promise<ServiceResult<null>>
 \`\`\`
 
 **Function logic:**
+
 - Validate planId UUID format (reuse existing `isValidUUID()`)
 - Fetch plan to check existence and ownership
   - SELECT id, owner_id, destination_text FROM plans WHERE id = planId
@@ -155,6 +174,7 @@ export async function deletePlan(
 - Return ServiceResult with success = true, data = null
 
 **Error handling:**
+
 - Wrap in try-catch for unexpected errors
 - Log errors but don't expose internal details
 - Return INTERNAL_ERROR for database failures
@@ -164,6 +184,7 @@ export async function deletePlan(
 **File**: `src/pages/api/plans/[planId].ts` (extend existing file with GET and PATCH handlers)
 
 **Implement DELETE handler:**
+
 - Extract Supabase client from `locals.supabase`
 - Use DEFAULT_USER_ID for development
 - Extract `planId` from `params`
@@ -179,10 +200,10 @@ export async function deletePlan(
 **Example handler structure:**
 \`\`\`typescript
 export const DELETE: APIRoute = async ({ params, locals }) => {
-  try {
-    const supabase = locals.supabase;
-    const userId = DEFAULT_USER_ID;
-    const planId = params.planId;
+try {
+const supabase = locals.supabase;
+const userId = DEFAULT_USER_ID;
+const planId = params.planId;
 
     // Call service
     const result = await deletePlan(supabase, userId, planId!);
@@ -195,9 +216,10 @@ export const DELETE: APIRoute = async ({ params, locals }) => {
 
     // Success
     return new Response(null, { status: 204 });
-  } catch (error) {
-    // Handle unexpected errors
-  }
+
+} catch (error) {
+// Handle unexpected errors
+}
 };
 \`\`\`
 
@@ -206,6 +228,7 @@ export const DELETE: APIRoute = async ({ params, locals }) => {
 **File**: `src/lib/services/events.service.ts`
 
 **Add `logPlanDeleted()` function:**
+
 - Event type: `plan_deleted`
 - Context: user_id, plan_id, destination_text
 - Note: plan_id remains valid in events table even after plan deletion
@@ -214,22 +237,24 @@ export const DELETE: APIRoute = async ({ params, locals }) => {
 **Function signature:**
 \`\`\`typescript
 export async function logPlanDeleted(
-  supabase: SupabaseClient<Database>,
-  userId: string,
-  planId: string,
-  destinationText: string
+supabase: SupabaseClient<Database>,
+userId: string,
+planId: string,
+destinationText: string
 ): Promise<void>
 \`\`\`
 
 ### Step 4: Testing Considerations
 
 **Unit Tests**:
+
 - Test UUID validation (invalid format → 400)
 - Test authorization logic (wrong owner → 403)
 - Test not found logic (non-existent plan → 404)
 - Test successful deletion returns 204
 
 **Integration Tests**:
+
 - Create plan via POST → Delete via DELETE → 204
 - Verify plan no longer exists (GET returns 404)
 - Verify nested data deleted:
@@ -242,11 +267,13 @@ export async function logPlanDeleted(
 - Test invalid UUID → 400
 
 **Edge Cases**:
+
 - Delete plan with maximum nested data (30 days, 90 blocks, 900 activities)
 - Concurrent deletion attempts (verify proper locking)
 - Delete plan with no activities (empty blocks)
 
 **Manual Testing**:
+
 - Create plan via POST
 - List plans via GET (verify plan exists)
 - Delete plan via DELETE
@@ -257,6 +284,7 @@ export async function logPlanDeleted(
 ## 10. Notes
 
 ### Important Implementation Details
+
 - **Irreversible**: Deletion is permanent (no soft delete)
 - **Cascading**: Database automatically deletes nested records
 - **Event Persistence**: plan_deleted events retained for analytics
@@ -264,6 +292,7 @@ export async function logPlanDeleted(
 - **204 Response**: Success returns empty body (standard for DELETE)
 
 ### Database Cascading Behavior
+
 PostgreSQL foreign key constraints with `ON DELETE CASCADE`:
 \`\`\`sql
 -- plan_days references plans(id)
@@ -273,12 +302,14 @@ PostgreSQL foreign key constraints with `ON DELETE CASCADE`:
 \`\`\`
 
 When plan is deleted:
+
 1. PostgreSQL deletes all plan_days with plan_id = deleted_plan.id
 2. For each deleted plan_day, deletes all plan_blocks
 3. For each deleted plan_block, deletes all plan_activities
 4. Sets events.plan_id to NULL (preserves analytics)
 
 ### Future Enhancements
+
 - **Soft Delete**: Add `deleted_at` column, filter in queries
 - **Restore Functionality**: Allow undoing deletion within time window
 - **Bulk Delete**: Delete multiple plans in one request
@@ -287,6 +318,7 @@ When plan is deleted:
 - **Notification**: Notify user of successful deletion (email, webhook)
 
 ### Security Best Practices
+
 - Always verify ownership before deletion
 - Log all deletion attempts (successful and failed)
 - Consider implementing deletion rate limiting
@@ -294,7 +326,9 @@ When plan is deleted:
 - Frontend should implement confirmation dialog
 
 ### Performance Monitoring
+
 Monitor these metrics for deletion operations:
+
 - Average deletion time by plan size
 - Number of rows affected per deletion
 - Failed deletion attempts (errors)

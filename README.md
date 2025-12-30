@@ -7,6 +7,7 @@
 VibeTravels is an MVP web application that converts a user's simple travel note and basic parameters into a detailed, day-by-day itinerary using AI. The project is intended as a small, focused MVP (Polish-language UI) prioritizing quick generation of travel plans from a single input note and user preferences.
 
 Core goals:
+
 - Turn one user note + destination + dates + preferences into a detailed daily schedule
 - Provide account management (register/login, preferences, change password, delete account)
 - Allow saving, viewing, editing and deleting up to 10 plans per user
@@ -48,6 +49,7 @@ Dev tooling:
 ## Getting started locally
 
 Prerequisites
+
 - Node: the project uses Node `22.14.0` (see `.nvmrc`). Use `nvm` to switch: `nvm use`.
 - npm or another package manager (instructions below use `npm`).
 
@@ -78,6 +80,7 @@ npm run preview
 ```
 
 Notes
+
 - The repository includes lint and format scripts. Run `npm run lint` and `npm run format` to keep code consistent.
 - See `.ai/prd.md` and `.ai/tech-stack.md` for product and architecture context.
 
@@ -119,7 +122,7 @@ Out-of-scope for the MVP:
 ## Project status
 
 - Current version: `0.0.1` (see `package.json`).
-- Branch: `master` (active development). 
+- Branch: `master` (active development).
 - Target: MVP buildable by one developer within ~4 weeks (PRD constraint).
 - CI / Deploy: GitHub Actions and Docker deployment to DigitalOcean are planned (no workflow files included yet).
 

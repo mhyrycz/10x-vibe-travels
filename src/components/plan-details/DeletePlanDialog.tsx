@@ -11,13 +11,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useDeletePlan } from "./hooks/usePlanMutations";
-import type { PlanDetailsViewModel } from "./types";
 
 interface DeletePlanDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  plan: PlanDetailsViewModel;
-  onDeleted: () => void;
+  plan: {
+    id: string;
+    name: string;
+  };
+  onDeleted?: () => void;
 }
 
 export function DeletePlanDialog({ open, onOpenChange, plan, onDeleted }: DeletePlanDialogProps) {
