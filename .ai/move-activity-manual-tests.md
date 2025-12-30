@@ -825,8 +825,8 @@ curl -X POST http://localhost:3000/api/plans/invalid-uuid/activities/{activityId
 
 ## Sign-off
 
-**Tested By**: ******\_\_\_******  
-**Date**: ******\_\_\_******  
-**Environment**: ******\_\_\_******  
+**Tested By**: **\*\***\_\_\_**\*\***  
+**Date**: **\*\***\_\_\_**\*\***  
+**Environment**: **\*\***\_\_\_**\*\***  
 **Overall Result**: ⬜ Pass | ⬜ Fail | ⬜ Partial  
-**Comments**: ******\_\_\_******
+**Comments**: **\*\***\_\_\_**\*\***

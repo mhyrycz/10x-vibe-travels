@@ -75,10 +75,10 @@ VibeTravels rozwiązuje ten problem, pozwalając użytkownikowi:
   - zmienić hasło (podając obecne hasło oraz nowe, z podstawową walidacją),
   - usunąć swoje konto (co powoduje usunięcie powiązanych planów zgodnie z polityką aplikacji).
 
-  3.2. Tworzenie planów podróży (AI „na jedno kliknięcie”)
+    3.2. Tworzenie planów podróży (AI „na jedno kliknięcie”)
 
-  3.2.1. Formularz tworzenia nowego planu
-  Formularz zawiera:
+    3.2.1. Formularz tworzenia nowego planu
+    Formularz zawiera:
 
 - pole tekstowe „Notatka o podróży”
   - jedno duże pole tekstowe w języku polskim,
@@ -108,7 +108,7 @@ VibeTravels rozwiązuje ten problem, pozwalając użytkownikowi:
   - zaznaczenie wielu opcji sygnalizuje AI, że może dobrać najbardziej rozsądny środek transportu między atrakcjami.
   - pieszo jest ignorowane między dużymi odległościami (np. między miastami/krajami), ale może być stosowane lokalnie.
 
-3.2.2. Generowanie planu
+  3.2.2. Generowanie planu
 
 - Po wypełnieniu formularza użytkownik klika przycisk „Generuj plan”.
 - Aplikacja:
@@ -127,7 +127,7 @@ VibeTravels rozwiązuje ten problem, pozwalając użytkownikowi:
     - orientacyjny czas transportu między atrakcjami lub blokami, zgodnie z wybraną opcją transportu,
     - dopasowanie intensywności do komfortu zwiedzania (np. mniej atrakcji przy trybie „relaks”, więcej przy „intensywne zwiedzanie”).
 
-  3.2.3. Nazwa planu
+    3.2.3. Nazwa planu
 
 - Po wygenerowaniu planu aplikacja automatycznie nadaje nazwę, na przykład:
   - „[Destynacja], [data_start] – [data_koniec]”.
@@ -148,7 +148,7 @@ VibeTravels rozwiązuje ten problem, pozwalając użytkownikowi:
   - jeśli użytkownik próbuje stworzyć nowy plan, mając już 10:
     - aplikacja wyświetla komunikat informujący, że należy najpierw usunąć istniejący plan.
 
-  3.3.2. Szczegóły planu
+    3.3.2. Szczegóły planu
 
 - Po kliknięciu planu na liście użytkownik przechodzi do widoku szczegółowego.
 - Widok szczegółowy zawiera:
@@ -166,7 +166,7 @@ VibeTravels rozwiązuje ten problem, pozwalając użytkownikowi:
       - opcjonalnie informacja o czasie transportu,
   - dostęp (bez konieczności eksponowania UI) do pierwotnej notatki, powiązanej z planem, do celów ponownego generowania.
 
-  3.3.3. Edycja planu
+    3.3.3. Edycja planu
 
 - Użytkownik może w widoku szczegółowym:
   - edytować nazwę planu,
@@ -180,7 +180,7 @@ VibeTravels rozwiązuje ten problem, pozwalając użytkownikowi:
   - uruchomić ponowne generowanie planu na podstawie zaktualizowanej notatki i parametrów:
     - nowy plan zastępuje poprzednią wersję (brak wersjonowania w MVP).
 
-  3.3.4. Ostrzeżenia o „przeładowaniu” planu
+    3.3.4. Ostrzeżenia o „przeładowaniu” planu
 
 - Po wygenerowaniu planu:
   - system może obliczyć sumaryczny czas atrakcji oraz transportu dla danego bloku/dnia.
@@ -191,7 +191,7 @@ VibeTravels rozwiązuje ten problem, pozwalając użytkownikowi:
   - nie blokują zapisu planu,
   - nie powodują automatycznych korekt planu.
 
-  3.3.5. Usuwanie planów
+    3.3.5. Usuwanie planów
 
 - Użytkownik może usunąć plan z:
   - widoku listy,
@@ -202,7 +202,7 @@ VibeTravels rozwiązuje ten problem, pozwalając użytkownikowi:
   - plan jest trwale usuwany z konta użytkownika.
   - jeśli użytkownik był przy limicie 10 planów, po usunięciu może utworzyć nowy plan.
 
-  3.4. Panel admina
+    3.4. Panel admina
 
 - Dla kont z rolą admin dostępny jest prosty panel administracyjny.
 - Funkcjonalności panelu admina:
@@ -212,7 +212,7 @@ VibeTravels rozwiązuje ten problem, pozwalając użytkownikowi:
     - bez rozbudowanego filtrowania, sortowania i wykresów,
   - dane prezentowane w ujęciu „od początku działania systemu” (all‑time).
 
-  3.5. Analityka i logowanie zdarzeń
+    3.5. Analityka i logowanie zdarzeń
 
 - System powinien rejestrować co najmniej następujące zdarzenia:
   - account_created
@@ -564,7 +564,7 @@ Kryteria akceptacji:
   - Sposób pomiaru:
     - analiza eventów plan_generated.
 
-  6.2. Metryki pomocnicze
+    6.2. Metryki pomocnicze
 
 - Średnia liczba planów na użytkownika:
   - liczba wszystkich planów / liczba wszystkich użytkowników.
@@ -573,7 +573,7 @@ Kryteria akceptacji:
 - Częstość ponownego generowania:
   - liczba zdarzeń plan_regenerated / liczba planów lub użytkowników.
 
-  6.3. Weryfikacja jakości doświadczenia
+    6.3. Weryfikacja jakości doświadczenia
 
 Choć MVP nie zakłada formalnych badań zewnętrznych, wewnętrzne testy powinny sprawdzić:
 
