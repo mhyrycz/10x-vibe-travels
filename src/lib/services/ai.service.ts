@@ -9,6 +9,8 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "../../db/database.types";
 import type { CreatePlanDto } from "../../types";
 import { getUserPreferences } from "./userPreferences.service";
+import { OpenRouterService } from "./openrouter";
+import { z } from "zod";
 
 // ============================================================================
 // Type Definitions
@@ -153,12 +155,41 @@ export function generateMockItinerary(params: CreatePlanDto): AIItineraryRespons
 }
 
 // ============================================================================
+// Zod Schema Definition
+// ============================================================================
+
+/**
+ * Zod schema for validating AI-generated itinerary responses
+ * Matches the AIItineraryResponse interface structure
+ */
+const activitySchema = z.object({
+  title: z.string(),
+  duration_minutes: z.number(),
+  transport_minutes: z.number().nullable(),
+});
+
+const blockSchema = z.object({
+  morning: z.array(activitySchema),
+  afternoon: z.array(activitySchema),
+  evening: z.array(activitySchema),
+});
+
+const daySchema = z.object({
+  day_index: z.number(),
+  activities: blockSchema,
+});
+
+const itinerarySchema = z.object({
+  days: z.array(daySchema),
+});
+
+// ============================================================================
 // OpenRouter.ai Integration (Production Mode)
 // ============================================================================
 
 /**
  * Calls OpenRouter.ai API to generate travel itinerary
- * Uses Claude 3.5 Sonnet for high-quality travel planning
+ * Uses new OpenRouterService with structured outputs
  *
  * @param params - Plan creation parameters
  * @param userAge - User's age for personalized activity recommendations
@@ -172,20 +203,26 @@ async function callOpenRouterAI(
   userCountry?: string
 ): Promise<AIItineraryResponse> {
   const apiKey = import.meta.env.OPENROUTER_API_KEY;
-  const baseUrl = import.meta.env.OPENROUTER_BASE_URL || "https://openrouter.ai/api/v1";
+  const baseUrl = import.meta.env.OPENROUTER_BASE_URL;
 
   if (!apiKey) {
     throw new Error("OPENROUTER_API_KEY environment variable is not set");
   }
+
+  // Initialize OpenRouter service
+  const openRouter = new OpenRouterService({
+    apiKey,
+    baseUrl,
+    defaultTimeout: 60000,
+    enableLogging: import.meta.env.DEV,
+  });
 
   // Calculate trip length
   const startDate = new Date(params.date_start);
   const endDate = new Date(params.date_end);
   const dayCount = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
 
-  // Build prompt
-  const systemPrompt = `You are an expert travel planning assistant. Create detailed, realistic travel itineraries based on user preferences. Return responses in valid JSON format only.`;
-
+  // Build transport information
   const transportInfo =
     params.transport_modes && params.transport_modes.length > 0
       ? `Preferred transport: ${params.transport_modes.join(", ")}`
@@ -201,6 +238,11 @@ async function callOpenRouterAI(
   }
   const userContextInfo = userContext.length > 0 ? `\n- ${userContext.join("\n- ")}` : "";
 
+  // Build system message
+  const systemMessage =
+    "You are an expert travel planning assistant. Create detailed, realistic travel itineraries based on user preferences.";
+
+  // Build user prompt
   const userPrompt = `Create a detailed ${dayCount}-day travel itinerary for ${params.destination_text}.
 
 Trip Details:
@@ -213,20 +255,6 @@ Trip Details:
 
 User Notes: ${params.note_text}
 
-Create an itinerary with activities for morning, afternoon, and evening for each day. Return ONLY valid JSON in this exact format:
-{
-  "days": [
-    {
-      "day_index": 1,
-      "activities": {
-        "morning": [{"title": "Activity name", "duration_minutes": 120, "transport_minutes": 15}],
-        "afternoon": [{"title": "Activity name", "duration_minutes": 90, "transport_minutes": 10}],
-        "evening": [{"title": "Activity name", "duration_minutes": 120, "transport_minutes": 20}]
-      }
-    }
-  ]
-}
-
 Guidelines:
 - Each block should have 1-3 activities
 - duration_minutes: 60-180 for main activities
@@ -235,64 +263,22 @@ Guidelines:
 - Match budget level with activity choices
 - Include specific, actionable activities (not generic descriptions)`;
 
-  // Make API request with timeout
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout
+  // Call OpenRouter service with structured output
+  const response = await openRouter.chat<AIItineraryResponse>({
+    messages: [
+      { role: "system", content: systemMessage },
+      { role: "user", content: userPrompt },
+    ],
+    responseSchema: {
+      name: "travel_itinerary",
+      description: "Structured travel itinerary with daily activities organized by time blocks",
+      schema: itinerarySchema,
+    },
+    temperature: 0.7,
+    maxTokens: 4000,
+  });
 
-  try {
-    const response = await fetch(`${baseUrl}/chat/completions`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "anthropic/claude-3.5-sonnet",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt },
-        ],
-        temperature: 0.7,
-        max_tokens: 4000,
-      }),
-      signal: controller.signal,
-    });
-
-    clearTimeout(timeoutId);
-
-    if (!response.ok) {
-      throw new Error(`OpenRouter API error: ${response.status} ${response.statusText}`);
-    }
-
-    const data = await response.json();
-    const content = data.choices?.[0]?.message?.content;
-
-    if (!content) {
-      throw new Error("No content in AI response");
-    }
-
-    // Parse JSON from AI response
-    const jsonMatch = content.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
-      throw new Error("Could not extract JSON from AI response");
-    }
-
-    const itinerary = JSON.parse(jsonMatch[0]) as AIItineraryResponse;
-
-    // Validate response structure
-    if (!itinerary.days || !Array.isArray(itinerary.days)) {
-      throw new Error("Invalid itinerary structure: missing days array");
-    }
-
-    return itinerary;
-  } catch (error) {
-    if (error instanceof Error && error.name === "AbortError") {
-      throw new Error("AI service timeout - please try again");
-    }
-    throw error;
-  } finally {
-    clearTimeout(timeoutId);
-  }
+  return response.data;
 }
 
 // ============================================================================

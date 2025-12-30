@@ -55,13 +55,29 @@ Prerequisites
 
 Environment variables
 
-You will need to provide credentials for Supabase and OpenRouter (or your AI provider). Example env vars to set in a `.env` file (these names are suggestions — update according to your implementation):
+You will need to provide credentials for Supabase and OpenRouter. Create a `.env` file in the project root:
 
-```
-SUPABASE_URL=your-supabase-url
-SUPABASE_ANON_KEY=your-supabase-anon-key
+```bash
+# Supabase Configuration
+SUPABASE_URL=your-supabase-project-url
+SUPABASE_KEY=your-supabase-anon-key
+
+# OpenRouter.ai Configuration
 OPENROUTER_API_KEY=your-openrouter-api-key
+
+# Development Mode (optional)
+USE_MOCK_AI=true  # Set to 'false' to use real AI API
 ```
+
+**Getting OpenRouter API Key:**
+
+1. Sign up at [OpenRouter.ai](https://openrouter.ai)
+2. Navigate to [API Keys](https://openrouter.ai/keys)
+3. Create a new API key
+4. Set spending limits to control costs
+5. Copy the key to your `.env` file
+
+The service uses `gpt-4o-mini` model by default for cost efficiency. You can test the connection without using credits by keeping `USE_MOCK_AI=true` during development.
 
 Install and run locally
 

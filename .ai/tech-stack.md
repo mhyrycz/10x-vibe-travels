@@ -17,6 +17,17 @@ AI - Komunikacja z modelami przez usługę Openrouter.ai:
 
 - Dostęp do szerokiej gamy modeli (OpenAI, Anthropic, Google i wiele innych), które pozwolą nam znaleźć rozwiązanie zapewniające wysoką efektywność i niskie koszta
 - Pozwala na ustawianie limitów finansowych na klucze API
+- Implementacja:
+  - Type-safe wrapper w `/src/lib/services/openrouter/` z pełnym TypeScript typowaniem
+  - Strukturowane outputy (Structured Outputs) używające Zod schematów i JSON Schema
+  - Automatyczna walidacja odpowiedzi AI z Zod
+  - Retry logic z exponential backoff dla obsługi błędów tymczasowych
+  - Custom error classes dla różnych scenariuszy błędów (auth, rate limit, timeout, validation)
+  - Hardcoded model: `gpt-4o-mini-2024-07-18` (optymalizacja kosztów)
+  - Mock mode dla development (USE_MOCK_AI=true) aby unikać kosztów API podczas developmentu
+  - Request/response logging w trybie development
+  - Timeout management (60s default, configurowalny)
+  - Connection testing endpoint do weryfikacji konfiguracji API
 
 CI/CD i Hosting:
 
