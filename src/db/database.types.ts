@@ -65,6 +65,7 @@ export interface Database {
         Row: {
           created_at: string;
           day_id: string;
+          description: string | null;
           duration_minutes: number;
           id: string;
           order_index: number;
@@ -75,6 +76,7 @@ export interface Database {
         Insert: {
           created_at?: string;
           day_id: string;
+          description?: string | null;
           duration_minutes: number;
           id?: string;
           order_index: number;
@@ -85,6 +87,7 @@ export interface Database {
         Update: {
           created_at?: string;
           day_id?: string;
+          description?: string | null;
           duration_minutes?: number;
           id?: string;
           order_index?: number;

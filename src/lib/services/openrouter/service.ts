@@ -410,20 +410,36 @@ export class OpenRouterService {
     }
 
     // Extract JSON from content (handle markdown code blocks)
-    const jsonMatch = content.match(/\{[\s\S]*\}/);
+    // First try to extract from markdown code blocks
+    const markdownMatch = content.match(/```(?:json)?\s*(\{[\s\S]*?\})\s*```/);
+    const jsonMatch = markdownMatch ? markdownMatch[1] : content.match(/\{[\s\S]*\}/)?.[0];
+
     if (!jsonMatch) {
       throw new OpenRouterApiError("Could not extract JSON from API response", 200, {
-        contentSample: content.substring(0, 200),
+        contentSample: content.substring(0, 500),
+      });
+    }
+
+    // Check if JSON appears complete (basic check for closing brace)
+    const openBraces = (jsonMatch.match(/\{/g) || []).length;
+    const closeBraces = (jsonMatch.match(/\}/g) || []).length;
+    if (openBraces !== closeBraces) {
+      throw new OpenRouterApiError("Incomplete JSON in API response (mismatched braces)", 200, {
+        contentSample: jsonMatch.substring(0, 500),
+        openBraces,
+        closeBraces,
+        hint: "Response may have been truncated. Consider increasing maxTokens.",
       });
     }
 
     // Parse JSON string
     let parsedData: unknown;
     try {
-      parsedData = JSON.parse(jsonMatch[0]);
-    } catch {
+      parsedData = JSON.parse(jsonMatch);
+    } catch (error) {
       throw new OpenRouterApiError("Failed to parse JSON from API response", 200, {
-        contentSample: jsonMatch[0].substring(0, 200),
+        contentSample: jsonMatch.substring(0, 500),
+        parseError: error instanceof Error ? error.message : "Unknown parse error",
       });
     }
 
@@ -480,6 +496,21 @@ export class OpenRouterService {
 
       // Extract and validate response content
       const content = apiResponse.choices[0].message.content;
+      const finishReason = apiResponse.choices[0].finish_reason;
+
+      // Check if response was truncated due to token limit
+      if (finishReason === "length") {
+        console.warn(`⚠️ Response truncated due to token limit. Consider increasing maxTokens.`);
+        console.log(`📊 Token usage: ${apiResponse.usage.completion_tokens} completion tokens`);
+      }
+
+      // Debug: Log content length and check if it's truncated
+      console.log(`📊 Response content length: ${content.length} chars, finish_reason: ${finishReason}`);
+      if (content.length > 500) {
+        console.log(`📝 Content preview (first 300 chars): ${content.substring(0, 300)}`);
+        console.log(`📝 Content preview (last 300 chars): ${content.substring(content.length - 300)}`);
+      }
+
       const data = this.parseAndValidateResponse(content, options.responseSchema.schema);
 
       // Build typed response
@@ -491,7 +522,7 @@ export class OpenRouterService {
           completionTokens: apiResponse.usage.completion_tokens,
           totalTokens: apiResponse.usage.total_tokens,
         },
-        finishReason: apiResponse.choices[0].finish_reason,
+        finishReason: finishReason,
         requestId,
       };
 

@@ -54,16 +54,27 @@ function transformActivityToViewModel(activity: ActivityDto, dayId: string): Act
   const transportMinutes = activity.transport_minutes ?? 0;
   const formattedTransport = transportMinutes > 0 ? formatDuration(transportMinutes) : null;
 
+  // Format timestamps
+  const createdDate = new Date(activity.created_at);
+  const updatedDate = new Date(activity.updated_at);
+  const formattedCreatedAt = `Created: ${format(createdDate, "MMM d, yyyy, h:mm a")}`;
+  const formattedUpdatedAt = `Updated: ${format(updatedDate, "MMM d, yyyy, h:mm a")}`;
+
   return {
     id: activity.id,
     dayId,
     title: activity.title,
+    description: activity.description,
     durationMinutes: activity.duration_minutes,
     formattedDuration,
     transportMinutes,
     formattedTransport,
     hasTransport: transportMinutes > 0,
     orderIndex: activity.order_index,
+    createdAt: activity.created_at,
+    updatedAt: activity.updated_at,
+    formattedCreatedAt,
+    formattedUpdatedAt,
   };
 }
 

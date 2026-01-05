@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Clock, AlertTriangle } from "lucide-react";
+import { Clock, AlertTriangle, Plus } from "lucide-react";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { useDroppable } from "@dnd-kit/core";
 import { ActivityCard } from "./ActivityCard";
@@ -9,9 +10,11 @@ import type { DayViewModel } from "./types";
 interface DayCardProps {
   day: DayViewModel;
   onEditActivity: (activityId: string) => void;
+  onDeleteActivity: (activityId: string) => void;
+  onAddActivity: (dayId: string) => void;
 }
 
-export function DayCard({ day, onEditActivity }: DayCardProps) {
+export function DayCard({ day, onEditActivity, onDeleteActivity, onAddActivity }: DayCardProps) {
   const { setNodeRef, isOver } = useDroppable({
     id: day.id,
   });
@@ -25,9 +28,15 @@ export function DayCard({ day, onEditActivity }: DayCardProps) {
           <CardTitle>
             Day {day.dayIndex} - {day.formattedDate}
           </CardTitle>
-          <div className="flex items-center gap-1 text-sm text-muted-foreground">
-            <Clock className="h-4 w-4" />
-            <span>{day.formattedDuration}</span>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1 text-sm text-muted-foreground">
+              <Clock className="h-4 w-4" />
+              <span>{day.formattedDuration}</span>
+            </div>
+            <Button variant="outline" size="sm" onClick={() => onAddActivity(day.id)}>
+              <Plus className="h-4 w-4 mr-1" />
+              Add Activity
+            </Button>
           </div>
         </div>
       </CardHeader>
@@ -48,7 +57,12 @@ export function DayCard({ day, onEditActivity }: DayCardProps) {
               <p className="text-sm text-muted-foreground text-center py-4">No activities for this day</p>
             ) : (
               day.activities.map((activity) => (
-                <ActivityCard key={activity.id} activity={activity} onEdit={() => onEditActivity(activity.id)} />
+                <ActivityCard
+                  key={activity.id}
+                  activity={activity}
+                  onEdit={() => onEditActivity(activity.id)}
+                  onDelete={() => onDeleteActivity(activity.id)}
+                />
               ))
             )}
           </SortableContext>

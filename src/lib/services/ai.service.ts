@@ -23,6 +23,7 @@ export interface AIActivityResponse {
   title: string;
   duration_minutes: number;
   transport_minutes: number | null;
+  description: string;
 }
 
 /**
@@ -126,6 +127,7 @@ export function generateMockItinerary(params: CreatePlanDto): AIItineraryRespons
         title: `${destinationPrefix}${activityTitle}`,
         duration_minutes: 60 + Math.floor(Math.random() * 120), // 60-180 minutes
         transport_minutes: j === 0 && dayIndex === 1 ? 15 : Math.floor(Math.random() * 25) + 5, // 5-30 minutes
+        description: `Experience ${activityTitle.toLowerCase()} in ${destination_text}. This activity offers a unique opportunity to explore and enjoy the local culture and attractions.`,
       });
     }
 
@@ -150,6 +152,7 @@ const activitySchema = z.object({
   title: z.string(),
   duration_minutes: z.number(),
   transport_minutes: z.number().nullable(),
+  description: z.string().max(500),
 });
 
 const daySchema = z.object({
@@ -238,10 +241,12 @@ Guidelines:
 - Activities should be in logical sequential order (but without specific times)
 - duration_minutes: 60-180 for main activities
 - transport_minutes: 5-30 for travel between locations (can be null if walking distance)
+- description: For each activity, provide a detailed description (up to 500 characters) explaining what visitors will experience, see, or do. Include information about the proposed transport type
 - Avoid morning/afternoon/evening labels - just list activities in order
 - Consider the comfort level when determining activity count and pacing
 - Match budget level with activity choices
-- Include specific, actionable activities (not generic descriptions)`;
+- Include specific, actionable activities (not generic descriptions)
+- Descriptions must be written in English language`;
 
   // Call OpenRouter service with structured output
   const response = await openRouter.chat<AIItineraryResponse>({
@@ -255,7 +260,7 @@ Guidelines:
       schema: itinerarySchema,
     },
     temperature: 0.7,
-    maxTokens: 4000,
+    maxTokens: 8000, // Increased to accommodate activity descriptions
   });
 
   return response.data;

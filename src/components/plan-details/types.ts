@@ -50,10 +50,15 @@ export interface ActivityViewModel {
   id: string;
   dayId: string; // Reference to parent day
   title: string;
+  description: string | null;
   durationMinutes: number;
   formattedDuration: string; // e.g., "2h" or "45min"
   transportMinutes: number;
   formattedTransport: string | null; // e.g., "15min" or null if 0
   hasTransport: boolean; // computed from transportMinutes > 0
   orderIndex: number;
+  createdAt: string; // ISO timestamp
+  updatedAt: string; // ISO timestamp
+  formattedCreatedAt: string; // e.g., "Created: Jan 5, 2026, 10:30 AM"
+  formattedUpdatedAt: string; // e.g., "Updated: Jan 5, 2026, 2:45 PM"
 }

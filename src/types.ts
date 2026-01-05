@@ -113,6 +113,7 @@ export type PlanListItemDto = Pick<Plan, "id" | "name" | "destination_text" | "d
  * Used in nested plan responses
  *
  * Omits day_id as it's implied by parent day context
+ * Includes description for AI-generated context and custom activity notes
  */
 export type ActivityDto = Omit<PlanActivity, "day_id">;
 
@@ -157,8 +158,19 @@ export type PlanUpdatedDto = Pick<Plan, "id" | "name" | "budget" | "note_text" |
  * PATCH /api/plans/{planId}/activities/{activityId}
  */
 export type UpdateActivityDto = Partial<
-  Pick<TablesUpdate<"plan_activities">, "title" | "duration_minutes" | "transport_minutes">
+  Pick<TablesUpdate<"plan_activities">, "title" | "duration_minutes" | "transport_minutes" | "description">
 >;
+
+/**
+ * DTO for creating custom activity
+ * POST /api/plans/{planId}/days/{dayId}/activities
+ */
+export interface CreateActivityDto {
+  title: string;
+  description?: string | null;
+  duration_minutes?: number;
+  transport_minutes?: number | null;
+}
 
 /**
  * Command Model for moving activity to different day/position

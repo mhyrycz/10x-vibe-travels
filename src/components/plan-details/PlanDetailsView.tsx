@@ -29,8 +29,10 @@ import { DayCard } from "./DayCard";
 import { ActivityCard } from "./ActivityCard";
 import { EditPlanModal } from "./EditPlanModal";
 import { EditActivityModal } from "./EditActivityModal";
+import { AddActivityModal } from "./AddActivityModal";
 import { RegeneratePlanModal } from "./RegeneratePlanModal";
 import { DeletePlanDialog } from "./DeletePlanDialog";
+import { DeleteActivityDialog } from "./DeleteActivityDialog";
 import type { ActivityViewModel } from "./types";
 import { useNavigate } from "@/lib/navigation";
 
@@ -48,6 +50,8 @@ export function PlanDetailsView({ planId }: PlanDetailsViewProps) {
   const [isRegenerateModalOpen, setIsRegenerateModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [editActivityId, setEditActivityId] = useState<string | null>(null);
+  const [addActivityDayId, setAddActivityDayId] = useState<string | null>(null);
+  const [deleteActivityId, setDeleteActivityId] = useState<string | null>(null);
 
   // Drag-and-drop state
   const [activeActivity, setActiveActivity] = useState<ActivityViewModel | null>(null);
@@ -182,6 +186,11 @@ export function PlanDetailsView({ planId }: PlanDetailsViewProps) {
     ? viewModel.days.flatMap((day) => day.activities).find((activity) => activity.id === editActivityId)
     : null;
 
+  // Find activity for delete dialog
+  const activityToDelete = deleteActivityId
+    ? viewModel.days.flatMap((day) => day.activities).find((activity) => activity.id === deleteActivityId)
+    : null;
+
   const handlePlanDeleted = () => {
     // Navigate to plans list with View Transition
     if (typeof window !== "undefined") {
@@ -223,7 +232,13 @@ export function PlanDetailsView({ planId }: PlanDetailsViewProps) {
         {/* Days list with flat activities - Responsive spacing */}
         <div className="space-y-6 md:space-y-8">
           {viewModel.days.map((day) => (
-            <DayCard key={day.id} day={day} onEditActivity={(activityId) => setEditActivityId(activityId)} />
+            <DayCard
+              key={day.id}
+              day={day}
+              onEditActivity={(activityId) => setEditActivityId(activityId)}
+              onDeleteActivity={(activityId) => setDeleteActivityId(activityId)}
+              onAddActivity={(dayId) => setAddActivityDayId(dayId)}
+            />
           ))}
         </div>
 
@@ -247,10 +262,31 @@ export function PlanDetailsView({ planId }: PlanDetailsViewProps) {
             planId={planId}
           />
         )}
+
+        {addActivityDayId && (
+          <AddActivityModal
+            open={!!addActivityDayId}
+            onOpenChange={(open) => !open && setAddActivityDayId(null)}
+            planId={planId}
+            dayId={addActivityDayId}
+          />
+        )}
+
+        {activityToDelete && (
+          <DeleteActivityDialog
+            open={!!deleteActivityId}
+            onOpenChange={(open) => !open && setDeleteActivityId(null)}
+            planId={planId}
+            activityId={activityToDelete.id}
+            activityTitle={activityToDelete.title}
+          />
+        )}
       </div>
 
       {/* Drag overlay */}
-      <DragOverlay>{activeActivity ? <ActivityCard activity={activeActivity} onEdit={() => {}} /> : null}</DragOverlay>
+      <DragOverlay>
+        {activeActivity ? <ActivityCard activity={activeActivity} onEdit={() => {}} onDelete={() => {}} /> : null}
+      </DragOverlay>
     </DndContext>
   );
 }

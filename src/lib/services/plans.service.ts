@@ -286,6 +286,7 @@ async function insertPlanItineraryData(
     const activitiesToInsert = aiDay.activities.map((activity, idx) => ({
       day_id: day.id,
       title: activity.title,
+      description: activity.description,
       duration_minutes: activity.duration_minutes,
       transport_minutes: activity.transport_minutes,
       order_index: idx + 1,
@@ -538,6 +539,7 @@ async function fetchCompletePlan(
       const activitiesDto: ActivityDto[] = (activities || []).map((activity) => ({
         id: activity.id,
         title: activity.title,
+        description: activity.description,
         duration_minutes: activity.duration_minutes,
         transport_minutes: activity.transport_minutes,
         order_index: activity.order_index,
