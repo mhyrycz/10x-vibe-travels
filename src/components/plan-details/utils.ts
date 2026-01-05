@@ -5,8 +5,8 @@
  */
 
 import { format } from "date-fns";
-import type { PlanDto, BlockDto, ActivityDto } from "../../types";
-import type { PlanDetailsViewModel, DayViewModel, BlockViewModel, ActivityViewModel } from "./types";
+import type { PlanDto, ActivityDto } from "../../types";
+import type { PlanDetailsViewModel, DayViewModel, ActivityViewModel } from "./types";
 
 /**
  * Formats duration in minutes to human-readable string
@@ -47,24 +47,16 @@ export function formatDateRange(start: string, end: string): string {
 }
 
 /**
- * Capitalizes first letter of a string
- * @param str - Input string
- * @returns Capitalized string
- */
-function capitalize(str: string): string {
-  return str.charAt(0).toUpperCase() + str.slice(1);
-}
-
-/**
  * Transforms activity DTO to ViewModel
  */
-function transformActivityToViewModel(activity: ActivityDto): ActivityViewModel {
+function transformActivityToViewModel(activity: ActivityDto, dayId: string): ActivityViewModel {
   const formattedDuration = formatDuration(activity.duration_minutes);
   const transportMinutes = activity.transport_minutes ?? 0;
   const formattedTransport = transportMinutes > 0 ? formatDuration(transportMinutes) : null;
 
   return {
     id: activity.id,
+    dayId,
     title: activity.title,
     durationMinutes: activity.duration_minutes,
     formattedDuration,
@@ -76,23 +68,7 @@ function transformActivityToViewModel(activity: ActivityDto): ActivityViewModel 
 }
 
 /**
- * Transforms block DTO to ViewModel
- */
-function transformBlockToViewModel(block: BlockDto): BlockViewModel {
-  return {
-    id: block.id,
-    blockType: block.block_type,
-    blockLabel: capitalize(block.block_type),
-    totalDurationMinutes: block.total_duration_minutes,
-    formattedDuration: formatDuration(block.total_duration_minutes),
-    warning: block.warning,
-    hasWarning: block.warning !== null,
-    activities: block.activities.map(transformActivityToViewModel),
-  };
-}
-
-/**
- * Transforms day DTO to ViewModel
+ * Transforms day DTO to ViewModel with flat activities
  */
 function transformDayToViewModel(day: PlanDto["days"][0]): DayViewModel {
   const dayDate = new Date(day.day_date);
@@ -103,7 +79,11 @@ function transformDayToViewModel(day: PlanDto["days"][0]): DayViewModel {
     dayIndex: day.day_index,
     dayDate: day.day_date,
     formattedDate,
-    blocks: day.blocks.map(transformBlockToViewModel),
+    totalDurationMinutes: day.total_duration_minutes,
+    formattedDuration: formatDuration(day.total_duration_minutes),
+    warning: day.warning,
+    hasWarning: day.warning !== null,
+    activities: day.activities.map((activity) => transformActivityToViewModel(activity, day.id)),
   };
 }
 
@@ -114,8 +94,8 @@ function transformDayToViewModel(day: PlanDto["days"][0]): DayViewModel {
 export function transformPlanToViewModel(planDto: PlanDto): PlanDetailsViewModel {
   const formattedDateRange = formatDateRange(planDto.date_start, planDto.date_end);
 
-  // Check if any block in any day has warnings
-  const hasWarnings = planDto.days.some((day) => day.blocks.some((block) => block.warning !== null));
+  // Check if any day has warnings
+  const hasWarnings = planDto.days.some((day) => day.warning !== null);
 
   return {
     id: planDto.id,

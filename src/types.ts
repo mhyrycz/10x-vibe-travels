@@ -15,7 +15,6 @@ import type { Tables, TablesInsert, TablesUpdate, Enums } from "./db/database.ty
 type UserPreferences = Tables<"user_preferences">;
 type Plan = Tables<"plans">;
 type PlanDay = Tables<"plan_days">;
-type PlanBlock = Tables<"plan_blocks">;
 type PlanActivity = Tables<"plan_activities">;
 type Event = Tables<"events">;
 
@@ -23,7 +22,6 @@ type UserRoleEnum = Enums<"user_role_enum">;
 type TripTypeEnum = Enums<"trip_type_enum">;
 type ComfortLevelEnum = Enums<"comfort_level_enum">;
 type BudgetLevelEnum = Enums<"budget_level_enum">;
-type BlockTypeEnum = Enums<"block_type_enum">;
 type EventTypeEnum = Enums<"event_type_enum">;
 type TransportModeEnum = Enums<"transport_mode_enum">;
 
@@ -111,35 +109,28 @@ export type RegeneratePlanDto = Partial<
 export type PlanListItemDto = Pick<Plan, "id" | "name" | "destination_text" | "date_start" | "date_end" | "created_at">;
 
 /**
- * DTO for activity within a plan block
+ * DTO for activity within a day
  * Used in nested plan responses
  *
- * Omits block_id as it's implied by parent block context
+ * Omits day_id as it's implied by parent day context
  */
-export type ActivityDto = Omit<PlanActivity, "block_id">;
+export type ActivityDto = Omit<PlanActivity, "day_id">;
 
 /**
- * DTO for plan block with nested activities and computed warnings
- * Used in nested plan/day responses
+ * DTO for plan day with nested activities and computed warnings
+ * Used in nested plan responses
  *
  * Includes computed fields:
+ * - activities: Flat array of activities for the day
  * - total_duration_minutes: Sum of all activity durations + transport times
- * - warning: Alert message if block exceeds recommended time thresholds
- */
-export type BlockDto = Omit<PlanBlock, "day_id" | "created_at"> & {
-  activities: ActivityDto[];
-  total_duration_minutes: number;
-  warning: string | null;
-};
-
-/**
- * DTO for plan day with nested blocks
- * Used in nested plan responses
+ * - warning: Alert message if day exceeds 12 hours
  *
  * Omits plan_id as it's implied by parent plan context
  */
 export type DayDto = Omit<PlanDay, "plan_id" | "created_at" | "updated_at"> & {
-  blocks: BlockDto[];
+  activities: ActivityDto[];
+  total_duration_minutes: number;
+  warning: string | null;
 };
 
 /**
@@ -170,11 +161,11 @@ export type UpdateActivityDto = Partial<
 >;
 
 /**
- * Command Model for moving activity to different block/position
+ * Command Model for moving activity to different day/position
  * POST /api/plans/{planId}/activities/{activityId}/move
  */
 export interface MoveActivityDto {
-  target_block_id: string;
+  target_day_id: string;
   target_order_index: number;
 }
 
@@ -347,12 +338,4 @@ export type AdminPlansQueryDto = ListQueryDto & {
 // Re-export Enums for Convenience
 // ============================================================================
 
-export type {
-  UserRoleEnum,
-  TripTypeEnum,
-  ComfortLevelEnum,
-  BudgetLevelEnum,
-  BlockTypeEnum,
-  EventTypeEnum,
-  TransportModeEnum,
-};
+export type { UserRoleEnum, TripTypeEnum, ComfortLevelEnum, BudgetLevelEnum, EventTypeEnum, TransportModeEnum };

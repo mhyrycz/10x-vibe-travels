@@ -12,16 +12,7 @@
 import { z } from "zod";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database, Tables } from "../../db/database.types";
-import type {
-  CreatePlanDto,
-  RegeneratePlanDto,
-  PlanDto,
-  DayDto,
-  BlockDto,
-  ActivityDto,
-  PaginatedPlansDto,
-  BlockTypeEnum,
-} from "../../types";
+import type { CreatePlanDto, RegeneratePlanDto, PlanDto, DayDto, ActivityDto, PaginatedPlansDto } from "../../types";
 import { generatePlanItinerary, type AIItineraryResponse } from "./ai.service";
 import { logPlanGenerated, logPlanEdited, logPlanDeleted, logPlanRegenerated } from "./events.service";
 import { checkRateLimit } from "./rateLimiter.service";
@@ -225,15 +216,12 @@ async function generateAIItinerary(
 }
 
 /**
- * Calculates total duration for a block and generates warning if too long
+ * Calculates total duration for a day and generates warning if too long
  *
- * @param activities - Array of activities in the block
+ * @param activities - Array of activities in the day
  * @returns Object with total duration and warning message
  */
-function calculateBlockMetrics(
-  activities: ActivityDto[],
-  blockType: BlockTypeEnum
-): {
+function calculateDayMetrics(activities: ActivityDto[]): {
   total_duration_minutes: number;
   warning: string | null;
 } {
@@ -241,16 +229,12 @@ function calculateBlockMetrics(
     return sum + activity.duration_minutes + (activity.transport_minutes || 0);
   }, 0);
 
-  // Generate warning based on block type thresholds
+  // Generate warning if day exceeds 12 hours (720 minutes)
   let warning: string | null = null;
   const hours = Math.round((totalDuration / 60) * 10) / 10; // Round to 1 decimal
 
-  if (blockType === "morning" && totalDuration > 240) {
-    warning = `This morning block is quite packed (${hours} hours). Consider spacing activities.`;
-  } else if (blockType === "afternoon" && totalDuration > 300) {
-    warning = `This afternoon block is quite packed (${hours} hours). Consider spacing activities.`;
-  } else if (blockType === "evening" && totalDuration > 240) {
-    warning = `This evening block is quite packed (${hours} hours). Consider spacing activities.`;
+  if (totalDuration > 720) {
+    warning = `This day may be too intensive - ${hours} hours total`;
   }
 
   return {
@@ -260,7 +244,7 @@ function calculateBlockMetrics(
 }
 
 /**
- * Inserts days, blocks, and activities for a plan
+ * Inserts days and activities for a plan
  * Shared by createPlan and regeneratePlan to avoid code duplication
  *
  * @param supabase - Supabase client instance
@@ -293,57 +277,19 @@ async function insertPlanItineraryData(
     return createErrorResult("INTERNAL_ERROR", "Failed to create plan days");
   }
 
-  // Step 2: Insert blocks and activities for each day
+  // Step 2: Insert activities for each day
   for (let i = 0; i < insertedDays.length; i++) {
     const day = insertedDays[i];
     const aiDay = aiItinerary.days[i];
 
-    // Insert 3 blocks per day (morning, afternoon, evening)
-    const blocksToInsert = [
-      { day_id: day.id, block_type: "morning" as const },
-      { day_id: day.id, block_type: "afternoon" as const },
-      { day_id: day.id, block_type: "evening" as const },
-    ];
-
-    const { data: insertedBlocks, error: blocksError } = await supabase
-      .from("plan_blocks")
-      .insert(blocksToInsert)
-      .select();
-
-    if (blocksError || !insertedBlocks || insertedBlocks.length !== 3) {
-      console.error("Error creating plan blocks:", blocksError);
-      return createErrorResult("INTERNAL_ERROR", "Failed to create plan blocks");
-    }
-
-    // Insert activities for each block
-    const morningBlock = insertedBlocks.find((b) => b.block_type === "morning");
-    const afternoonBlock = insertedBlocks.find((b) => b.block_type === "afternoon");
-    const eveningBlock = insertedBlocks.find((b) => b.block_type === "evening");
-
-    if (!morningBlock || !afternoonBlock || !eveningBlock) {
-      console.error("Missing required blocks for day");
-      return createErrorResult("INTERNAL_ERROR", "Failed to create plan blocks");
-    }
-
-    // Helper to map activities for a given block
-    function mapActivitiesForBlock(
-      block: { block_type: BlockTypeEnum; created_at: string; day_id: string; id: string },
-      activities: AIItineraryResponse["days"][number]["activities"]["morning"]
-    ) {
-      return activities.map((activity, idx) => ({
-        block_id: block.id,
-        title: activity.title,
-        duration_minutes: activity.duration_minutes,
-        transport_minutes: activity.transport_minutes,
-        order_index: idx + 1,
-      }));
-    }
-
-    const activitiesToInsert = [
-      ...mapActivitiesForBlock(morningBlock, aiDay.activities.morning),
-      ...mapActivitiesForBlock(afternoonBlock, aiDay.activities.afternoon),
-      ...mapActivitiesForBlock(eveningBlock, aiDay.activities.evening),
-    ];
+    // Map activities with sequential order_index
+    const activitiesToInsert = aiDay.activities.map((activity, idx) => ({
+      day_id: day.id,
+      title: activity.title,
+      duration_minutes: activity.duration_minutes,
+      transport_minutes: activity.transport_minutes,
+      order_index: idx + 1,
+    }));
 
     const { error: activitiesError } = await supabase.from("plan_activities").insert(activitiesToInsert);
 
@@ -374,7 +320,7 @@ async function insertPlanItineraryData(
  * 3. Generate plan name from destination and dates
  * 4. Call AI service to generate itinerary
  * 5. Insert plan record
- * 6. Insert plan_days, plan_blocks, and plan_activities
+ * 6. Insert plan_days and plan_activities
  * 7. Fetch complete plan with nested structure
  * 8. Log plan_generated event
  * 9. Return complete PlanDto
@@ -547,7 +493,7 @@ export async function updatePlan(
 }
 
 /**
- * Fetches complete plan with nested days, blocks, and activities
+ * Fetches complete plan with nested days and activities
  *
  * @param supabase - Supabase client instance
  * @param planId - Plan ID
@@ -576,59 +522,44 @@ async function fetchCompletePlan(
       return { data: null, error: new Error("Failed to fetch days") };
     }
 
-    // Fetch blocks and activities for each day
-    const daysWithBlocks: DayDto[] = [];
+    // Fetch activities for each day
+    const daysWithActivities: DayDto[] = [];
     for (const day of days || []) {
-      const { data: blocks, error: blocksError } = await supabase.from("plan_blocks").select("*").eq("day_id", day.id);
+      const { data: activities, error: activitiesError } = await supabase
+        .from("plan_activities")
+        .select("*")
+        .eq("day_id", day.id)
+        .order("order_index");
 
-      if (blocksError) {
-        return { data: null, error: new Error("Failed to fetch blocks") };
+      if (activitiesError) {
+        return { data: null, error: new Error("Failed to fetch activities") };
       }
 
-      const blocksWithActivities: BlockDto[] = [];
-      for (const block of blocks || []) {
-        const { data: activities, error: activitiesError } = await supabase
-          .from("plan_activities")
-          .select("*")
-          .eq("block_id", block.id)
-          .order("order_index");
+      const activitiesDto: ActivityDto[] = (activities || []).map((activity) => ({
+        id: activity.id,
+        title: activity.title,
+        duration_minutes: activity.duration_minutes,
+        transport_minutes: activity.transport_minutes,
+        order_index: activity.order_index,
+        created_at: activity.created_at,
+        updated_at: activity.updated_at,
+      }));
 
-        if (activitiesError) {
-          return { data: null, error: new Error("Failed to fetch activities") };
-        }
+      const metrics = calculateDayMetrics(activitiesDto);
 
-        const activitiesDto: ActivityDto[] = (activities || []).map((activity) => ({
-          id: activity.id,
-          title: activity.title,
-          duration_minutes: activity.duration_minutes,
-          transport_minutes: activity.transport_minutes,
-          order_index: activity.order_index,
-          created_at: activity.created_at,
-          updated_at: activity.updated_at,
-        }));
-
-        const metrics = calculateBlockMetrics(activitiesDto, block.block_type);
-
-        blocksWithActivities.push({
-          id: block.id,
-          block_type: block.block_type,
-          activities: activitiesDto,
-          total_duration_minutes: metrics.total_duration_minutes,
-          warning: metrics.warning,
-        });
-      }
-
-      daysWithBlocks.push({
+      daysWithActivities.push({
         id: day.id,
         day_index: day.day_index,
         day_date: day.day_date,
-        blocks: blocksWithActivities,
+        activities: activitiesDto,
+        total_duration_minutes: metrics.total_duration_minutes,
+        warning: metrics.warning,
       });
     }
 
     const completePlan: PlanDto = {
       ...plan,
-      days: daysWithBlocks,
+      days: daysWithActivities,
     };
 
     return { data: completePlan, error: null };
@@ -802,7 +733,7 @@ export async function listPlans(
  * - INTERNAL_ERROR: Database error during deletion
  *
  * Note: Deletion is permanent and irreversible. Database cascading automatically
- * deletes all associated plan_days, plan_blocks, and plan_activities.
+ * deletes all associated plan_days and plan_activities.
  */
 export async function deletePlan(
   supabase: SupabaseClient<Database>,
@@ -966,7 +897,7 @@ export async function regeneratePlan(
       return createErrorResult("INTERNAL_ERROR", "Failed to delete old itinerary");
     }
 
-    // Step 8: Insert new days, blocks, and activities
+    // Step 8: Insert new days and activities
     const insertionResult = await insertPlanItineraryData(supabase, planId, aiItinerary, mergedParams.date_start);
     if (!insertionResult.success) {
       return insertionResult;

@@ -85,11 +85,7 @@ export const GET: APIRoute = async ({ params, locals }) => {
     console.log(`✅ Plan ${planId} fetched successfully:`, {
       planName: result.data.name,
       days: result.data.days.length,
-      totalBlocks: result.data.days.reduce((sum, day) => sum + day.blocks.length, 0),
-      totalActivities: result.data.days.reduce(
-        (sum, day) => sum + day.blocks.reduce((blockSum, block) => blockSum + block.activities.length, 0),
-        0
-      ),
+      totalActivities: result.data.days.reduce((sum, day) => sum + day.activities.length, 0),
     });
 
     return new Response(JSON.stringify(result.data), {
@@ -254,7 +250,7 @@ export const PATCH: APIRoute = async ({ request, params, locals }) => {
  * @returns 500 Internal Server Error on unexpected errors
  *
  * Note: Deletion is permanent and irreversible. The database automatically
- * cascades the deletion to all associated plan_days, plan_blocks, and plan_activities.
+ * cascades the deletion to all associated plan_days and plan_activities.
  */
 export const DELETE: APIRoute = async ({ params, locals }) => {
   try {

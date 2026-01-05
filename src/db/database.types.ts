@@ -63,8 +63,8 @@ export interface Database {
       };
       plan_activities: {
         Row: {
-          block_id: string;
           created_at: string;
+          day_id: string;
           duration_minutes: number;
           id: string;
           order_index: number;
@@ -73,8 +73,8 @@ export interface Database {
           updated_at: string;
         };
         Insert: {
-          block_id: string;
           created_at?: string;
+          day_id: string;
           duration_minutes: number;
           id?: string;
           order_index: number;
@@ -83,8 +83,8 @@ export interface Database {
           updated_at?: string;
         };
         Update: {
-          block_id?: string;
           created_at?: string;
+          day_id?: string;
           duration_minutes?: number;
           id?: string;
           order_index?: number;
@@ -94,36 +94,7 @@ export interface Database {
         };
         Relationships: [
           {
-            foreignKeyName: "plan_activities_block_id_fkey";
-            columns: ["block_id"];
-            isOneToOne: false;
-            referencedRelation: "plan_blocks";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
-      plan_blocks: {
-        Row: {
-          block_type: Database["public"]["Enums"]["block_type_enum"];
-          created_at: string;
-          day_id: string;
-          id: string;
-        };
-        Insert: {
-          block_type: Database["public"]["Enums"]["block_type_enum"];
-          created_at?: string;
-          day_id: string;
-          id?: string;
-        };
-        Update: {
-          block_type?: Database["public"]["Enums"]["block_type_enum"];
-          created_at?: string;
-          day_id?: string;
-          id?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "plan_blocks_day_id_fkey";
+            foreignKeyName: "plan_activities_day_id_fkey";
             columns: ["day_id"];
             isOneToOne: false;
             referencedRelation: "plan_days";
@@ -280,12 +251,12 @@ export interface Database {
       move_activity_transaction: {
         Args: {
           p_activity_id: string;
-          p_target_block_id: string;
+          p_target_day_id: string;
           p_target_order_index: number;
         };
         Returns: {
-          block_id: string;
           created_at: string;
+          day_id: string;
           duration_minutes: number;
           id: string;
           order_index: number;
@@ -296,7 +267,6 @@ export interface Database {
       };
     };
     Enums: {
-      block_type_enum: "morning" | "afternoon" | "evening";
       budget_level_enum: "budget" | "moderate" | "luxury";
       comfort_level_enum: "relax" | "balanced" | "intense";
       event_type_enum:
@@ -429,7 +399,6 @@ export const Constants = {
   },
   public: {
     Enums: {
-      block_type_enum: ["morning", "afternoon", "evening"],
       budget_level_enum: ["budget", "moderate", "luxury"],
       comfort_level_enum: ["relax", "balanced", "intense"],
       event_type_enum: [

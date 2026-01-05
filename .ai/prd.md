@@ -108,7 +108,7 @@ VibeTravels rozwiązuje ten problem, pozwalając użytkownikowi:
   - zaznaczenie wielu opcji sygnalizuje AI, że może dobrać najbardziej rozsądny środek transportu między atrakcjami.
   - pieszo jest ignorowane między dużymi odległościami (np. między miastami/krajami), ale może być stosowane lokalnie.
 
-  3.2.2. Generowanie planu
+    3.2.2. Generowanie planu
 
 - Po wypełnieniu formularza użytkownik klika przycisk „Generuj plan”.
 - Aplikacja:
@@ -127,7 +127,7 @@ VibeTravels rozwiązuje ten problem, pozwalając użytkownikowi:
     - orientacyjny czas transportu między atrakcjami lub blokami, zgodnie z wybraną opcją transportu,
     - dopasowanie intensywności do komfortu zwiedzania (np. mniej atrakcji przy trybie „relaks”, więcej przy „intensywne zwiedzanie”).
 
-    3.2.3. Nazwa planu
+      3.2.3. Nazwa planu
 
 - Po wygenerowaniu planu aplikacja automatycznie nadaje nazwę, na przykład:
   - „[Destynacja], [data_start] – [data_koniec]”.
@@ -148,7 +148,7 @@ VibeTravels rozwiązuje ten problem, pozwalając użytkownikowi:
   - jeśli użytkownik próbuje stworzyć nowy plan, mając już 10:
     - aplikacja wyświetla komunikat informujący, że należy najpierw usunąć istniejący plan.
 
-    3.3.2. Szczegóły planu
+      3.3.2. Szczegóły planu
 
 - Po kliknięciu planu na liście użytkownik przechodzi do widoku szczegółowego.
 - Widok szczegółowy zawiera:
@@ -180,7 +180,7 @@ VibeTravels rozwiązuje ten problem, pozwalając użytkownikowi:
   - uruchomić ponowne generowanie planu na podstawie zaktualizowanej notatki i parametrów:
     - nowy plan zastępuje poprzednią wersję (brak wersjonowania w MVP).
 
-    3.3.4. Ostrzeżenia o „przeładowaniu” planu
+      3.3.4. Ostrzeżenia o „przeładowaniu” planu
 
 - Po wygenerowaniu planu:
   - system może obliczyć sumaryczny czas atrakcji oraz transportu dla danego bloku/dnia.
@@ -564,7 +564,7 @@ Kryteria akceptacji:
   - Sposób pomiaru:
     - analiza eventów plan_generated.
 
-    6.2. Metryki pomocnicze
+      6.2. Metryki pomocnicze
 
 - Średnia liczba planów na użytkownika:
   - liczba wszystkich planów / liczba wszystkich użytkowników.

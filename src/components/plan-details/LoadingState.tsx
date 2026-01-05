@@ -33,24 +33,12 @@ export function LoadingState() {
           <div key={dayIndex} className="rounded-lg border border-gray-200 bg-white p-6">
             <Skeleton className="mb-4 h-7 w-64" />
 
-            {/* Block skeletons */}
-            <div className="space-y-4">
-              {Array.from({ length: 3 }).map((_, blockIndex) => (
-                <div key={blockIndex} className="rounded-md border border-gray-100 p-4">
-                  <div className="mb-3 flex items-center gap-2">
-                    <Skeleton className="h-6 w-24" />
-                    <Skeleton className="h-5 w-16" />
-                  </div>
-
-                  {/* Activity skeletons */}
-                  <div className="space-y-2">
-                    {Array.from({ length: 2 }).map((_, activityIndex) => (
-                      <div key={activityIndex} className="rounded border border-gray-100 bg-gray-50 p-3">
-                        <Skeleton className="mb-2 h-5 w-3/4" />
-                        <Skeleton className="h-4 w-1/3" />
-                      </div>
-                    ))}
-                  </div>
+            {/* Activity skeletons */}
+            <div className="space-y-3">
+              {Array.from({ length: 4 }).map((_, activityIndex) => (
+                <div key={activityIndex} className="rounded border border-gray-100 bg-gray-50 p-3">
+                  <Skeleton className="mb-2 h-5 w-3/4" />
+                  <Skeleton className="h-4 w-1/3" />
                 </div>
               ))}
             </div>

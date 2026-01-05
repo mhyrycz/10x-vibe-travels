@@ -5,7 +5,7 @@
  * strings, computed properties, and denormalized data for efficient rendering.
  */
 
-import type { TripTypeEnum, ComfortLevelEnum, BudgetLevelEnum, TransportModeEnum, BlockTypeEnum } from "../../types";
+import type { TripTypeEnum, ComfortLevelEnum, BudgetLevelEnum, TransportModeEnum } from "../../types";
 
 /**
  * ViewModel for the entire plan details view
@@ -24,30 +24,20 @@ export interface PlanDetailsViewModel {
   budget: BudgetLevelEnum;
   transportModes: TransportModeEnum[];
   noteText: string | null;
-  hasWarnings: boolean; // true if any block has warning !== null
+  hasWarnings: boolean; // true if any day has warning !== null
   days: DayViewModel[];
 }
 
 /**
- * ViewModel for a single day
+ * ViewModel for a single day with activities and computed warnings
  */
 export interface DayViewModel {
   id: string;
   dayIndex: number; // 1-based
   dayDate: string; // ISO date
   formattedDate: string; // e.g., "Monday, June 15, 2025"
-  blocks: BlockViewModel[];
-}
-
-/**
- * ViewModel for a time block
- */
-export interface BlockViewModel {
-  id: string;
-  blockType: BlockTypeEnum; // 'morning' | 'afternoon' | 'evening'
-  blockLabel: string; // e.g., "Morning", "Afternoon", "Evening"
   totalDurationMinutes: number;
-  formattedDuration: string; // e.g., "2h 15min"
+  formattedDuration: string; // e.g., "8h 30min"
   warning: string | null;
   hasWarning: boolean; // computed from warning !== null
   activities: ActivityViewModel[];
@@ -58,6 +48,7 @@ export interface BlockViewModel {
  */
 export interface ActivityViewModel {
   id: string;
+  dayId: string; // Reference to parent day
   title: string;
   durationMinutes: number;
   formattedDuration: string; // e.g., "2h" or "45min"
@@ -65,14 +56,4 @@ export interface ActivityViewModel {
   formattedTransport: string | null; // e.g., "15min" or null if 0
   hasTransport: boolean; // computed from transportMinutes > 0
   orderIndex: number;
-}
-
-/**
- * Helper type for block selection in EditActivityModal
- */
-export interface BlockOption {
-  id: string;
-  label: string; // e.g., "Day 1 - Morning", "Day 2 - Afternoon"
-  dayIndex: number;
-  blockType: BlockTypeEnum;
 }

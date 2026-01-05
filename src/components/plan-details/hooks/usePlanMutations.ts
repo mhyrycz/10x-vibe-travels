@@ -96,12 +96,9 @@ export function useUpdateActivity(planId: string, activityId: string) {
           ...previousPlan,
           days: previousPlan.days.map((day) => ({
             ...day,
-            blocks: day.blocks.map((block) => ({
-              ...block,
-              activities: block.activities.map((activity) =>
-                activity.id === activityId ? { ...activity, ...data } : activity
-              ),
-            })),
+            activities: day.activities.map((activity) =>
+              activity.id === activityId ? { ...activity, ...data } : activity
+            ),
           })),
         };
         queryClient.setQueryData<PlanDto>(["plan", planId], updatedPlan);
@@ -125,7 +122,7 @@ export function useUpdateActivity(planId: string, activityId: string) {
 }
 
 /**
- * Hook for moving activity to different block/position
+ * Hook for moving activity to different day/position
  * POST /api/plans/{planId}/activities/{activityId}/move
  */
 export function useMoveActivity(planId: string) {
@@ -155,44 +152,34 @@ export function useMoveActivity(planId: string) {
 
       // Optimistically update activity position
       if (previousPlan) {
-        type ActivityType = PlanDto["days"][0]["blocks"][0]["activities"][0];
+        type ActivityType = PlanDto["days"][0]["activities"][0];
         let activityToMove: ActivityType | null = null;
         let sourceDayIndex = -1;
-        let sourceBlockIndex = -1;
         let sourceActivityIndex = -1;
 
         // Find the activity to move
         previousPlan.days.forEach((day, dIdx) => {
-          day.blocks.forEach((block, bIdx) => {
-            block.activities.forEach((activity, aIdx) => {
-              if (activity.id === activityId) {
-                activityToMove = activity;
-                sourceDayIndex = dIdx;
-                sourceBlockIndex = bIdx;
-                sourceActivityIndex = aIdx;
-              }
-            });
+          day.activities.forEach((activity, aIdx) => {
+            if (activity.id === activityId) {
+              activityToMove = activity;
+              sourceDayIndex = dIdx;
+              sourceActivityIndex = aIdx;
+            }
           });
         });
 
         if (activityToMove) {
           // Remove from source
           const updatedPlan = JSON.parse(JSON.stringify(previousPlan)) as PlanDto;
-          updatedPlan.days[sourceDayIndex].blocks[sourceBlockIndex].activities.splice(sourceActivityIndex, 1);
+          updatedPlan.days[sourceDayIndex].activities.splice(sourceActivityIndex, 1);
 
-          // Add to target
+          // Add to target day
           type DayType = PlanDto["days"][0];
-          type BlockType = DayType["blocks"][0];
-          const targetDay = updatedPlan.days.find((day: DayType) =>
-            day.blocks.some((block: BlockType) => block.id === data.target_block_id)
-          );
+          const targetDay = updatedPlan.days.find((day: DayType) => day.id === data.target_day_id);
           if (targetDay) {
-            const targetBlock = targetDay.blocks.find((block: BlockType) => block.id === data.target_block_id);
-            if (targetBlock) {
-              const activity = activityToMove as ActivityType;
-              // Note: ActivityDto omits block_id, no need to set it in optimistic update
-              targetBlock.activities.splice(data.target_order_index, 0, activity);
-            }
+            const activity = activityToMove as ActivityType;
+            // Insert at specified order_index (convert to 0-based array index)
+            targetDay.activities.splice(data.target_order_index - 1, 0, activity);
           }
 
           queryClient.setQueryData<PlanDto>(["plan", planId], updatedPlan);
@@ -219,7 +206,7 @@ export function useMoveActivity(planId: string) {
  * Hook for regenerating plan itinerary with updated parameters
  * POST /api/plans/{planId}/regenerate
  *
- * This is a destructive operation that replaces all days/blocks/activities
+ * This is a destructive operation that replaces all days and activities
  * No optimistic update as the entire structure changes
  */
 export function useRegeneratePlan(planId: string) {

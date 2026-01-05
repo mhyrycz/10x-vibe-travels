@@ -17,7 +17,7 @@ import { z } from "zod";
 // ============================================================================
 
 /**
- * Represents a single activity within a time block
+ * Represents a single activity in a day
  */
 export interface AIActivityResponse {
   title: string;
@@ -26,20 +26,11 @@ export interface AIActivityResponse {
 }
 
 /**
- * Represents a time block (morning, afternoon, evening) with activities
- */
-export interface AIBlockResponse {
-  morning: AIActivityResponse[];
-  afternoon: AIActivityResponse[];
-  evening: AIActivityResponse[];
-}
-
-/**
- * Represents a single day in the itinerary
+ * Represents a single day in the itinerary with flat activities
  */
 export interface AIDayResponse {
   day_index: number;
-  activities: AIBlockResponse;
+  activities: AIActivityResponse[];
 }
 
 /**
@@ -55,7 +46,8 @@ export interface AIItineraryResponse {
 
 /**
  * Generates a realistic mock travel itinerary for development/testing
- * Creates varied activities across morning, afternoon, and evening blocks
+ * Creates 3-6 sequential activities per day based on comfort level
+ * No time-of-day blocks - activities are generated in logical sequence
  * Note: Mock generator does not use user preferences (age/country) for simplicity
  *
  * @param params - Plan creation parameters
@@ -69,43 +61,49 @@ export function generateMockItinerary(params: CreatePlanDto): AIItineraryRespons
   const endDate = new Date(date_end);
   const dayCount = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
 
-  // Sample activity templates based on comfort level
+  // Activity count based on comfort level
+  const activityCounts = {
+    relax: [3, 4], // 3-4 activities per day
+    balanced: [4, 5], // 4-5 activities per day
+    intense: [5, 6], // 5-6 activities per day
+  };
+
+  const [minActivities, maxActivities] = activityCounts[comfort] || activityCounts.balanced;
+
+  // Sample activity templates - no time-of-day references
   const activityPool = {
-    relax: {
-      morning: [
-        "Leisurely breakfast at hotel",
-        "Morning walk in the park",
-        "Visit local café",
-        "Gentle sightseeing tour",
-      ],
-      afternoon: [
-        "Lunch at scenic restaurant",
-        "Visit museum at own pace",
-        "Shopping in local markets",
-        "Relax at spa",
-      ],
-      evening: ["Sunset viewing", "Dinner at recommended restaurant", "Evening stroll", "Local cultural show"],
-    },
-    balanced: {
-      morning: ["Breakfast and city exploration", "Guided walking tour", "Visit main attractions", "Local market tour"],
-      afternoon: [
-        "Lunch at traditional restaurant",
-        "Museum or gallery visit",
-        "Afternoon activity or workshop",
-        "Explore neighborhood",
-      ],
-      evening: [
-        "Dinner at popular restaurant",
-        "Evening entertainment",
-        "Night market visit",
-        "Local nightlife experience",
-      ],
-    },
-    intense: {
-      morning: ["Early start with breakfast", "Full morning tour", "Adventure activity", "Multiple attraction visits"],
-      afternoon: ["Quick lunch break", "Afternoon adventures", "Active exploration", "Sports or outdoor activity"],
-      evening: ["Dinner on the go", "Evening activities", "Nightlife exploration", "Late-night sightseeing"],
-    },
+    relax: [
+      "Leisurely breakfast at hotel",
+      "Gentle sightseeing tour",
+      "Visit local café",
+      "Lunch at scenic restaurant",
+      "Relax at spa",
+      "Sunset viewing",
+      "Dinner at recommended restaurant",
+      "Evening stroll",
+    ],
+    balanced: [
+      "Breakfast and city exploration",
+      "Visit main attractions",
+      "Guided walking tour",
+      "Lunch at traditional restaurant",
+      "Museum or gallery visit",
+      "Explore neighborhood",
+      "Dinner at popular restaurant",
+      "Evening entertainment",
+    ],
+    intense: [
+      "Early start with breakfast",
+      "Full city tour",
+      "Adventure activity",
+      "Multiple attraction visits",
+      "Quick lunch break",
+      "Active exploration",
+      "Sports or outdoor activity",
+      "Dinner on the go",
+      "Nightlife exploration",
+      "Late-night sightseeing",
+    ],
   };
 
   const activities = activityPool[comfort] || activityPool.balanced;
@@ -115,39 +113,25 @@ export function generateMockItinerary(params: CreatePlanDto): AIItineraryRespons
   for (let i = 0; i < dayCount; i++) {
     const dayIndex = i + 1;
 
-    // Select random activities for each block
-    const morningActivity = activities.morning[i % activities.morning.length];
-    const afternoonActivity = activities.afternoon[i % activities.afternoon.length];
-    const eveningActivity = activities.evening[i % activities.evening.length];
+    // Random activity count for variety within range
+    const activityCount = minActivities + Math.floor(Math.random() * (maxActivities - minActivities + 1));
 
-    // Add destination context to first day
-    const destinationPrefix = dayIndex === 1 ? `${destination_text} - ` : "";
+    const dayActivities: AIActivityResponse[] = [];
+
+    for (let j = 0; j < activityCount; j++) {
+      const activityTitle = activities[(i * activityCount + j) % activities.length];
+      const destinationPrefix = dayIndex === 1 && j === 0 ? `${destination_text} - ` : "";
+
+      dayActivities.push({
+        title: `${destinationPrefix}${activityTitle}`,
+        duration_minutes: 60 + Math.floor(Math.random() * 120), // 60-180 minutes
+        transport_minutes: j === 0 && dayIndex === 1 ? 15 : Math.floor(Math.random() * 25) + 5, // 5-30 minutes
+      });
+    }
 
     days.push({
       day_index: dayIndex,
-      activities: {
-        morning: [
-          {
-            title: `${destinationPrefix}${morningActivity}`,
-            duration_minutes: 120 + Math.floor(Math.random() * 60), // 120-180 minutes
-            transport_minutes: dayIndex === 1 ? 15 : Math.floor(Math.random() * 20) + 5, // 5-25 minutes
-          },
-        ],
-        afternoon: [
-          {
-            title: afternoonActivity,
-            duration_minutes: 90 + Math.floor(Math.random() * 90), // 90-180 minutes
-            transport_minutes: Math.floor(Math.random() * 25) + 5, // 5-30 minutes
-          },
-        ],
-        evening: [
-          {
-            title: eveningActivity,
-            duration_minutes: 90 + Math.floor(Math.random() * 60), // 90-150 minutes
-            transport_minutes: Math.floor(Math.random() * 20) + 5, // 5-25 minutes
-          },
-        ],
-      },
+      activities: dayActivities,
     });
   }
 
@@ -160,7 +144,7 @@ export function generateMockItinerary(params: CreatePlanDto): AIItineraryRespons
 
 /**
  * Zod schema for validating AI-generated itinerary responses
- * Matches the AIItineraryResponse interface structure
+ * Matches the AIItineraryResponse interface structure with flat activities
  */
 const activitySchema = z.object({
   title: z.string(),
@@ -168,15 +152,9 @@ const activitySchema = z.object({
   transport_minutes: z.number().nullable(),
 });
 
-const blockSchema = z.object({
-  morning: z.array(activitySchema),
-  afternoon: z.array(activitySchema),
-  evening: z.array(activitySchema),
-});
-
 const daySchema = z.object({
   day_index: z.number(),
-  activities: blockSchema,
+  activities: z.array(activitySchema),
 });
 
 const itinerarySchema = z.object({
@@ -249,17 +227,19 @@ Trip Details:
 - Dates: ${params.date_start} to ${params.date_end}
 - Travelers: ${params.people_count} ${params.people_count === 1 ? "person" : "people"}
 - Trip Type: ${params.trip_type}
-- Comfort Level: ${params.comfort} (relax=leisurely pace, balanced=moderate pace, intense=packed schedule)
+- Comfort Level: ${params.comfort} (relax=3-4 activities/day, balanced=4-5 activities/day, intense=5-6 activities/day)
 - Budget: ${params.budget}
 - ${transportInfo}${userContextInfo}
 
 User Notes: ${params.note_text}
 
 Guidelines:
-- Each block should have 1-3 activities
+- Generate 3-6 activities per day based on comfort level
+- Activities should be in logical sequential order (but without specific times)
 - duration_minutes: 60-180 for main activities
 - transport_minutes: 5-30 for travel between locations (can be null if walking distance)
-- Consider the comfort level when scheduling activities
+- Avoid morning/afternoon/evening labels - just list activities in order
+- Consider the comfort level when determining activity count and pacing
 - Match budget level with activity choices
 - Include specific, actionable activities (not generic descriptions)`;
 
@@ -271,7 +251,7 @@ Guidelines:
     ],
     responseSchema: {
       name: "travel_itinerary",
-      description: "Structured travel itinerary with daily activities organized by time blocks",
+      description: "Structured travel itinerary with daily activities in sequential order (no time blocks)",
       schema: itinerarySchema,
     },
     temperature: 0.7,
@@ -292,7 +272,7 @@ Guidelines:
  * @param supabase - Supabase client instance for fetching user preferences
  * @param userId - User ID for fetching preferences
  * @param params - Plan creation parameters
- * @returns Structured itinerary data (days with blocks and activities)
+ * @returns Structured itinerary data (days with flat activities arrays)
  *
  * Environment Variables:
  * - USE_MOCK_AI (boolean): If true, uses mock data instead of AI API (default: true)

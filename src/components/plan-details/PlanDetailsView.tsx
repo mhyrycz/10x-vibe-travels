@@ -66,12 +66,10 @@ export function PlanDetailsView({ planId }: PlanDetailsViewProps) {
 
     // Find the dragged activity
     for (const day of viewModel.days) {
-      for (const block of day.blocks) {
-        const activity = block.activities.find((a) => a.id === active.id);
-        if (activity) {
-          setActiveActivity(activity);
-          return;
-        }
+      const activity = day.activities.find((a) => a.id === active.id);
+      if (activity) {
+        setActiveActivity(activity);
+        return;
       }
     }
   };
@@ -85,64 +83,58 @@ export function PlanDetailsView({ planId }: PlanDetailsViewProps) {
     const activityId = active.id as string;
     const overElementId = over.id as string;
 
-    // Find source block and activity
-    let sourceBlock = null;
+    // Find source day and activity
+    let sourceDay = null;
 
     for (const day of viewModel.days) {
-      for (const block of day.blocks) {
-        const index = block.activities.findIndex((a) => a.id === activityId);
-        if (index !== -1) {
-          sourceBlock = block;
-          break;
-        }
+      const index = day.activities.findIndex((a) => a.id === activityId);
+      if (index !== -1) {
+        sourceDay = day;
+        break;
       }
-      if (sourceBlock) break;
     }
 
-    if (!sourceBlock) return;
+    if (!sourceDay) return;
 
-    // Determine if dropped on activity or block
-    const allBlocks = viewModel.days.flatMap((day) => day.blocks);
-    const targetBlock = allBlocks.find((block) => block.id === overElementId);
-    const droppedOnActivity = !targetBlock;
+    // Determine if dropped on activity or day
+    const allDays = viewModel.days;
+    const targetDay = allDays.find((day) => day.id === overElementId);
+    const droppedOnActivity = !targetDay;
 
-    let finalTargetBlockId: string | undefined;
+    let finalTargetDayId: string | undefined;
     let targetOrderIndex: number | undefined;
 
     if (droppedOnActivity) {
-      // Dropped on another activity - find its block and position
+      // Dropped on another activity - find its day and position
       for (const day of viewModel.days) {
-        for (const block of day.blocks) {
-          const index = block.activities.findIndex((a) => a.id === overElementId);
-          if (index !== -1) {
-            finalTargetBlockId = block.id;
-            if (block.id === sourceBlock.id) {
-              // Moving within same block - place at target activity's position
-              targetOrderIndex = index + 1; // Convert 0-based index to 1-based position
-            } else {
-              // Moving to different block - insert after the target activity
-              targetOrderIndex = index + 2;
-            }
-            break;
+        const index = day.activities.findIndex((a) => a.id === overElementId);
+        if (index !== -1) {
+          finalTargetDayId = day.id;
+          if (day.id === sourceDay.id) {
+            // Moving within same day - place at target activity's position
+            targetOrderIndex = index + 1; // Convert 0-based index to 1-based position
+          } else {
+            // Moving to different day - insert after the target activity
+            targetOrderIndex = index + 2;
           }
+          break;
         }
-        if (finalTargetBlockId) break;
       }
     } else {
-      // Dropped directly on block
-      finalTargetBlockId = overElementId;
+      // Dropped directly on day
+      finalTargetDayId = overElementId;
 
-      // If same block and only one activity, no move needed
-      if (targetBlock.id === sourceBlock.id) {
+      // If same day and only one activity, no move needed
+      if (targetDay.id === sourceDay.id) {
         return;
       }
 
-      // Append to end of target block (1-based index)
-      targetOrderIndex = targetBlock.activities.length + 1;
+      // Append to end of target day (1-based index)
+      targetOrderIndex = targetDay.activities.length + 1;
     }
 
     // Ensure we have valid values
-    if (!finalTargetBlockId || targetOrderIndex === undefined) {
+    if (!finalTargetDayId || targetOrderIndex === undefined) {
       return;
     }
 
@@ -155,7 +147,7 @@ export function PlanDetailsView({ planId }: PlanDetailsViewProps) {
     moveActivityMutation.mutate({
       activityId,
       data: {
-        target_block_id: finalTargetBlockId,
+        target_day_id: finalTargetDayId,
         target_order_index: targetOrderIndex,
       },
     });
@@ -177,22 +169,17 @@ export function PlanDetailsView({ planId }: PlanDetailsViewProps) {
     return <ErrorState errorMessage="No plan data available" onRetry={refetch} />;
   }
 
-  // Collect all warnings from blocks
+  // Collect all warnings from days
   const allWarnings: string[] = [];
   viewModel.days.forEach((day) => {
-    day.blocks.forEach((block) => {
-      if (block.warning) {
-        allWarnings.push(`Day ${day.dayIndex}, ${block.blockLabel}: ${block.warning}`);
-      }
-    });
+    if (day.warning) {
+      allWarnings.push(`Day ${day.dayIndex}: ${day.warning}`);
+    }
   });
 
   // Find activity for edit modal
   const activityToEdit = editActivityId
-    ? viewModel.days
-        .flatMap((day) => day.blocks)
-        .flatMap((block) => block.activities)
-        .find((activity) => activity.id === editActivityId)
+    ? viewModel.days.flatMap((day) => day.activities).find((activity) => activity.id === editActivityId)
     : null;
 
   const handlePlanDeleted = () => {
@@ -230,10 +217,10 @@ export function PlanDetailsView({ planId }: PlanDetailsViewProps) {
         {/* Plan metadata card */}
         <PlanMetadata plan={viewModel} />
 
-        {/* Warning banner if any blocks have warnings */}
+        {/* Warning banner if any days have warnings */}
         <WarningBanner warnings={allWarnings} />
 
-        {/* Days list with nested blocks and activities - Responsive spacing */}
+        {/* Days list with flat activities - Responsive spacing */}
         <div className="space-y-6 md:space-y-8">
           {viewModel.days.map((day) => (
             <DayCard key={day.id} day={day} onEditActivity={(activityId) => setEditActivityId(activityId)} />
