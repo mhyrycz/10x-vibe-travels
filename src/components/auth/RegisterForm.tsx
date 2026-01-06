@@ -118,7 +118,7 @@ export default function RegisterForm() {
 
       // Success - show confirmation message and redirect to login
       setIsSuccess(true);
-    } catch (error) {
+    } catch {
       setApiError("An unexpected error occurred. Please try again.");
     } finally {
       setIsSubmitting(false);
@@ -137,8 +137,8 @@ export default function RegisterForm() {
           </div>
           <h1 className="text-3xl font-bold tracking-tight">Check Your Email</h1>
           <p className="text-muted-foreground">
-            We've sent a confirmation link to <strong>{formData.email}</strong>. Please check your inbox and click the
-            link to activate your account.
+            We&apos;ve sent a confirmation link to <strong>{formData.email}</strong>. Please check your inbox and click
+            the link to activate your account.
           </p>
         </div>
         <Button asChild className="w-full">
