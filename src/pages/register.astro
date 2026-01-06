@@ -1,0 +1,8 @@
+---
+import AuthLayout from "@/layouts/AuthLayout.astro";
+import RegisterForm from "@/components/auth/RegisterForm";
+---
+
+<AuthLayout title="Sign Up - VibeTravels">
+  <RegisterForm client:only="react" />
+</AuthLayout>
