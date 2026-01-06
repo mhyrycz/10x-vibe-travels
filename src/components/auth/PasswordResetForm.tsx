@@ -63,22 +63,18 @@ export default function PasswordResetForm() {
     setIsSubmitting(true);
 
     try {
-      // TODO: Replace with actual API call
-      // const response = await fetch('/api/auth/password-reset', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(formData),
-      // });
+      const response = await fetch("/api/auth/reset-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
 
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const data = await response.json();
 
-      // TODO: Handle real API response
-      // if (!response.ok) {
-      //   const error = await response.json();
-      //   setApiError(error.message || 'Failed to send reset email');
-      //   return;
-      // }
+      if (!response.ok) {
+        setApiError(data.error || "Failed to send reset email");
+        return;
+      }
 
       // Success - show confirmation message
       setIsSuccess(true);

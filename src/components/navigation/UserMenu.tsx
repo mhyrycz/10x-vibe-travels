@@ -16,11 +16,21 @@ import {
 } from "../ui/dropdown-menu";
 
 export default function UserMenu() {
-  const handleLogout = () => {
-    // TODO: Implement actual logout when authentication is added
-    console.log("Logout clicked");
-    // For now, just redirect to home
-    window.location.href = "/";
+  const handleLogout = async () => {
+    try {
+      const response = await fetch("/api/auth/logout", {
+        method: "POST",
+      });
+
+      if (response.ok) {
+        // Redirect to login page after successful logout
+        window.location.href = "/login";
+      } else {
+        console.error("Logout failed");
+      }
+    } catch (error) {
+      console.error("Error during logout:", error);
+    }
   };
 
   return (

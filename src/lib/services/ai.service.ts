@@ -289,9 +289,6 @@ export async function generatePlanItinerary(
   userId: string,
   params: CreatePlanDto
 ): Promise<AIItineraryResponse> {
-  // Fetch user preferences for personalization (age and country)
-  // Note: In development, all requests use DEFAULT_USER_ID, so all users share the same preferences
-  // When JWT authentication is implemented, each user will have their own preferences
   let userAge: number | undefined;
   let userCountry: string | undefined;
 

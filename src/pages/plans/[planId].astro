@@ -12,6 +12,13 @@
 import Layout from "../../layouts/Layout.astro";
 import { PlanDetailsPage } from "../../components/PlanDetailsPage";
 
+// Get authenticated user from middleware
+const user = Astro.locals.user;
+
+if (!user) {
+  return Astro.redirect("/login");
+}
+
 const { planId } = Astro.params;
 
 if (!planId) {

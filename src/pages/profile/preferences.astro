@@ -8,12 +8,12 @@
 import Layout from "../../layouts/Layout.astro";
 import EditPreferencesView from "../../components/profile/EditPreferencesView";
 
-// For development: using DEFAULT_USER_ID
-// TODO: Replace with actual JWT authentication when implemented
-const DEFAULT_USER_ID = "550e8400-e29b-41d4-a716-446655440000";
+// Get authenticated user from middleware
+const user = Astro.locals.user;
 
-// In production, check authentication here
-// For now, we proceed with DEFAULT_USER_ID
+if (!user) {
+  return Astro.redirect("/login");
+}
 ---
 
 <Layout title="Edit Preferences - VibeTravels">

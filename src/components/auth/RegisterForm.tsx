@@ -103,24 +103,20 @@ export default function RegisterForm() {
     setIsSubmitting(true);
 
     try {
-      // TODO: Replace with actual API call
-      // const response = await fetch('/api/auth/register', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ email: formData.email, password: formData.password }),
-      // });
+      const response = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: formData.email, password: formData.password }),
+      });
 
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const data = await response.json();
 
-      // TODO: Handle real API response
-      // if (!response.ok) {
-      //   const error = await response.json();
-      //   setApiError(error.message || 'Registration failed');
-      //   return;
-      // }
+      if (!response.ok) {
+        setApiError(data.error || "Registration failed");
+        return;
+      }
 
-      // Success - show confirmation message
+      // Success - show confirmation message and redirect to login
       setIsSuccess(true);
     } catch (error) {
       setApiError("An unexpected error occurred. Please try again.");

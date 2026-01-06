@@ -76,27 +76,21 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
     setIsSubmitting(true);
 
     try {
-      // TODO: Replace with actual API call
-      // const response = await fetch('/api/auth/login', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(formData),
-      // });
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
 
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const data = await response.json();
 
-      // TODO: Handle real API response
-      // if (!response.ok) {
-      //   const error = await response.json();
-      //   setApiError(error.message || 'Invalid email or password');
-      //   return;
-      // }
-
-      // Success - redirect will be handled by parent or API
-      if (onSuccess) {
-        onSuccess();
+      if (!response.ok) {
+        setApiError(data.error || "Invalid email or password");
+        return;
       }
+
+      // Success - redirect to dashboard
+      window.location.href = "/";
     } catch (error) {
       setApiError("An unexpected error occurred. Please try again.");
     } finally {

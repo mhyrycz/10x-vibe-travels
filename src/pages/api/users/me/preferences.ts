@@ -3,12 +3,11 @@
  * POST /api/users/me/preferences - Create user travel preferences during onboarding
  * GET /api/users/me/preferences - Retrieve user travel preferences
  *
- * Authentication: Uses DEFAULT_USER_ID for development (TODO: implement JWT auth)
+ * Authentication: Requires authenticated user session (enforced by middleware)
  * Rate Limit: None (onboarding endpoint)
  */
 
 import type { APIRoute } from "astro";
-import { DEFAULT_USER_ID } from "../../../../db/supabase.client";
 import {
   createUserPreferences,
   createUserPreferencesSchema,
@@ -35,8 +34,15 @@ export const POST: APIRoute = async ({ request, locals }) => {
     // Step 1: Extract Supabase client from context
     const supabase = locals.supabase;
 
-    // Step 2: Use DEFAULT_USER_ID for development (TODO: implement real JWT auth)
-    const userId = DEFAULT_USER_ID;
+    // Step 2: Get authenticated user from middleware
+    const userId = locals.user?.id;
+
+    if (!userId) {
+      return new Response(JSON.stringify({ error: { code: "UNAUTHORIZED", message: "Authentication required" } }), {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
 
     // Step 3: Parse and validate request body
     let requestBody: unknown;
@@ -128,8 +134,15 @@ export const GET: APIRoute = async ({ locals }) => {
     // Step 1: Extract Supabase client from context
     const supabase = locals.supabase;
 
-    // Step 2: Use DEFAULT_USER_ID for development (TODO: implement real JWT auth)
-    const userId = DEFAULT_USER_ID;
+    // Step 2: Get authenticated user from middleware
+    const userId = locals.user?.id;
+
+    if (!userId) {
+      return new Response(JSON.stringify({ error: { code: "UNAUTHORIZED", message: "Authentication required" } }), {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
 
     // Step 3: Call service function to retrieve preferences
     const result = await getUserPreferences(supabase, userId);
@@ -185,8 +198,15 @@ export const PATCH: APIRoute = async ({ request, locals }) => {
     // Step 1: Extract Supabase client from context
     const supabase = locals.supabase;
 
-    // Step 2: Use DEFAULT_USER_ID for development (TODO: implement real JWT auth)
-    const userId = DEFAULT_USER_ID;
+    // Step 2: Get authenticated user from middleware
+    const userId = locals.user?.id;
+
+    if (!userId) {
+      return new Response(JSON.stringify({ error: { code: "UNAUTHORIZED", message: "Authentication required" } }), {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
 
     // Step 3: Parse request body
     const body = await request.json();

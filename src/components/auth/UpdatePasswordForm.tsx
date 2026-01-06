@@ -89,26 +89,18 @@ export default function UpdatePasswordForm() {
     setIsSubmitting(true);
 
     try {
-      // TODO: Replace with actual API call
-      // Extract token from URL and send with password
-      // const urlParams = new URLSearchParams(window.location.search);
-      // const token = urlParams.get('token');
-      //
-      // const response = await fetch('/api/auth/update-password', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ password: formData.password, token }),
-      // });
+      const response = await fetch("/api/auth/update-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password: formData.password }),
+      });
 
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const data = await response.json();
 
-      // TODO: Handle real API response
-      // if (!response.ok) {
-      //   const error = await response.json();
-      //   setApiError(error.message || 'Failed to update password');
-      //   return;
-      // }
+      if (!response.ok) {
+        setApiError(data.error || "Failed to update password");
+        return;
+      }
 
       // Success - show confirmation message
       setIsSuccess(true);

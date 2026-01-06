@@ -2,12 +2,11 @@
  * Plan Details API Endpoint
  * GET /api/plans/{planId} - Retrieve complete plan with nested structure
  *
- * Authentication: Uses DEFAULT_USER_ID for development (TODO: implement JWT auth)
+ * Authentication: Requires authenticated user session (enforced by middleware)
  * Authorization: Verifies plan ownership before returning data
  */
 
 import type { APIRoute } from "astro";
-import { DEFAULT_USER_ID } from "../../../db/supabase.client";
 import { getPlanDetails, updatePlan, updatePlanSchema, deletePlan } from "../../../lib/services/plans.service";
 import type { ErrorDto, UpdatePlanDto, ErrorCode } from "../../../types";
 
@@ -39,8 +38,15 @@ export const GET: APIRoute = async ({ params, locals }) => {
     // Step 1: Extract Supabase client from context
     const supabase = locals.supabase;
 
-    // Step 2: Use DEFAULT_USER_ID for development (TODO: implement real JWT auth)
-    const userId = DEFAULT_USER_ID;
+    // Step 2: Get authenticated user from middleware
+    const userId = locals.user?.id;
+
+    if (!userId) {
+      return new Response(JSON.stringify({ error: { code: "UNAUTHORIZED", message: "Authentication required" } }), {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
 
     // Step 3: Extract planId from path parameters
     const planId = params.planId;
@@ -135,8 +141,15 @@ export const PATCH: APIRoute = async ({ request, params, locals }) => {
     // Step 1: Extract Supabase client from context
     const supabase = locals.supabase;
 
-    // Step 2: Use DEFAULT_USER_ID for development (TODO: implement real JWT auth)
-    const userId = DEFAULT_USER_ID;
+    // Step 2: Get authenticated user from middleware
+    const userId = locals.user?.id;
+
+    if (!userId) {
+      return new Response(JSON.stringify({ error: { code: "UNAUTHORIZED", message: "Authentication required" } }), {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
 
     // Step 3: Extract planId from path parameters
     const planId = params.planId;
@@ -257,8 +270,15 @@ export const DELETE: APIRoute = async ({ params, locals }) => {
     // Step 1: Extract Supabase client from context
     const supabase = locals.supabase;
 
-    // Step 2: Use DEFAULT_USER_ID for development (TODO: implement real JWT auth)
-    const userId = DEFAULT_USER_ID;
+    // Step 2: Get authenticated user from middleware
+    const userId = locals.user?.id;
+
+    if (!userId) {
+      return new Response(JSON.stringify({ error: { code: "UNAUTHORIZED", message: "Authentication required" } }), {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
 
     // Step 3: Extract planId from path parameters
     const planId = params.planId;

@@ -3,12 +3,11 @@
  * GET /api/plans - List all travel plans for authenticated user with pagination
  * POST /api/plans - Create a new travel plan with AI-generated itinerary
  *
- * Authentication: Uses DEFAULT_USER_ID for development (TODO: implement JWT auth)
+ * Authentication: Requires authenticated user session (enforced by middleware)
  * Rate Limit: 10 requests per hour per user (POST only)
  */
 
 import type { APIRoute } from "astro";
-import { DEFAULT_USER_ID } from "../../db/supabase.client";
 import { createPlan, createPlanSchema, listPlans, validateListQueryParams } from "../../lib/services/plans.service";
 import type { ErrorDto } from "../../types";
 
@@ -33,8 +32,15 @@ export const GET: APIRoute = async ({ request, locals }) => {
     // Step 1: Extract Supabase client from context
     const supabase = locals.supabase;
 
-    // Step 2: Use DEFAULT_USER_ID for development (TODO: implement real JWT auth)
-    const userId = DEFAULT_USER_ID;
+    // Step 2: Get authenticated user from middleware
+    const userId = locals.user?.id;
+
+    if (!userId) {
+      return new Response(JSON.stringify({ error: { code: "UNAUTHORIZED", message: "Authentication required" } }), {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
 
     // Step 3: Extract query parameters from URL
     const url = new URL(request.url);
@@ -118,8 +124,15 @@ export const POST: APIRoute = async ({ request, locals }) => {
     // Step 1: Extract Supabase client from context
     const supabase = locals.supabase;
 
-    // Step 2: Use DEFAULT_USER_ID for development (TODO: implement real JWT auth)
-    const userId = DEFAULT_USER_ID;
+    // Step 2: Get authenticated user from middleware
+    const userId = locals.user?.id;
+
+    if (!userId) {
+      return new Response(JSON.stringify({ error: { code: "UNAUTHORIZED", message: "Authentication required" } }), {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
 
     // Step 3: Parse request body
     const body = await request.json();

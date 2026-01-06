@@ -2,16 +2,19 @@
 import Layout from "@/layouts/Layout.astro";
 import PreferencesOnboardingView from "@/components/onboarding/PreferencesOnboardingView";
 import { getUserPreferences } from "@/lib/services/userPreferences.service";
-import { DEFAULT_USER_ID } from "@/db/supabase.client";
+
+// Get authenticated user from middleware
+const user = Astro.locals.user;
+
+if (!user) {
+  return Astro.redirect("/login");
+}
 
 // Get Supabase client from context
 const supabase = Astro.locals.supabase;
 
-// Use DEFAULT_USER_ID for development (TODO: implement real JWT auth)
-const userId = DEFAULT_USER_ID;
-
 // Check if user already has preferences
-const result = await getUserPreferences(supabase, userId);
+const result = await getUserPreferences(supabase, user.id);
 
 // If preferences exist, redirect to dashboard
 if (result.success) {

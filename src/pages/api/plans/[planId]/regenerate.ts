@@ -2,13 +2,12 @@
  * Plan Regeneration API Endpoint
  * POST /api/plans/{planId}/regenerate - Regenerate plan itinerary with AI
  *
- * Authentication: Uses DEFAULT_USER_ID for development (TODO: implement JWT auth)
+ * Authentication: Requires authenticated user session (enforced by middleware)
  * Authorization: Verifies plan ownership before regeneration
  * Rate Limiting: Shares 10/hour bucket with plan creation
  */
 
 import type { APIRoute } from "astro";
-import { DEFAULT_USER_ID } from "../../../../db/supabase.client";
 import { regeneratePlan, regeneratePlanSchema } from "../../../../lib/services/plans.service";
 import type { ErrorDto, RegeneratePlanDto } from "../../../../types";
 
@@ -44,8 +43,15 @@ export const POST: APIRoute = async ({ request, params, locals }) => {
     // Step 1: Extract Supabase client from context
     const supabase = locals.supabase;
 
-    // Step 2: Use DEFAULT_USER_ID for development (TODO: implement real JWT auth)
-    const userId = DEFAULT_USER_ID;
+    // Step 2: Get authenticated user from middleware
+    const userId = locals.user?.id;
+
+    if (!userId) {
+      return new Response(JSON.stringify({ error: { code: "UNAUTHORIZED", message: "Authentication required" } }), {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
 
     // Step 3: Extract planId from path parameters
     const planId = params.planId;
