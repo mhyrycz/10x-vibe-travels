@@ -1250,7 +1250,6 @@ export const createPlanFormSchema = z
 - Test error recovery: error -> fix -> retry
 - Test plan limit: reach limit -> delete plan -> create new
 - Verify analytics events logged correctly (plan_generated)
-- Cross-browser testing (Chrome, Firefox, Safari, Edge)
 
 ### Step 28: Documentation and Code Review
 

@@ -29,7 +29,19 @@ AI - Komunikacja z modelami przez usługę Openrouter.ai:
   - Timeout management (60s default, configurowalny)
   - Connection testing endpoint do weryfikacji konfiguracji API
 
+Testing:
+
+- Unit & Component Tests:
+  - Vitest jako framework do testów jednostkowych i komponentowych
+  - React Testing Library do testowania komponentów React w izolacji
+  - Mock Service Worker (MSW) do mockowania API w testach
+  - Zod schemas wykorzystywane do walidacji danych w testach
+- E2E Tests:
+  - Playwright jako framework do testów end-to-end
+  - Testowanie na najnowszych wersjach Chrome
+  - Symulatory urządzeń mobilnych oraz testy na rzeczywistych urządzeniach
+
 CI/CD i Hosting:
 
-- Github Actions do tworzenia pipeline’ów CI/CD
+- Github Actions do tworzenia pipeline'ów CI/CD
 - DigitalOcean do hostowania aplikacji za pośrednictwem obrazu docker

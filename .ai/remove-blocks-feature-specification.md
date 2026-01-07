@@ -600,7 +600,7 @@ Acceptance Criteria:
 - AC-019.3: Test dragging activity in plan with 10 days shows no lag
 - AC-019.4: Test dragging activity in plan with 50 activities shows no lag
 - AC-019.5: Test multiple rapid drag-and-drop operations without errors
-- AC-019.6: Test drag-and-drop on Chrome, Firefox, Safari browsers
+- AC-019.6: Test drag-and-drop on Chrome browser
 - AC-019.7: Test touch drag-and-drop on tablet devices
 - AC-019.8: Test collision detection correctly identifies drop zones
 - AC-019.9: Test drop indicators appear immediately during drag

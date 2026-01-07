@@ -1049,9 +1049,7 @@ console.error("Preferences creation failed:", {
 - Perform end-to-end testing on staging environment
 - Test with real database and API (not mocks)
 - Verify event logging works in production environment
-- Test on various devices and browsers:
-  - Chrome, Firefox, Safari (desktop)
-  - iOS Safari, Android Chrome (mobile)
+- Test on Chrome (desktop, mobile)
 - Get stakeholder approval
 - Deploy to production
 - Monitor error logs and user completion rates

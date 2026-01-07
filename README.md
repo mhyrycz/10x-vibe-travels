@@ -32,6 +32,7 @@ For full product requirements and scope see `.ai/prd.md`.
 - UI primitives: shadcn/ui, Radix where needed
 - Backend: Supabase (Postgres + Auth + SDK)
 - AI: Integration via OpenRouter.ai (model gateway)
+- Testing: Vitest + React Testing Library (unit/component), Playwright (E2E)
 - CI / Hosting: GitHub Actions (planned), DigitalOcean (Docker image target)
 
 Key dependencies (see `package.json`):
@@ -45,6 +46,13 @@ Key dependencies (see `package.json`):
 Dev tooling:
 
 - ESLint + TypeScript ESLint, Prettier (with `prettier-plugin-astro`), Husky, lint-staged
+
+Testing:
+
+- `vitest` - Fast unit test framework
+- `@testing-library/react` - Testing utilities for React components
+- `@playwright/test` - End-to-end testing framework
+- `msw` - API mocking for tests (planned)
 
 ## Getting started locally
 
@@ -111,6 +119,10 @@ All scripts are defined in `package.json`.
 - `npm run lint` — Run ESLint across the project.
 - `npm run lint:fix` — Run ESLint with `--fix` to auto-fix problems.
 - `npm run format` — Run Prettier to format files (uses `prettier-plugin-astro`).
+- `npm run test` — Run unit and component tests with Vitest (planned).
+- `npm run test:ui` — Run Vitest with UI mode for visual test management (planned).
+- `npm run test:e2e` — Run end-to-end tests with Playwright (planned).
+- `npm run test:coverage` — Generate test coverage report (planned).
 
 Lint-staged hooks are configured to run ESLint and Prettier on staged files.
 
