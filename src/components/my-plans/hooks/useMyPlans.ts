@@ -13,8 +13,8 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
-import type { PaginatedPlansDto } from "../../types";
-import type { MyPlansViewModel, PlanCardViewModel } from "../my-plans/types";
+import type { PaginatedPlansDto } from "../../../types";
+import type { MyPlansViewModel, PlanCardViewModel } from "../types";
 
 const PLAN_LIMIT = 10;
 

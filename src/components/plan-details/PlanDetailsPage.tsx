@@ -5,8 +5,8 @@
  * This is an Astro island that needs its own React Query context.
  */
 
-import { QueryClientProvider } from "./QueryClientProvider";
-import { PlanDetailsView } from "./plan-details/PlanDetailsView";
+import { QueryClientProvider } from "../QueryClientProvider";
+import { PlanDetailsView } from "./PlanDetailsView";
 
 interface PlanDetailsPageProps {
   planId: string;

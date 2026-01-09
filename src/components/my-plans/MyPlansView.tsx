@@ -7,11 +7,11 @@
  */
 
 import { useMyPlans } from "./hooks/useMyPlans";
-import { HeaderSection } from "./my-plans/HeaderSection";
-import { PlanGrid } from "./my-plans/PlanGrid";
-import { LoadingState } from "./my-plans/LoadingState";
-import { EmptyState } from "./my-plans/EmptyState";
-import { ErrorState } from "./my-plans/ErrorState";
+import { HeaderSection } from "./HeaderSection";
+import { PlanGrid } from "./PlanGrid";
+import { LoadingState } from "./LoadingState";
+import { EmptyState } from "./EmptyState";
+import { ErrorState } from "./ErrorState";
 
 const PLAN_LIMIT = 10;
 
