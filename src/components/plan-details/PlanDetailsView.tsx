@@ -20,6 +20,7 @@ import {
 } from "@dnd-kit/core";
 import { usePlan } from "./hooks/usePlan";
 import { useMoveActivity } from "./hooks/usePlanMutations";
+import { calculateDropPosition } from "./utils";
 import { LoadingState } from "./LoadingState";
 import { ErrorState } from "./ErrorState";
 import { PlanHeader } from "./PlanHeader";
@@ -87,72 +88,22 @@ export function PlanDetailsView({ planId }: PlanDetailsViewProps) {
     const activityId = active.id as string;
     const overElementId = over.id as string;
 
-    // Find source day and activity
-    let sourceDay = null;
+    // Calculate drop position using pure function
+    const result = calculateDropPosition({
+      activityId,
+      overElementId,
+      days: viewModel.days,
+    });
 
-    for (const day of viewModel.days) {
-      const index = day.activities.findIndex((a) => a.id === activityId);
-      if (index !== -1) {
-        sourceDay = day;
-        break;
-      }
-    }
+    // No valid move calculated
+    if (!result) return;
 
-    if (!sourceDay) return;
-
-    // Determine if dropped on activity or day
-    const allDays = viewModel.days;
-    const targetDay = allDays.find((day) => day.id === overElementId);
-    const droppedOnActivity = !targetDay;
-
-    let finalTargetDayId: string | undefined;
-    let targetOrderIndex: number | undefined;
-
-    if (droppedOnActivity) {
-      // Dropped on another activity - find its day and position
-      for (const day of viewModel.days) {
-        const index = day.activities.findIndex((a) => a.id === overElementId);
-        if (index !== -1) {
-          finalTargetDayId = day.id;
-          if (day.id === sourceDay.id) {
-            // Moving within same day - place at target activity's position
-            targetOrderIndex = index + 1; // Convert 0-based index to 1-based position
-          } else {
-            // Moving to different day - insert after the target activity
-            targetOrderIndex = index + 2;
-          }
-          break;
-        }
-      }
-    } else {
-      // Dropped directly on day
-      finalTargetDayId = overElementId;
-
-      // If same day and only one activity, no move needed
-      if (targetDay.id === sourceDay.id) {
-        return;
-      }
-
-      // Append to end of target day (1-based index)
-      targetOrderIndex = targetDay.activities.length + 1;
-    }
-
-    // Ensure we have valid values
-    if (!finalTargetDayId || targetOrderIndex === undefined) {
-      return;
-    }
-
-    // Ensure target_order_index is at least 1 (database constraint)
-    if (targetOrderIndex < 1) {
-      targetOrderIndex = 1;
-    }
-
-    // Call mutation
+    // Call mutation with calculated position
     moveActivityMutation.mutate({
       activityId,
       data: {
-        target_day_id: finalTargetDayId,
-        target_order_index: targetOrderIndex,
+        target_day_id: result.targetDayId,
+        target_order_index: result.targetOrderIndex,
       },
     });
   };

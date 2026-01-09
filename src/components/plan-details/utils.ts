@@ -125,3 +125,102 @@ export function transformPlanToViewModel(planDto: PlanDto): PlanDetailsViewModel
     days: planDto.days.map(transformDayToViewModel),
   };
 }
+
+/**
+ * Result of drop position calculation
+ */
+export interface DropPositionResult {
+  targetDayId: string;
+  targetOrderIndex: number;
+}
+
+/**
+ * Input parameters for drop position calculation
+ */
+export interface CalculateDropPositionParams {
+  activityId: string;
+  overElementId: string;
+  days: DayViewModel[];
+}
+
+/**
+ * Calculates the target day and position for a dropped activity
+ *
+ * Business Rules:
+ * - When dropped on an activity in the same day: place at target activity's position
+ * - When dropped on an activity in a different day: insert after target activity
+ * - When dropped on a day container: append to end of that day
+ * - Single activity in same day dropped on day container: no move needed (returns null)
+ * - Order index is 1-based (database constraint, minimum value is 1)
+ * - Array indices are 0-based and must be converted
+ *
+ * @param params - Activity ID, over element ID, and days array
+ * @returns Drop position result or null if move is invalid/unnecessary
+ */
+export function calculateDropPosition(params: CalculateDropPositionParams): DropPositionResult | null {
+  const { activityId, overElementId, days } = params;
+
+  // Find source day and activity
+  let sourceDay: DayViewModel | null = null;
+
+  for (const day of days) {
+    const index = day.activities.findIndex((a) => a.id === activityId);
+    if (index !== -1) {
+      sourceDay = day;
+      break;
+    }
+  }
+
+  if (!sourceDay) return null;
+
+  // Determine if dropped on activity or day
+  const targetDay = days.find((day) => day.id === overElementId);
+  const droppedOnActivity = !targetDay;
+
+  let finalTargetDayId: string | undefined;
+  let targetOrderIndex: number | undefined;
+
+  if (droppedOnActivity) {
+    // Dropped on another activity - find its day and position
+    for (const day of days) {
+      const index = day.activities.findIndex((a) => a.id === overElementId);
+      if (index !== -1) {
+        finalTargetDayId = day.id;
+        if (day.id === sourceDay.id) {
+          // Moving within same day - place at target activity's position
+          targetOrderIndex = index + 1; // Convert 0-based index to 1-based position
+        } else {
+          // Moving to different day - insert after the target activity
+          targetOrderIndex = index + 2;
+        }
+        break;
+      }
+    }
+  } else {
+    // Dropped directly on day
+    finalTargetDayId = overElementId;
+
+    // If same day and only one activity, no move needed
+    if (targetDay.id === sourceDay.id && sourceDay.activities.length === 1) {
+      return null;
+    }
+
+    // Append to end of target day (1-based index)
+    targetOrderIndex = targetDay.activities.length + 1;
+  }
+
+  // Ensure we have valid values
+  if (!finalTargetDayId || targetOrderIndex === undefined) {
+    return null;
+  }
+
+  // Ensure target_order_index is at least 1 (database constraint)
+  if (targetOrderIndex < 1) {
+    targetOrderIndex = 1;
+  }
+
+  return {
+    targetDayId: finalTargetDayId,
+    targetOrderIndex,
+  };
+}
