@@ -46,7 +46,7 @@ export default function PreferencesForm() {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6" aria-label="Travel preferences form">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6" aria-label="Travel preferences form" data-testid="preferences-form">
         <PeopleCountField />
 
         <TripTypeField />

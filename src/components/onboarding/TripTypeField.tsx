@@ -22,18 +22,18 @@ export default function TripTypeField() {
       control={control}
       name="trip_type"
       render={({ field }) => (
-        <FormItem className="space-y-3">
+        <FormItem className="space-y-3" data-testid="trip-type-field">
           <FormLabel>Trip type</FormLabel>
           <FormControl>
-            <RadioGroup onValueChange={field.onChange} value={field.value ?? ""} className="flex flex-col space-y-1">
+            <RadioGroup onValueChange={field.onChange} value={field.value ?? ""} className="flex flex-col space-y-1" data-testid="trip-type-radio-group">
               <div className="flex items-center space-x-3 space-y-0">
-                <RadioGroupItem value="leisure" id="leisure" />
+                <RadioGroupItem value="leisure" id="leisure" data-testid="trip-type-leisure" />
                 <Label htmlFor="leisure" className="font-normal cursor-pointer">
                   Leisure / Vacation
                 </Label>
               </div>
               <div className="flex items-center space-x-3 space-y-0">
-                <RadioGroupItem value="business" id="business" />
+                <RadioGroupItem value="business" id="business" data-testid="trip-type-business" />
                 <Label htmlFor="business" className="font-normal cursor-pointer">
                   Business
                 </Label>

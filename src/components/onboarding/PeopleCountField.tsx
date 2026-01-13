@@ -24,12 +24,13 @@ export default function PeopleCountField() {
       control={control}
       name="people_count"
       render={({ field }) => (
-        <FormItem>
+        <FormItem data-testid="people-count-field">
           <FormLabel>Number of travelers</FormLabel>
           <FormControl>
             <div className="flex items-center gap-2">
               <Button
                 type="button"
+                data-testid="people-count-decrease"
                 variant="outline"
                 size="icon"
                 className="h-10 w-10 shrink-0"
@@ -47,6 +48,7 @@ export default function PeopleCountField() {
                 min={1}
                 max={20}
                 className="text-center"
+                data-testid="people-count-input"
                 {...field}
                 onChange={(e) => {
                   const value = parseInt(e.target.value, 10);
@@ -60,6 +62,7 @@ export default function PeopleCountField() {
                 variant="outline"
                 size="icon"
                 className="h-10 w-10 shrink-0"
+                data-testid="people-count-increase"
                 onClick={() => {
                   const newValue = Math.min(20, (field.value || 1) + 1);
                   field.onChange(newValue);

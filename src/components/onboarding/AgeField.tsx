@@ -21,7 +21,7 @@ export default function AgeField() {
       control={control}
       name="age"
       render={({ field }) => (
-        <FormItem>
+        <FormItem data-testid="age-field">
           <FormLabel>Age</FormLabel>
           <FormControl>
             <Input
@@ -29,6 +29,7 @@ export default function AgeField() {
               placeholder="e.g., 30"
               min={13}
               max={120}
+              data-testid="age-input"
               {...field}
               onChange={(e) => {
                 const value = parseInt(e.target.value, 10);

@@ -22,12 +22,12 @@ export default function ComfortField() {
       control={control}
       name="comfort"
       render={({ field }) => (
-        <FormItem className="space-y-3">
+        <FormItem className="space-y-3" data-testid="comfort-field">
           <FormLabel>Travel comfort style</FormLabel>
           <FormControl>
-            <RadioGroup onValueChange={field.onChange} value={field.value ?? ""} className="flex flex-col space-y-2">
+            <RadioGroup onValueChange={field.onChange} value={field.value ?? ""} className="flex flex-col space-y-2" data-testid="comfort-radio-group">
               <div className="flex items-start space-x-3 space-y-0">
-                <RadioGroupItem value="relax" id="relax" className="mt-1" />
+                <RadioGroupItem value="relax" id="relax" className="mt-1" data-testid="comfort-relax" />
                 <div className="space-y-1 leading-none">
                   <Label htmlFor="relax" className="font-medium cursor-pointer">
                     Relax
@@ -36,7 +36,7 @@ export default function ComfortField() {
                 </div>
               </div>
               <div className="flex items-start space-x-3 space-y-0">
-                <RadioGroupItem value="balanced" id="balanced" className="mt-1" />
+                <RadioGroupItem value="balanced" id="balanced" className="mt-1" data-testid="comfort-balanced" />
                 <div className="space-y-1 leading-none">
                   <Label htmlFor="balanced" className="font-medium cursor-pointer">
                     Balanced
@@ -45,7 +45,7 @@ export default function ComfortField() {
                 </div>
               </div>
               <div className="flex items-start space-x-3 space-y-0">
-                <RadioGroupItem value="intense" id="intense" className="mt-1" />
+                <RadioGroupItem value="intense" id="intense" className="mt-1" data-testid="comfort-intense" />
                 <div className="space-y-1 leading-none">
                   <Label htmlFor="intense" className="font-medium cursor-pointer">
                     Intense

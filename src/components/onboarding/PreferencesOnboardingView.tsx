@@ -14,10 +14,10 @@ import PreferencesForm from "./PreferencesForm";
 export default function PreferencesOnboardingView() {
   return (
     <QueryClientProvider>
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background" data-testid="preferences-onboarding-container">
         <main className="container mx-auto px-4 sm:px-6 py-6 sm:py-8 max-w-2xl">
           <PageHeader />
-          <div className="bg-card border rounded-lg p-4 sm:p-6 shadow-sm">
+          <div className="bg-card border rounded-lg p-4 sm:p-6 shadow-sm" data-testid="preferences-form-card">
             <PreferencesForm />
           </div>
         </main>

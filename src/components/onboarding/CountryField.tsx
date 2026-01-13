@@ -22,13 +22,14 @@ export default function CountryField() {
       control={control}
       name="country"
       render={({ field }) => (
-        <FormItem>
+        <FormItem data-testid="country-field">
           <FormLabel>Country of origin</FormLabel>
           <FormControl>
             <Input
               type="text"
               placeholder="e.g., Poland"
               className="h-10 sm:h-9"
+              data-testid="country-input"
               {...field}
               aria-label="Your country of origin"
             />
