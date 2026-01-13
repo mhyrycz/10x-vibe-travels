@@ -17,11 +17,7 @@ interface LoginFormData {
   password: string;
 }
 
-interface LoginFormProps {
-  onSuccess?: () => void;
-}
-
-export default function LoginForm({ onSuccess }: LoginFormProps) {
+export default function LoginForm() {
   const [formData, setFormData] = useState<LoginFormData>({
     email: "",
     password: "",
@@ -91,7 +87,7 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
 
       // Success - redirect to dashboard
       window.location.href = "/";
-    } catch (error) {
+    } catch {
       setApiError("An unexpected error occurred. Please try again.");
     } finally {
       setIsSubmitting(false);
@@ -99,18 +95,20 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
   };
 
   return (
-    <div className="w-full max-w-md space-y-6">
+    <div className="w-full max-w-md space-y-6" data-testid="login-form-container">
       <div className="space-y-2 text-center">
-        <h1 className="text-3xl font-bold tracking-tight">Log In</h1>
+        <h1 className="text-3xl font-bold tracking-tight" data-testid="login-heading">
+          Log In
+        </h1>
         <p className="text-muted-foreground">Enter your credentials to access your account</p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-4" data-testid="login-form">
         {/* API Error Alert */}
         {apiError && (
-          <Alert variant="destructive">
+          <Alert variant="destructive" data-testid="login-error-alert">
             <AlertCircle className="h-4 w-4" />
-            <AlertDescription>{apiError}</AlertDescription>
+            <AlertDescription data-testid="login-error-message">{apiError}</AlertDescription>
           </Alert>
         )}
 
@@ -125,8 +123,13 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
             onChange={handleChange("email")}
             aria-invalid={!!errors.email}
             disabled={isSubmitting}
+            data-testid="login-email-input"
           />
-          {errors.email && <p className="text-sm text-destructive">{errors.email}</p>}
+          {errors.email && (
+            <p className="text-sm text-destructive" data-testid="login-email-error">
+              {errors.email}
+            </p>
+          )}
         </div>
 
         {/* Password Field */}
@@ -140,8 +143,13 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
             onChange={handleChange("password")}
             aria-invalid={!!errors.password}
             disabled={isSubmitting}
+            data-testid="login-password-input"
           />
-          {errors.password && <p className="text-sm text-destructive">{errors.password}</p>}
+          {errors.password && (
+            <p className="text-sm text-destructive" data-testid="login-password-error">
+              {errors.password}
+            </p>
+          )}
         </div>
 
         {/* Forgot Password Link */}
@@ -149,13 +157,14 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
           <a
             href="/password-reset"
             className="text-sm text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-sm"
+            data-testid="login-forgot-password-link"
           >
             Forgot password?
           </a>
         </div>
 
         {/* Submit Button */}
-        <Button type="submit" className="w-full" disabled={isSubmitting}>
+        <Button type="submit" className="w-full" disabled={isSubmitting} data-testid="login-submit-button">
           {isSubmitting ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -168,10 +177,11 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
 
         {/* Register Link */}
         <div className="text-center text-sm">
-          <span className="text-muted-foreground">Don't have an account? </span>
+          <span className="text-muted-foreground">Don&apos;t have an account? </span>
           <a
             href="/register"
             className="text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-sm"
+            data-testid="login-register-link"
           >
             Sign up
           </a>

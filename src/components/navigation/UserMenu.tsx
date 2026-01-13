@@ -36,13 +36,13 @@ export default function UserMenu() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="icon" aria-label="User menu">
+        <Button variant="outline" size="icon" aria-label="User menu" data-testid="user-menu-trigger">
           <UserCircle className="h-5 w-5" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56">
+      <DropdownMenuContent align="end" className="w-56" data-testid="user-menu-dropdown">
         <DropdownMenuItem asChild>
-          <a href="/" className="cursor-pointer">
+          <a href="/" className="cursor-pointer" data-testid="user-menu-my-plans">
             <List className="mr-2 h-4 w-4" />
             My Plans
           </a>
@@ -50,19 +50,19 @@ export default function UserMenu() {
         <DropdownMenuSeparator />
         <DropdownMenuLabel>Profile</DropdownMenuLabel>
         <DropdownMenuItem asChild>
-          <a href="/profile/preferences" className="cursor-pointer">
+          <a href="/profile/preferences" className="cursor-pointer" data-testid="user-menu-preferences">
             <Settings className="mr-2 h-4 w-4" />
             Preferences
           </a>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
-          <a href="/profile/settings" className="cursor-pointer">
+          <a href="/profile/settings" className="cursor-pointer" data-testid="user-menu-settings">
             <Settings className="mr-2 h-4 w-4" />
             Settings
           </a>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
+        <DropdownMenuItem onClick={handleLogout} className="cursor-pointer" data-testid="user-menu-logout">
           <LogOut className="mr-2 h-4 w-4" />
           Logout
         </DropdownMenuItem>
