@@ -13,13 +13,13 @@ export default function PreferencesSection() {
   const form = useFormContext<CreatePlanFormData>();
 
   return (
-    <div className="grid gap-4 md:grid-cols-2">
+    <div className="grid gap-4 md:grid-cols-2" data-testid="preferences-section">
       {/* People Count */}
       <FormField
         control={form.control}
         name="people_count"
         render={({ field }) => (
-          <FormItem>
+          <FormItem data-testid="people-count-field">
             <FormLabel>Number of Travelers</FormLabel>
             <FormControl>
               <Input
@@ -28,9 +28,10 @@ export default function PreferencesSection() {
                 max={20}
                 {...field}
                 onChange={(e) => field.onChange(parseInt(e.target.value, 10) || 1)}
+                data-testid="people-count-input"
               />
             </FormControl>
-            <FormMessage />
+            <FormMessage data-testid="people-count-error" />
           </FormItem>
         )}
       />
@@ -40,20 +41,24 @@ export default function PreferencesSection() {
         control={form.control}
         name="trip_type"
         render={({ field }) => (
-          <FormItem>
+          <FormItem data-testid="trip-type-field">
             <FormLabel>Trip Type</FormLabel>
             <Select onValueChange={field.onChange} value={field.value}>
               <FormControl>
-                <SelectTrigger>
+                <SelectTrigger data-testid="trip-type-select">
                   <SelectValue placeholder="Select trip type" />
                 </SelectTrigger>
               </FormControl>
               <SelectContent>
-                <SelectItem value="leisure">Leisure</SelectItem>
-                <SelectItem value="business">Business</SelectItem>
+                <SelectItem value="leisure" data-testid="trip-type-leisure">
+                  Leisure
+                </SelectItem>
+                <SelectItem value="business" data-testid="trip-type-business">
+                  Business
+                </SelectItem>
               </SelectContent>
             </Select>
-            <FormMessage />
+            <FormMessage data-testid="trip-type-error" />
           </FormItem>
         )}
       />
@@ -63,21 +68,27 @@ export default function PreferencesSection() {
         control={form.control}
         name="comfort"
         render={({ field }) => (
-          <FormItem>
+          <FormItem data-testid="comfort-field">
             <FormLabel>Comfort Level</FormLabel>
             <Select onValueChange={field.onChange} value={field.value}>
               <FormControl>
-                <SelectTrigger>
+                <SelectTrigger data-testid="comfort-select">
                   <SelectValue placeholder="Select comfort level" />
                 </SelectTrigger>
               </FormControl>
               <SelectContent>
-                <SelectItem value="relax">Relax - Slow pace, plenty of downtime</SelectItem>
-                <SelectItem value="balanced">Balanced - Mix of activities and rest</SelectItem>
-                <SelectItem value="intense">Intense - Packed schedule, maximize experiences</SelectItem>
+                <SelectItem value="relax" data-testid="comfort-relax">
+                  Relax - Slow pace, plenty of downtime
+                </SelectItem>
+                <SelectItem value="balanced" data-testid="comfort-balanced">
+                  Balanced - Mix of activities and rest
+                </SelectItem>
+                <SelectItem value="intense" data-testid="comfort-intense">
+                  Intense - Packed schedule, maximize experiences
+                </SelectItem>
               </SelectContent>
             </Select>
-            <FormMessage />
+            <FormMessage data-testid="comfort-error" />
           </FormItem>
         )}
       />
@@ -87,21 +98,27 @@ export default function PreferencesSection() {
         control={form.control}
         name="budget"
         render={({ field }) => (
-          <FormItem>
+          <FormItem data-testid="budget-field">
             <FormLabel>Budget</FormLabel>
             <Select onValueChange={field.onChange} value={field.value}>
               <FormControl>
-                <SelectTrigger>
+                <SelectTrigger data-testid="budget-select">
                   <SelectValue placeholder="Select budget level" />
                 </SelectTrigger>
               </FormControl>
               <SelectContent>
-                <SelectItem value="budget">Budget - Cost-effective options</SelectItem>
-                <SelectItem value="moderate">Moderate - Balance cost and quality</SelectItem>
-                <SelectItem value="luxury">Luxury - Premium experiences</SelectItem>
+                <SelectItem value="budget" data-testid="budget-budget">
+                  Budget - Cost-effective options
+                </SelectItem>
+                <SelectItem value="moderate" data-testid="budget-moderate">
+                  Moderate - Balance cost and quality
+                </SelectItem>
+                <SelectItem value="luxury" data-testid="budget-luxury">
+                  Luxury - Premium experiences
+                </SelectItem>
               </SelectContent>
             </Select>
-            <FormMessage />
+            <FormMessage data-testid="budget-error" />
           </FormItem>
         )}
       />

@@ -228,7 +228,7 @@ By providing activity descriptions, custom activity creation, and deletion capab
   - 404: activity not found
   - 500: server error
 
-  3.5.4 Empty Day Behavior
+    3.5.4 Empty Day Behavior
 
 - When last activity in day is deleted, day card remains visible
 - Empty day displays placeholder message: "No activities for this day. Click '+Add Activity' to create one."
@@ -311,7 +311,7 @@ By providing activity descriptions, custom activity creation, and deletion capab
   - All activity titles, descriptions, durations, transport times
   - All custom activities are deleted
 
-  3.9.2 User Communication
+    3.9.2 User Communication
 
 - RegeneratePlanModal includes warning message:
   - "Regenerating will replace your entire itinerary, including all activities and descriptions. Custom activities will be removed. Plan metadata (destination, dates, preferences) will be preserved. This action cannot be undone."

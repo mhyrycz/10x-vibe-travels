@@ -22,11 +22,12 @@ export default function TravelNoteSection() {
       control={form.control}
       name="note_text"
       render={({ field }) => (
-        <FormItem>
+        <FormItem data-testid="travel-note-field">
           <div className="flex items-center justify-between">
             <FormLabel>Travel Note</FormLabel>
             <span
               className={cn("text-xs", isError && "text-destructive font-medium", !isError && "text-muted-foreground")}
+              data-testid="travel-note-counter"
             >
               {charCount.toLocaleString()} / {MAX_CHARS.toLocaleString()}
             </span>
@@ -36,13 +37,14 @@ export default function TravelNoteSection() {
               placeholder="Share your travel ideas, must-see places, or any specific requests. The AI will use this to create your itinerary."
               className="min-h-[200px] resize-y"
               {...field}
+              data-testid="travel-note-textarea"
             />
           </FormControl>
           <FormDescription>
             Share your travel ideas, must-see places, or any specific requests. The AI will use this to create your
             itinerary.
           </FormDescription>
-          <FormMessage />
+          <FormMessage data-testid="travel-note-error" />
         </FormItem>
       )}
     />

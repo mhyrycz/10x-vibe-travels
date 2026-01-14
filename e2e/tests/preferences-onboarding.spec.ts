@@ -56,8 +56,6 @@ test.describe("First-Time User Onboarding - Preferences Flow", () => {
       await loginPage.navigate();
       await loginPage.login(testEmail, testPassword);
       await expect(userMenu.trigger).toBeVisible();
-      // Navigate to preferences page
-      await preferencesPage.navigate();
     });
 
     test("should display preferences onboarding page with all elements", async () => {
@@ -285,7 +283,6 @@ test.describe("First-Time User Onboarding - Preferences Flow", () => {
       await loginPage.navigate();
       await loginPage.login(testEmail, testPassword);
       await expect(userMenu.trigger).toBeVisible();
-      await preferencesPage.navigate();
     });
 
     test("should show validation errors for incomplete form", async () => {
@@ -345,7 +342,6 @@ test.describe("First-Time User Onboarding - Preferences Flow", () => {
       await loginPage.navigate();
       await loginPage.login(testEmail, testPassword);
       await expect(userMenu.trigger).toBeVisible();
-      await preferencesPage.navigate();
     });
 
     test("should have proper ARIA labels on buttons", async () => {
