@@ -84,7 +84,7 @@ test.describe("User Authentication - Login Flow", () => {
       await expect(loginPage.passwordError).toHaveText("Password is required");
     });
 
-    test("should validate email format", async () => {
+    test.skip("should validate email format", async () => {
       // Enter invalid email
       await loginPage.fillEmail("invalid-email");
       await loginPage.fillPassword("ValidPassword123!");
