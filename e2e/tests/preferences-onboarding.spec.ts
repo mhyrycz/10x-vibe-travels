@@ -29,18 +29,17 @@ test.describe("First-Time User Onboarding - Preferences Flow", () => {
   let dbHelper: DatabaseHelper;
 
   test.beforeEach(async ({ page }) => {
-    // Initialize page objects
-    loginPage = new LoginPage(page);
-    preferencesPage = new PreferencesOnboardingPage(page);
-    userMenu = new UserMenuComponent(page);
-    dbHelper = new DatabaseHelper();
     // Clean up preferences before each test
+    dbHelper = new DatabaseHelper();
     try {
       await dbHelper.cleanupUserPreferences();
     } catch (error) {
       console.warn("⚠️ Failed to cleanup after test:", error);
-      // Don't throw - allow tests to continue even if cleanup fails
     }
+    // Initialize page objects
+    loginPage = new LoginPage(page);
+    preferencesPage = new PreferencesOnboardingPage(page);
+    userMenu = new UserMenuComponent(page);
   });
 
   test.describe("Authenticated User - Preferences Setup", () => {
@@ -226,7 +225,7 @@ test.describe("First-Time User Onboarding - Preferences Flow", () => {
       await expect(userMenu.trigger).toBeVisible();
     });
 
-    test("should show loading state during form submission", async () => {
+    test("should show loading state during form submission", async ({ page }) => {
       // Fill form
       await preferencesPage.fillCompleteForm({
         tripType: "business",
@@ -241,6 +240,8 @@ test.describe("First-Time User Onboarding - Preferences Flow", () => {
 
       // Button should show loading state
       await expect(preferencesPage.submitButton).toContainText("Saving...");
+      // Should redirect to create plan page after successful onboarding
+      await page.waitForURL("/plans/new", { timeout: 10000 });
     });
 
     test("should complete full onboarding flow from login to preferences", async ({ page }) => {
