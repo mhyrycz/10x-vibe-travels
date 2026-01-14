@@ -78,6 +78,12 @@ export default defineConfig({
   /* Run your local dev server before starting the tests */
   webServer: {
     command: "npm run dev:e2e",
+    env: {
+      // Pass .env.test variables to Astro dev server
+      SUPABASE_URL: process.env.SUPABASE_URL ?? "",
+      SUPABASE_KEY: process.env.SUPABASE_SECRET_KEY ?? "",
+      USE_MOCK_AI: process.env.USE_MOCK_AI ?? "false",
+    },
     url: "http://localhost:3000",
     reuseExistingServer: !process.env.CI,
   },
