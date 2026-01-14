@@ -117,7 +117,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     needs: [lint, unit-test, e2e-test]
-    if: always()
+    if: always() && github.event_name == 'pull_request'
     permissions:
       pull-requests: write
     steps:
