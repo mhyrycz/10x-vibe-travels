@@ -5,7 +5,7 @@
  * Validates password strength and confirmation.
  */
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -26,6 +26,19 @@ export default function UpdatePasswordForm() {
   const [apiError, setApiError] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [resetCode, setResetCode] = useState<string | null>(null);
+
+  // Extract code from URL query params
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const code = urlParams.get("code");
+
+    if (!code) {
+      setApiError("Invalid or missing reset code. Please use the link from your email.");
+    } else {
+      setResetCode(code);
+    }
+  }, []);
 
   // Validate password strength
   const validatePassword = (password: string): { isValid: boolean; errors: string[] } => {
@@ -82,6 +95,11 @@ export default function UpdatePasswordForm() {
     e.preventDefault();
     setApiError("");
 
+    if (!resetCode) {
+      setApiError("Reset code is missing. Please use the link from your email.");
+      return;
+    }
+
     if (!validateForm()) {
       return;
     }
@@ -92,7 +110,10 @@ export default function UpdatePasswordForm() {
       const response = await fetch("/api/auth/update-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password: formData.password }),
+        body: JSON.stringify({
+          password: formData.password,
+          code: resetCode,
+        }),
       });
 
       const data = await response.json();
@@ -104,7 +125,7 @@ export default function UpdatePasswordForm() {
 
       // Success - show confirmation message
       setIsSuccess(true);
-    } catch (error) {
+    } catch {
       setApiError("An unexpected error occurred. Please try again.");
     } finally {
       setIsSubmitting(false);

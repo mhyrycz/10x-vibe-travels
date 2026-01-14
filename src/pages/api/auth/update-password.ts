@@ -10,6 +10,7 @@ const updatePasswordSchema = z.object({
     .min(10, "Password must be at least 10 characters")
     .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
     .regex(/[!@#$%^&*()_+=\[\]{};':"\\|,.<>?-]/, "Password must contain at least one special character"),
+  code: z.string().min(1, "Reset code is required"),
 });
 
 export const POST: APIRoute = async ({ request, cookies }) => {
@@ -30,12 +31,27 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       );
     }
 
-    const { password } = validation.data;
+    const { password, code } = validation.data;
 
     const supabase = createSupabaseServerInstance({
       cookies,
       headers: request.headers,
     });
+
+    // Exchange the code for a session
+    const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+
+    if (exchangeError) {
+      return new Response(
+        JSON.stringify({
+          error: "Invalid or expired reset code. Please request a new password reset link.",
+        }),
+        {
+          status: 401,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+    }
 
     // Update password - requires user to be authenticated via reset token
     const { error } = await supabase.auth.updateUser({
