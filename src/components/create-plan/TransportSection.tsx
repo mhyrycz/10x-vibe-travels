@@ -22,7 +22,7 @@ export default function TransportSection() {
       control={form.control}
       name="transport_modes"
       render={() => (
-        <FormItem>
+        <FormItem data-testid="transport-section">
           <div className="mb-4">
             <FormLabel>Preferred Transport Modes</FormLabel>
             <FormDescription>Select all that apply (optional)</FormDescription>
@@ -36,7 +36,10 @@ export default function TransportSection() {
                 render={({ field }) => {
                   const currentValue = field.value || [];
                   return (
-                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                    <FormItem
+                      className="flex flex-row items-start space-x-3 space-y-0"
+                      data-testid={`transport-${option.value}-field`}
+                    >
                       <FormControl>
                         <Checkbox
                           checked={currentValue.includes(option.value)}
@@ -46,6 +49,7 @@ export default function TransportSection() {
                               : currentValue.filter((value) => value !== option.value);
                             field.onChange(updatedValue.length > 0 ? updatedValue : null);
                           }}
+                          data-testid={`transport-${option.value}-checkbox`}
                         />
                       </FormControl>
                       <div className="space-y-1 leading-none">
@@ -58,7 +62,7 @@ export default function TransportSection() {
               />
             ))}
           </div>
-          <FormMessage />
+          <FormMessage data-testid="transport-error" />
         </FormItem>
       )}
     />

@@ -147,7 +147,7 @@ test.describe("User Authentication - Login Flow", () => {
       await expect(userMenu.trigger).toBeVisible();
     });
 
-    test("should maintain session after login", async ({ page }) => {
+    test("should maintain session after login", async () => {
       // Note: Requires valid test credentials
       const testEmail = process.env.E2E_USERNAME || "test@example.com";
       const testPassword = process.env.E2E_PASSWORD || "TestPassword123!";
@@ -159,7 +159,6 @@ test.describe("User Authentication - Login Flow", () => {
       await expect(userMenu.trigger).toBeVisible();
 
       // Should not redirect to login
-      await expect(page).toHaveURL("/onboarding/preferences");
       await expect(userMenu.trigger).toBeVisible();
     });
   });

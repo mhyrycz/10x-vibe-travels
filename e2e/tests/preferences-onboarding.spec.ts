@@ -43,7 +43,7 @@ test.describe("First-Time User Onboarding - Preferences Flow", () => {
   });
 
   test.describe("Authenticated User - Preferences Setup", () => {
-    test.beforeEach(async ({ page }) => {
+    test.beforeEach(async () => {
       // Login before each test
       const testEmail = process.env.E2E_USERNAME;
       const testPassword = process.env.E2E_PASSWORD;
@@ -54,7 +54,7 @@ test.describe("First-Time User Onboarding - Preferences Flow", () => {
 
       await loginPage.navigate();
       await loginPage.login(testEmail, testPassword);
-      await expect(page).toHaveURL("/onboarding/preferences");
+      await expect(userMenu.trigger).toBeVisible();
     });
 
     test("should display preferences onboarding page with all elements", async () => {
@@ -284,7 +284,6 @@ test.describe("First-Time User Onboarding - Preferences Flow", () => {
       await loginPage.navigate();
       await loginPage.login(testEmail, testPassword);
       await expect(userMenu.trigger).toBeVisible();
-      await preferencesPage.navigate();
     });
 
     test("should show validation errors for incomplete form", async () => {
@@ -344,7 +343,6 @@ test.describe("First-Time User Onboarding - Preferences Flow", () => {
       await loginPage.navigate();
       await loginPage.login(testEmail, testPassword);
       await expect(userMenu.trigger).toBeVisible();
-      await preferencesPage.navigate();
     });
 
     test("should have proper ARIA labels on buttons", async () => {

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { useFormContext } from "react-hook-form";
 import { cn } from "@/lib/utils";
+import { useState } from "react";
 import type { CreatePlanFormData } from "./types";
 
 interface DatePickerFieldProps {
@@ -16,20 +17,22 @@ interface DatePickerFieldProps {
 
 function DatePickerField({ name, label, disabled }: DatePickerFieldProps) {
   const form = useFormContext<CreatePlanFormData>();
+  const [open, setOpen] = useState(false);
 
   return (
     <FormField
       control={form.control}
       name={name}
       render={({ field }) => (
-        <FormItem className="flex flex-col">
+        <FormItem className="flex flex-col" data-testid={`${name}-field`}>
           <FormLabel>{label}</FormLabel>
-          <Popover>
+          <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
               <FormControl>
                 <Button
                   variant="outline"
                   className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
+                  data-testid={`${name}-button`}
                 >
                   {field.value ? format(new Date(field.value), "PPP") : <span>Pick a date</span>}
                   <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
@@ -40,13 +43,17 @@ function DatePickerField({ name, label, disabled }: DatePickerFieldProps) {
               <Calendar
                 mode="single"
                 selected={field.value ? new Date(field.value) : undefined}
-                onSelect={(date) => field.onChange(date ? format(date, "yyyy-MM-dd") : "")}
+                onSelect={(date) => {
+                  field.onChange(date ? format(date, "yyyy-MM-dd") : "");
+                  setOpen(false); // Close popover after date selection
+                }}
                 disabled={disabled}
                 initialFocus
+                data-testid={`${name}-calendar`}
               />
             </PopoverContent>
           </Popover>
-          <FormMessage />
+          <FormMessage data-testid={`${name}-error`} />
         </FormItem>
       )}
     />
@@ -81,7 +88,7 @@ export default function DateRangeSection() {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" data-testid="date-range-section">
       <DatePickerField name="date_start" label="Start Date" disabled={disablePastDates} />
 
       <DatePickerField name="date_end" label="End Date" disabled={disableBeforeStartDate} />

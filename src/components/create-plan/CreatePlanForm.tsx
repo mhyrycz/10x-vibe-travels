@@ -59,13 +59,19 @@ export default function CreatePlanForm({
   const hasErrors = Object.keys(form.formState.errors).length > 0;
 
   return (
-    <Card>
+    <Card data-testid="create-plan-card">
       <CardHeader>
-        <CardTitle>Plan Details</CardTitle>
+        <CardTitle data-testid="create-plan-card-title">Plan Details</CardTitle>
       </CardHeader>
       <CardContent>
         <Form {...form}>
-          <form onSubmit={handleSubmit} className="space-y-8" noValidate aria-label="Create travel plan form">
+          <form
+            onSubmit={handleSubmit}
+            className="space-y-8"
+            noValidate
+            aria-label="Create travel plan form"
+            data-testid="create-plan-form"
+          >
             {/* Screen reader announcement for form errors */}
             {hasErrors && (
               <div role="alert" aria-live="polite" className="sr-only">
