@@ -25,7 +25,12 @@ export default function BudgetField() {
         <FormItem className="space-y-3" data-testid="budget-field">
           <FormLabel>Travel budget</FormLabel>
           <FormControl>
-            <RadioGroup onValueChange={field.onChange} value={field.value ?? ""} className="flex flex-col space-y-2" data-testid="budget-radio-group">
+            <RadioGroup
+              onValueChange={field.onChange}
+              value={field.value ?? ""}
+              className="flex flex-col space-y-2"
+              data-testid="budget-radio-group"
+            >
               <div className="flex items-start space-x-3 space-y-0">
                 <RadioGroupItem value="budget" id="budget" className="mt-1" data-testid="budget-budget" />
                 <div className="space-y-1 leading-none">

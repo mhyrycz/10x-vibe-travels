@@ -1,12 +1,6 @@
-/**
- * DateRangeSection - Date picker fields for travel date range
- * Refactored to DRY with DatePickerField component
- */
-
-import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { Calendar as CalendarIcon } from "lucide-react";
-import { FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -61,22 +55,8 @@ function DatePickerField({ name, label, disabled }: DatePickerFieldProps) {
 
 export default function DateRangeSection() {
   const form = useFormContext<CreatePlanFormData>();
-  const [tripDuration, setTripDuration] = useState<number | null>(null);
 
   const dateStart = form.watch("date_start");
-  const dateEnd = form.watch("date_end");
-
-  // Calculate trip duration
-  useEffect(() => {
-    if (dateStart && dateEnd) {
-      const start = new Date(dateStart);
-      const end = new Date(dateEnd);
-      const days = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-      setTripDuration(days > 0 ? days : null);
-    } else {
-      setTripDuration(null);
-    }
-  }, [dateStart, dateEnd]);
 
   // Disable past dates
   const disablePastDates = (date: Date) => {

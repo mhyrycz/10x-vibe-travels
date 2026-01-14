@@ -45,6 +45,7 @@ export default function RegisterForm() {
     if (!/[A-Z]/.test(password)) {
       errors.push("One uppercase letter");
     }
+    // eslint-disable-next-line no-useless-escape
     if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
       errors.push("One special character");
     }

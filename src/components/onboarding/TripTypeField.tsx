@@ -25,7 +25,12 @@ export default function TripTypeField() {
         <FormItem className="space-y-3" data-testid="trip-type-field">
           <FormLabel>Trip type</FormLabel>
           <FormControl>
-            <RadioGroup onValueChange={field.onChange} value={field.value ?? ""} className="flex flex-col space-y-1" data-testid="trip-type-radio-group">
+            <RadioGroup
+              onValueChange={field.onChange}
+              value={field.value ?? ""}
+              className="flex flex-col space-y-1"
+              data-testid="trip-type-radio-group"
+            >
               <div className="flex items-center space-x-3 space-y-0">
                 <RadioGroupItem value="leisure" id="leisure" data-testid="trip-type-leisure" />
                 <Label htmlFor="leisure" className="font-normal cursor-pointer">

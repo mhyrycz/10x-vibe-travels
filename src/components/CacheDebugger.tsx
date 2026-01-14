@@ -1,6 +1,15 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 
+interface CacheQueryState {
+  queryKey: readonly unknown[];
+  status: string;
+  fetchStatus: string;
+  dataUpdatedAt: string;
+  isStale: boolean;
+  observerCount: number;
+}
+
 /**
  * Visual component to inspect TanStack Query cache state in real-time.
  * Shows all queries, their status, and cache metadata.
@@ -9,7 +18,7 @@ import { useEffect, useState } from "react";
  */
 export function CacheDebugger() {
   const queryClient = useQueryClient();
-  const [cacheState, setCacheState] = useState<any[]>([]);
+  const [cacheState, setCacheState] = useState<CacheQueryState[]>([]);
 
   useEffect(() => {
     const updateCache = () => {

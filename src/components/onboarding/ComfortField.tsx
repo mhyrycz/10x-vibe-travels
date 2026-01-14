@@ -25,7 +25,12 @@ export default function ComfortField() {
         <FormItem className="space-y-3" data-testid="comfort-field">
           <FormLabel>Travel comfort style</FormLabel>
           <FormControl>
-            <RadioGroup onValueChange={field.onChange} value={field.value ?? ""} className="flex flex-col space-y-2" data-testid="comfort-radio-group">
+            <RadioGroup
+              onValueChange={field.onChange}
+              value={field.value ?? ""}
+              className="flex flex-col space-y-2"
+              data-testid="comfort-radio-group"
+            >
               <div className="flex items-start space-x-3 space-y-0">
                 <RadioGroupItem value="relax" id="relax" className="mt-1" data-testid="comfort-relax" />
                 <div className="space-y-1 leading-none">

@@ -19,7 +19,12 @@ interface FormActionsProps {
 export default function FormActions({ isLoading, disabled }: FormActionsProps) {
   return (
     <div className="flex justify-end pt-6">
-      <Button type="submit" disabled={isLoading || disabled} className="w-full sm:w-auto min-w-[200px]" data-testid="preferences-submit-button">
+      <Button
+        type="submit"
+        disabled={isLoading || disabled}
+        className="w-full sm:w-auto min-w-[200px]"
+        data-testid="preferences-submit-button"
+      >
         {isLoading ? (
           <>
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />

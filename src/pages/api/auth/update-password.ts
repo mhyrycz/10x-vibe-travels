@@ -9,6 +9,7 @@ const updatePasswordSchema = z.object({
     .string()
     .min(10, "Password must be at least 10 characters")
     .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
+    // eslint-disable-next-line no-useless-escape
     .regex(/[!@#$%^&*()_+=\[\]{};':"\\|,.<>?-]/, "Password must contain at least one special character"),
   code: z.string().min(1, "Reset code is required"),
 });

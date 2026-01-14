@@ -78,7 +78,7 @@ export default function PasswordResetForm() {
 
       // Success - show confirmation message
       setIsSuccess(true);
-    } catch (error) {
+    } catch {
       setApiError("An unexpected error occurred. Please try again.");
     } finally {
       setIsSubmitting(false);
@@ -111,7 +111,7 @@ export default function PasswordResetForm() {
     <div className="w-full max-w-md space-y-6">
       <div className="space-y-2 text-center">
         <h1 className="text-3xl font-bold tracking-tight">Reset Password</h1>
-        <p className="text-muted-foreground">Enter your email address and we'll send you a reset link</p>
+        <p className="text-muted-foreground">Enter your email address and we&apos;ll send you a reset link</p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
