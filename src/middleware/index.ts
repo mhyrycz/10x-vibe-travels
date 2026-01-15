@@ -17,10 +17,11 @@ const PUBLIC_PATHS = [
 ];
 
 export const onRequest = defineMiddleware(async ({ locals, cookies, url, request, redirect }, next) => {
-  // Create Supabase instance for this request
+  // Create Supabase instance for this request with runtime environment
   const supabase = createSupabaseServerInstance({
     cookies,
     headers: request.headers,
+    runtime: locals.runtime,
   });
 
   // Make supabase available to all routes
