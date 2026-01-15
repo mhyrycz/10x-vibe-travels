@@ -4,7 +4,7 @@ on:
   push:
     branches: [master]
   pull_request:
-    branches: [master] 
+    branches: [master]
 
 # Ensure only one workflow runs at a time per PR
 concurrency:
@@ -23,8 +23,8 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
-          node-version-file: '.nvmrc'
-          cache: 'npm'
+          node-version-file: ".nvmrc"
+          cache: "npm"
 
       - name: Install dependencies
         run: npm ci
@@ -44,8 +44,8 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
-          node-version-file: '.nvmrc'
-          cache: 'npm'
+          node-version-file: ".nvmrc"
+          cache: "npm"
 
       - name: Install dependencies
         run: npm ci
@@ -66,8 +66,8 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
-          node-version-file: '.nvmrc'
-          cache: 'npm'
+          node-version-file: ".nvmrc"
+          cache: "npm"
 
       - name: Install dependencies
         run: npm ci
@@ -134,7 +134,7 @@ jobs:
           LINT_STATUS="${{ needs.lint.result }}"
           UNIT_STATUS="${{ needs.unit-test.result }}"
           E2E_STATUS="${{ needs.e2e-test.result }}"
-          
+
           # Determine overall result
           if [ "$LINT_STATUS" = "success" ] && [ "$UNIT_STATUS" = "success" ] && [ "$E2E_STATUS" = "success" ]; then
             echo "overall=✅ All checks passed!" >> $GITHUB_OUTPUT
@@ -143,7 +143,7 @@ jobs:
             echo "overall=❌ Some checks failed" >> $GITHUB_OUTPUT
             echo "status=failure" >> $GITHUB_OUTPUT
           fi
-          
+
           # Format individual statuses
           case $LINT_STATUS in
             success) echo "lint=✅ Passed" >> $GITHUB_OUTPUT ;;
@@ -152,7 +152,7 @@ jobs:
             skipped) echo "lint=⏭️ Skipped" >> $GITHUB_OUTPUT ;;
             *) echo "lint=❓ Unknown" >> $GITHUB_OUTPUT ;;
           esac
-          
+
           case $UNIT_STATUS in
             success) echo "unit=✅ Passed" >> $GITHUB_OUTPUT ;;
             failure) echo "unit=❌ Failed" >> $GITHUB_OUTPUT ;;
@@ -160,7 +160,7 @@ jobs:
             skipped) echo "unit=⏭️ Skipped" >> $GITHUB_OUTPUT ;;
             *) echo "unit=❓ Unknown" >> $GITHUB_OUTPUT ;;
           esac
-          
+
           case $E2E_STATUS in
             success) echo "e2e=✅ Passed" >> $GITHUB_OUTPUT ;;
             failure) echo "e2e=❌ Failed" >> $GITHUB_OUTPUT ;;
@@ -179,34 +179,34 @@ jobs:
             const lintStatus = '${{ steps.status.outputs.lint }}';
             const unitStatus = '${{ steps.status.outputs.unit }}';
             const e2eStatus = '${{ steps.status.outputs.e2e }}';
-            
+
             const comment = `## ${overall}
-            
+
             ### 🔍 CI Results
-            
+
             | Check | Status |
             |-------|--------|
             | 🧹 Lint | ${lintStatus} |
             | 🧪 Unit Tests | ${unitStatus} |
             | 🎭 E2E Tests | ${e2eStatus} |
-            
+
             ---
-            
+
             🔗 [View detailed Playwright report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
-            
+
             _Triggered by commit ${{ github.event.pull_request.head.sha }}_`;
-            
+
             // Find existing comment
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.issue.number,
             });
-            
+
             const botComment = comments.find(comment => 
               comment.user.type === 'Bot' && comment.body.includes('🔍 CI Results')
             );
-            
+
             // Update or create comment
             if (botComment) {
               await github.rest.issues.updateComment({
