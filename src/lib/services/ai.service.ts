@@ -181,10 +181,12 @@ const itinerarySchema = z.object({
 async function callOpenRouterAI(
   params: CreatePlanDto,
   userAge?: number,
-  userCountry?: string
+  userCountry?: string,
+  env?: { OPENROUTER_API_KEY: string; OPENROUTER_BASE_URL?: string }
 ): Promise<AIItineraryResponse> {
-  const apiKey = import.meta.env.OPENROUTER_API_KEY;
-  const baseUrl = import.meta.env.OPENROUTER_BASE_URL;
+  // Use runtime env if provided (Cloudflare Pages), fallback to import.meta.env for local dev
+  const apiKey = env?.OPENROUTER_API_KEY || import.meta.env.OPENROUTER_API_KEY;
+  const baseUrl = env?.OPENROUTER_BASE_URL || import.meta.env.OPENROUTER_BASE_URL;
 
   if (!apiKey) {
     throw new Error("OPENROUTER_API_KEY environment variable is not set");
@@ -277,6 +279,7 @@ Guidelines:
  * @param supabase - Supabase client instance for fetching user preferences
  * @param userId - User ID for fetching preferences
  * @param params - Plan creation parameters
+ * @param env - Optional runtime environment variables (for Cloudflare Pages)
  * @returns Structured itinerary data (days with flat activities arrays)
  *
  * Environment Variables:
@@ -287,7 +290,8 @@ Guidelines:
 export async function generatePlanItinerary(
   supabase: SupabaseClient<Database>,
   userId: string,
-  params: CreatePlanDto
+  params: CreatePlanDto,
+  env?: { OPENROUTER_API_KEY: string; OPENROUTER_BASE_URL?: string; USE_MOCK_AI?: string }
 ): Promise<AIItineraryResponse> {
   let userAge: number | undefined;
   let userCountry: string | undefined;
@@ -310,7 +314,9 @@ export async function generatePlanItinerary(
   }
 
   // Check if mock mode is enabled (default to true for development)
-  const useMockAI = import.meta.env.USE_MOCK_AI !== "false" && import.meta.env.USE_MOCK_AI !== false;
+  // Use runtime env if available (Cloudflare Pages), fallback to import.meta.env
+  const useMockAIEnv = env?.USE_MOCK_AI || import.meta.env.USE_MOCK_AI;
+  const useMockAI = useMockAIEnv !== "false" && useMockAIEnv !== false;
 
   try {
     if (useMockAI) {
@@ -322,7 +328,7 @@ export async function generatePlanItinerary(
 
     console.log("🤖 Calling OpenRouter.ai for itinerary generation");
     // Only pass user preferences to real AI for personalization
-    return await callOpenRouterAI(params, userAge, userCountry);
+    return await callOpenRouterAI(params, userAge, userCountry, env);
   } catch (error) {
     // Re-throw with consistent error message for upstream error handling
     if (error instanceof Error) {

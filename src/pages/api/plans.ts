@@ -165,7 +165,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       dates: `${validation.data.date_start} to ${validation.data.date_end}`,
     });
 
-    const result = await createPlan(supabase, userId, validation.data);
+    const result = await createPlan(supabase, userId, validation.data, locals.runtime?.env);
     // Step 4: Validate request data with Zod schema
     // Step 6: Handle service result and return appropriate response
     if (!result.success) {
