@@ -1,0 +1,17 @@
+name = "vibe-travels"
+compatibility_date = "2024-01-15"
+
+# Cloudflare Pages configuration
+# Note: Environment variables should be configured in Cloudflare Dashboard
+# Pages → Settings → Environment variables
+
+# For Cloudflare Pages, the build output is handled by Astro
+# The deployment should use: wrangler pages deploy dist
+
+# Required environment variables (configure in Cloudflare Dashboard):
+# - SUPABASE_URL
+# - SUPABASE_KEY
+# - SUPABASE_SECRET_KEY
+# - OPENROUTER_API_KEY
+# - OPENROUTER_BASE_URL
+# - USE_MOCK_AI
