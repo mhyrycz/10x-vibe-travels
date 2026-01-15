@@ -21,7 +21,7 @@ declare global {
         id: string;
         email: string | undefined;
       } | null;
-      runtime: CloudflareRuntime;
+      runtime?: CloudflareRuntime;
     }
   }
 }

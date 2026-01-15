@@ -18,6 +18,7 @@ const PUBLIC_PATHS = [
 
 export const onRequest = defineMiddleware(async ({ locals, cookies, url, request, redirect }, next) => {
   // Create Supabase instance for this request with runtime environment
+  // runtime is only available in Cloudflare Pages, falls back to import.meta.env in local dev
   const supabase = createSupabaseServerInstance({
     cookies,
     headers: request.headers,
