@@ -60,6 +60,7 @@ Add the following secrets:
 #### GitHub Environments
 
 Create a "production" environment:
+
 1. Go to GitHub Repository → Settings → Environments
 2. Click "New environment"
 3. Name it: `production`
@@ -81,6 +82,7 @@ git push origin master
 ```
 
 The CI/CD pipeline will:
+
 1. ✅ Lint the code
 2. ✅ Run unit tests
 3. ✅ Build the application
@@ -90,16 +92,19 @@ The CI/CD pipeline will:
 ### Method 2: Manual Deployment via CLI
 
 Install Wrangler CLI:
+
 ```bash
 npm install -g wrangler
 ```
 
 Login to Cloudflare:
+
 ```bash
 wrangler login
 ```
 
 Build and deploy:
+
 ```bash
 npm run build
 npx wrangler pages deploy dist --project-name=vibe-travels
@@ -132,6 +137,7 @@ Cloudflare Pages doesn't provide real-time logs. For debugging:
 ### Preview Deployments
 
 Every Pull Request automatically creates a preview deployment:
+
 - URL format: `https://<hash>.vibe-travels.pages.dev`
 - Environment variables from "Preview" environment are used
 - Useful for testing before merging to master
@@ -139,11 +145,13 @@ Every Pull Request automatically creates a preview deployment:
 ## Environment-Specific Settings
 
 ### Production Environment
+
 - URL: `https://vibe-travels.pages.dev` (or your custom domain)
 - Uses production database
 - Real AI API calls (USE_MOCK_AI=false)
 
 ### Preview Environment (PR deployments)
+
 - URL: `https://<pr-hash>.vibe-travels.pages.dev`
 - Can use test database
 - Can use mock AI (USE_MOCK_AI=true)
@@ -202,12 +210,14 @@ git push --force origin master
 ## Cost Estimation
 
 Cloudflare Pages Free Tier:
+
 - ✅ Unlimited requests
 - ✅ Unlimited bandwidth
 - ✅ 500 builds/month
 - ✅ 1 build at a time
 
 Additional costs may come from:
+
 - Supabase usage (database, storage, bandwidth)
 - OpenRouter API calls (pay-per-use)
 

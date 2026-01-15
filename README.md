@@ -33,7 +33,7 @@ For full product requirements and scope see `.ai/prd.md`.
 - Backend: Supabase (Postgres + Auth + SDK)
 - AI: Integration via OpenRouter.ai (model gateway)
 - Testing: Vitest + React Testing Library (unit/component), Playwright (E2E)
-- CI / Hosting: GitHub Actions (planned), DigitalOcean (Docker image target)
+- CI / Hosting: GitHub Actions, Cloudflare Pages
 
 Key dependencies (see `package.json`):
 
@@ -152,7 +152,7 @@ Out-of-scope for the MVP:
 - Current version: `0.0.1` (see `package.json`).
 - Branch: `master` (active development).
 - Target: MVP buildable by one developer within ~4 weeks (PRD constraint).
-- CI / Deploy: GitHub Actions and Docker deployment to DigitalOcean are planned (no workflow files included yet).
+- CI / Deploy: Deployed to Cloudflare Pages with GitHub Actions workflow.
 
 If you want to help:
 
