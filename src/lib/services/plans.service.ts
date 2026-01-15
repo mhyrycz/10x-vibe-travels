@@ -195,15 +195,17 @@ export async function getUserPlanCount(supabase: SupabaseClient<Database>, userI
  * @param supabase - Supabase client instance for fetching user preferences
  * @param userId - User ID for fetching preferences
  * @param params - Plan parameters for AI generation
+ * @param env - Optional runtime environment variables (for Cloudflare Pages)
  * @returns ServiceResult with AI itinerary or error
  */
 async function generateAIItinerary(
   supabase: SupabaseClient<Database>,
   userId: string,
-  params: CreatePlanDto
+  params: CreatePlanDto,
+  env?: { OPENROUTER_API_KEY: string; OPENROUTER_BASE_URL?: string; USE_MOCK_AI?: string }
 ): Promise<ServiceResult<AIItineraryResponse>> {
   try {
-    const aiItinerary = await generatePlanItinerary(supabase, userId, params);
+    const aiItinerary = await generatePlanItinerary(supabase, userId, params, env);
     return { success: true, data: aiItinerary };
   } catch (error) {
     console.error("AI service error:", error);
@@ -334,7 +336,8 @@ async function insertPlanItineraryData(
 export async function createPlan(
   supabase: SupabaseClient<Database>,
   userId: string,
-  data: CreatePlanDto
+  data: CreatePlanDto,
+  env?: { OPENROUTER_API_KEY: string; OPENROUTER_BASE_URL?: string; USE_MOCK_AI?: string }
 ): Promise<ServiceResult<PlanDto>> {
   try {
     // Step 1: Check rate limit (10 plans per hour, shared with regenerate)
@@ -357,7 +360,7 @@ export async function createPlan(
     const tripLengthDays = calculateTripLengthDays(data.date_start, data.date_end);
 
     // Step 4: Call AI service to generate itinerary
-    const aiResult = await generateAIItinerary(supabase, userId, data);
+    const aiResult = await generateAIItinerary(supabase, userId, data, env);
     if (!aiResult.success) {
       return aiResult;
     }
@@ -820,7 +823,8 @@ export async function regeneratePlan(
   supabase: SupabaseClient<Database>,
   userId: string,
   planId: string,
-  updates: RegeneratePlanDto
+  updates: RegeneratePlanDto,
+  env?: { OPENROUTER_API_KEY: string; OPENROUTER_BASE_URL?: string; USE_MOCK_AI?: string }
 ): Promise<ServiceResult<PlanDto>> {
   try {
     console.log(`Regenerating plan ${planId} for user ${userId}`);
@@ -868,7 +872,7 @@ export async function regeneratePlan(
     });
 
     // Step 5: Generate new itinerary with AI
-    const aiResult = await generateAIItinerary(supabase, userId, mergedParams as CreatePlanDto);
+    const aiResult = await generateAIItinerary(supabase, userId, mergedParams as CreatePlanDto, env);
     if (!aiResult.success) {
       return aiResult;
     }

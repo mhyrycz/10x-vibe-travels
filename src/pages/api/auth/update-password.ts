@@ -14,7 +14,7 @@ const updatePasswordSchema = z.object({
   code: z.string().min(1, "Reset code is required"),
 });
 
-export const POST: APIRoute = async ({ request, cookies }) => {
+export const POST: APIRoute = async ({ request, cookies, locals }) => {
   try {
     const body = await request.json();
 
@@ -37,6 +37,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     const supabase = createSupabaseServerInstance({
       cookies,
       headers: request.headers,
+      runtime: locals.runtime,
     });
 
     // Exchange the code for a session
