@@ -1,8 +1,6 @@
 name: Pull Request CI
 
 on:
-  push:
-    branches: [master]
   pull_request:
     branches: [master]
 
@@ -57,7 +55,7 @@ jobs:
     name: E2E Tests
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    # needs: lint
+    needs: lint
     environment: integration
     steps:
       - name: Checkout code
