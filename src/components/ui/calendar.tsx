@@ -115,6 +115,12 @@ function Calendar({
 
           return <ChevronDownIcon className={cn("size-4", className)} {...props} />;
         },
+        PreviousMonthButton: ({ className, ...props }) => {
+          return <button {...props} data-testid="calendar-previous-button" className={className} />;
+        },
+        NextMonthButton: ({ className, ...props }) => {
+          return <button {...props} data-testid="calendar-next-button" className={className} />;
+        },
         DayButton: CalendarDayButton,
         WeekNumber: ({ children, ...props }) => {
           return (

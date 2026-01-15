@@ -55,7 +55,6 @@ export class DatabaseHelper {
         throw new Error(`Failed to delete user preferences: ${error.message}`);
       }
 
-      console.log(`✅ Deleted ${count ?? 0} user preference record(s) for user ${this.testUserId}`);
       return count ?? 0;
     } catch (error) {
       console.error("❌ Failed to cleanup user preferences:", error);
@@ -78,7 +77,6 @@ export class DatabaseHelper {
         throw new Error(`Failed to delete travel plans: ${error.message}`);
       }
 
-      console.log(`✅ Deleted ${count ?? 0} travel plan(s) for user ${this.testUserId}`);
       return count ?? 0;
     } catch (error) {
       console.error("❌ Failed to cleanup travel plans:", error);

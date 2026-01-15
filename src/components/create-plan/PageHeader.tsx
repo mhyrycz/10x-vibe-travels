@@ -13,8 +13,8 @@ import {
 
 export default function PageHeader() {
   return (
-    <div className="mb-6 space-y-2">
-      <Breadcrumb aria-label="Breadcrumb navigation">
+    <div className="mb-6 space-y-2" data-testid="create-plan-header">
+      <Breadcrumb aria-label="Breadcrumb navigation" data-testid="create-plan-breadcrumb">
         <BreadcrumbList>
           <BreadcrumbItem>
             <BreadcrumbLink href="/">Home</BreadcrumbLink>
@@ -30,7 +30,9 @@ export default function PageHeader() {
         </BreadcrumbList>
       </Breadcrumb>
 
-      <h1 className="text-3xl font-bold tracking-tight">Create New Travel Plan</h1>
+      <h1 className="text-3xl font-bold tracking-tight" data-testid="create-plan-heading">
+        Create New Travel Plan
+      </h1>
     </div>
   );
 }

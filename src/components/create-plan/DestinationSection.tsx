@@ -15,13 +15,13 @@ export default function DestinationSection() {
       control={form.control}
       name="destination_text"
       render={({ field }) => (
-        <FormItem>
+        <FormItem data-testid="destination-field">
           <FormLabel>Destination</FormLabel>
           <FormControl>
-            <Input placeholder="e.g., Kraków, Poland" {...field} />
+            <Input placeholder="e.g., Kraków, Poland" {...field} data-testid="destination-input" />
           </FormControl>
           <FormDescription>Where are you planning to travel?</FormDescription>
-          <FormMessage />
+          <FormMessage data-testid="destination-error" />
         </FormItem>
       )}
     />
