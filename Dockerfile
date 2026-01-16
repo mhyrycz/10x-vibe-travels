@@ -70,4 +70,5 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
 
 # Start the standalone Node server
 # Note: Astro Node adapter 'standalone' mode produces an entry file at dist/server/entry.mjs
-CMD ["node", "./dist/server/entry.mjs"]
+# Use shell form to allow environment variable expansion
+CMD node ./dist/server/entry.mjs
