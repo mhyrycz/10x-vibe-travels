@@ -23,15 +23,11 @@ export const createSupabaseServerInstance = (context: { headers: Headers; cookie
   const supabaseKey = import.meta.env.SUPABASE_KEY;
 
   if (!supabaseUrl) {
-    throw new Error(
-      "SUPABASE_URL is not set. Please define SUPABASE_URL in your environment variables (e.g. .env)."
-    );
+    throw new Error("SUPABASE_URL is not set. Please define SUPABASE_URL in your environment variables (e.g. .env).");
   }
 
   if (!supabaseKey) {
-    throw new Error(
-      "SUPABASE_KEY is not set. Please define SUPABASE_KEY in your environment variables (e.g. .env)."
-    );
+    throw new Error("SUPABASE_KEY is not set. Please define SUPABASE_KEY in your environment variables (e.g. .env).");
   }
 
   const supabase = createServerClient<Database>(supabaseUrl, supabaseKey, {
