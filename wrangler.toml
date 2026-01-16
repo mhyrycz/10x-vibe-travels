@@ -3,6 +3,7 @@ main = "./dist/_worker.js/index.js"
 compatibility_date = "2026-01-15"
 compatibility_flags = ["nodejs_compat"]
 
+# Assets configuration - exclude worker code from being uploaded as static assets
 [assets]
 binding = "ASSETS"
 directory = "./dist"
