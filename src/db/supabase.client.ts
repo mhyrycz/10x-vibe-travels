@@ -19,7 +19,22 @@ function parseCookieHeader(cookieHeader: string): { name: string; value: string 
 }
 
 export const createSupabaseServerInstance = (context: { headers: Headers; cookies: AstroCookies }) => {
-  const supabase = createServerClient<Database>(import.meta.env.SUPABASE_URL, import.meta.env.SUPABASE_KEY, {
+  const supabaseUrl = import.meta.env.SUPABASE_URL;
+  const supabaseKey = import.meta.env.SUPABASE_KEY;
+
+  if (!supabaseUrl) {
+    throw new Error(
+      "SUPABASE_URL is not set. Please define SUPABASE_URL in your environment variables (e.g. .env)."
+    );
+  }
+
+  if (!supabaseKey) {
+    throw new Error(
+      "SUPABASE_KEY is not set. Please define SUPABASE_KEY in your environment variables (e.g. .env)."
+    );
+  }
+
+  const supabase = createServerClient<Database>(supabaseUrl, supabaseKey, {
     cookieOptions,
     cookies: {
       getAll() {
