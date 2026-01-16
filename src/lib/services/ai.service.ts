@@ -183,8 +183,8 @@ async function callOpenRouterAI(
   userAge?: number,
   userCountry?: string
 ): Promise<AIItineraryResponse> {
-  const apiKey = import.meta.env.OPENROUTER_API_KEY;
-  const baseUrl = import.meta.env.OPENROUTER_BASE_URL;
+  const apiKey = process.env.OPENROUTER_API_KEY || import.meta.env.OPENROUTER_API_KEY;
+  const baseUrl = process.env.OPENROUTER_BASE_URL || import.meta.env.OPENROUTER_BASE_URL;
 
   if (!apiKey) {
     throw new Error("OPENROUTER_API_KEY environment variable is not set");
@@ -195,7 +195,7 @@ async function callOpenRouterAI(
     apiKey,
     baseUrl,
     defaultTimeout: 60000,
-    enableLogging: import.meta.env.DEV,
+    enableLogging: import.meta.env.DEV || !!process.env.DEV,
   });
 
   // Calculate trip length
@@ -310,7 +310,7 @@ export async function generatePlanItinerary(
   }
 
   // Check if mock mode is enabled (default to true for development)
-  const useMockAIEnv = import.meta.env.USE_MOCK_AI;
+  const useMockAIEnv = process.env.USE_MOCK_AI || import.meta.env.USE_MOCK_AI;
   const useMockAI = useMockAIEnv !== "false" && useMockAIEnv !== false;
 
   try {
