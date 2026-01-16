@@ -190,12 +190,14 @@ async function callOpenRouterAI(
     throw new Error("OPENROUTER_API_KEY environment variable is not set");
   }
 
+  const enableLogging = import.meta.env.DEV || !!process.env.DEV;
+
   // Initialize OpenRouter service
   const openRouter = new OpenRouterService({
     apiKey,
     baseUrl,
     defaultTimeout: 60000,
-    enableLogging: import.meta.env.DEV || !!process.env.DEV,
+    enableLogging,
   });
 
   // Calculate trip length

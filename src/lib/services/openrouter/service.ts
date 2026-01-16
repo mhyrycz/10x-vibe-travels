@@ -75,8 +75,10 @@ export class OpenRouterService {
     this.retryAttempts = config.retryAttempts ?? 2;
     this.retryDelay = config.retryDelay ?? 1000; // 1 second
 
+    const devEnv = import.meta.env.DEV || process.env.DEV;
+
     // Validate base URL protocol in production
-    if (!this.baseUrl.startsWith("https://")) {
+    if (!this.baseUrl.startsWith("https://") && !devEnv) {
       throw new OpenRouterError("OpenRouter base URL must use HTTPS in production", "CONFIG_ERROR");
     }
 
