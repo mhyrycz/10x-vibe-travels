@@ -7,8 +7,6 @@
     "dev:e2e": "astro dev --mode test",
     "build": "astro build",
     "preview": "astro preview",
-    "preview:cloudflare": "wrangler dev",
-    "deploy": "astro build && wrangler deploy",
     "astro": "astro",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
@@ -18,7 +16,6 @@
     "test:coverage": "vitest --coverage"
   },
   "dependencies": {
-    "@astrojs/cloudflare": "^12.6.12",
     "@astrojs/node": "^9.4.3",
     "@astrojs/react": "^4.3.1",
     "@astrojs/sitemap": "^3.5.1",

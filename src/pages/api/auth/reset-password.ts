@@ -8,7 +8,7 @@ const resetPasswordSchema = z.object({
   email: z.string().email("Invalid email address"),
 });
 
-export const POST: APIRoute = async ({ request, cookies, locals }) => {
+export const POST: APIRoute = async ({ request, cookies }) => {
   try {
     const body = await request.json();
 
@@ -31,7 +31,6 @@ export const POST: APIRoute = async ({ request, cookies, locals }) => {
     const supabase = createSupabaseServerInstance({
       cookies,
       headers: request.headers,
-      runtime: locals.runtime,
     });
 
     const { error } = await supabase.auth.resetPasswordForEmail(email, {

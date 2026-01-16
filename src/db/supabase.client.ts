@@ -18,19 +18,16 @@ function parseCookieHeader(cookieHeader: string): { name: string; value: string 
   });
 }
 
-export const createSupabaseServerInstance = (context: {
-  headers: Headers;
-  cookies: AstroCookies;
-  runtime?: { env: { SUPABASE_URL: string; SUPABASE_KEY: string } };
-}) => {
-  // Use runtime environment variables for Cloudflare Pages, fallback to import.meta.env for local dev
-  const supabaseUrl = import.meta.env.SUPABASE_URL || context.runtime?.env.SUPABASE_URL;
-  const supabaseKey = import.meta.env.SUPABASE_KEY || context.runtime?.env.SUPABASE_KEY;
+export const createSupabaseServerInstance = (context: { headers: Headers; cookies: AstroCookies }) => {
+  const supabaseUrl = import.meta.env.SUPABASE_URL;
+  const supabaseKey = import.meta.env.SUPABASE_KEY;
 
-  if (!supabaseUrl || !supabaseKey) {
-    throw new Error(
-      `Your project's URL and Key are required to create a Supabase client!\n\nCheck your Supabase project's API settings to find these values\n\nhttps://supabase.com/dashboard/project/_/settings/api`
-    );
+  if (!supabaseUrl) {
+    throw new Error("SUPABASE_URL is not set. Please define SUPABASE_URL in your environment variables (e.g. .env).");
+  }
+
+  if (!supabaseKey) {
+    throw new Error("SUPABASE_KEY is not set. Please define SUPABASE_KEY in your environment variables (e.g. .env).");
   }
 
   const supabase = createServerClient<Database>(supabaseUrl, supabaseKey, {

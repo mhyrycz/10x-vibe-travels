@@ -14,7 +14,7 @@ const registerSchema = z.object({
     .regex(/[!@#$%^&*()_+=\[\]{};':"\\|,.<>?-]/, "Password must contain at least one special character"),
 });
 
-export const POST: APIRoute = async ({ request, cookies, locals }) => {
+export const POST: APIRoute = async ({ request, cookies }) => {
   try {
     const body = await request.json();
 
@@ -37,7 +37,6 @@ export const POST: APIRoute = async ({ request, cookies, locals }) => {
     const supabase = createSupabaseServerInstance({
       cookies,
       headers: request.headers,
-      runtime: locals.runtime,
     });
 
     // Sign up with auto-confirm (Option B - skip email verification for MVP)

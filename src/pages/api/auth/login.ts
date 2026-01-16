@@ -9,7 +9,7 @@ const loginSchema = z.object({
   password: z.string().min(1, "Password is required"),
 });
 
-export const POST: APIRoute = async ({ request, cookies, locals }) => {
+export const POST: APIRoute = async ({ request, cookies }) => {
   try {
     const body = await request.json();
 
@@ -32,7 +32,6 @@ export const POST: APIRoute = async ({ request, cookies, locals }) => {
     const supabase = createSupabaseServerInstance({
       cookies,
       headers: request.headers,
-      runtime: locals.runtime,
     });
 
     const { data, error } = await supabase.auth.signInWithPassword({
