@@ -95,6 +95,12 @@ jobs:
         with:
           token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
 
+      # NOTE: Runtime environment variables like SUPABASE_URL, SUPABASE_KEY, and
+      # OPENROUTER_API_KEY are not configured in this workflow. They must be set
+      # in the DigitalOcean App Platform configuration for the app referenced by
+      # DIGITALOCEAN_APP_ID (e.g., via the DigitalOcean control panel or an app
+      # spec). Ensure all required variables expected by the Dockerfile and app
+      # code are defined there before triggering this deployment.
       - name: Deploy to DigitalOcean App Platform
         run: |
           doctl apps create-deployment ${{ secrets.DIGITALOCEAN_APP_ID }}
