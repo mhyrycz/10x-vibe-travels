@@ -3,7 +3,7 @@ main = "./dist/_worker.js/index.js"
 compatibility_date = "2026-01-15"
 compatibility_flags = ["nodejs_compat"]
 
-# Assets configuration - exclude worker code from being uploaded as static assets
+# Workers with Static Assets configuration
 [assets]
 binding = "ASSETS"
 directory = "./dist"
@@ -11,14 +11,15 @@ directory = "./dist"
 [observability]
 enabled = true
 
-# Cloudflare Pages configuration
-# Note: Environment variables should be configured in Cloudflare Dashboard
-# Pages → Settings → Environment variables
+# Cloudflare Workers configuration
+# Note: Environment variables and secrets should be configured via:
+# - Dashboard: Workers & Pages > 10x-vibe-travels > Settings > Variables
+# - CLI: wrangler secret put <KEY>
+# - Local dev: .dev.vars file
 
 # Required environment variables (configure in Cloudflare Dashboard):
 # - SUPABASE_URL
 # - SUPABASE_KEY
-# - SUPABASE_SECRET_KEY
 # - OPENROUTER_API_KEY
-# - OPENROUTER_BASE_URL
+# - OPENROUTER_BASE_URL (optional)
 # - USE_MOCK_AI
