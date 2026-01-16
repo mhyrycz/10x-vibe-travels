@@ -181,12 +181,10 @@ const itinerarySchema = z.object({
 async function callOpenRouterAI(
   params: CreatePlanDto,
   userAge?: number,
-  userCountry?: string,
-  env?: { OPENROUTER_API_KEY: string; OPENROUTER_BASE_URL?: string }
+  userCountry?: string
 ): Promise<AIItineraryResponse> {
-  // Use runtime env if provided (Cloudflare Pages), fallback to import.meta.env for local dev
-  const apiKey = env?.OPENROUTER_API_KEY || import.meta.env.OPENROUTER_API_KEY;
-  const baseUrl = env?.OPENROUTER_BASE_URL || import.meta.env.OPENROUTER_BASE_URL;
+  const apiKey = import.meta.env.OPENROUTER_API_KEY;
+  const baseUrl = import.meta.env.OPENROUTER_BASE_URL;
 
   if (!apiKey) {
     throw new Error("OPENROUTER_API_KEY environment variable is not set");
@@ -290,8 +288,7 @@ Guidelines:
 export async function generatePlanItinerary(
   supabase: SupabaseClient<Database>,
   userId: string,
-  params: CreatePlanDto,
-  env?: { OPENROUTER_API_KEY: string; OPENROUTER_BASE_URL?: string; USE_MOCK_AI?: string }
+  params: CreatePlanDto
 ): Promise<AIItineraryResponse> {
   let userAge: number | undefined;
   let userCountry: string | undefined;
@@ -314,8 +311,7 @@ export async function generatePlanItinerary(
   }
 
   // Check if mock mode is enabled (default to true for development)
-  // Use runtime env if available (Cloudflare Pages), fallback to import.meta.env
-  const useMockAIEnv = env?.USE_MOCK_AI || import.meta.env.USE_MOCK_AI;
+  const useMockAIEnv = import.meta.env.USE_MOCK_AI;
   const useMockAI = useMockAIEnv !== "false" && useMockAIEnv !== false;
 
   try {
@@ -328,7 +324,7 @@ export async function generatePlanItinerary(
 
     console.log("🤖 Calling OpenRouter.ai for itinerary generation");
     // Only pass user preferences to real AI for personalization
-    return await callOpenRouterAI(params, userAge, userCountry, env);
+    return await callOpenRouterAI(params, userAge, userCountry);
   } catch (error) {
     // Re-throw with consistent error message for upstream error handling
     if (error instanceof Error) {

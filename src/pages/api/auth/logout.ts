@@ -3,12 +3,11 @@ import { createSupabaseServerInstance } from "@/db/supabase.client";
 
 export const prerender = false;
 
-export const POST: APIRoute = async ({ request, cookies, locals }) => {
+export const POST: APIRoute = async ({ request, cookies }) => {
   try {
     const supabase = createSupabaseServerInstance({
       cookies,
       headers: request.headers,
-      runtime: locals.runtime,
     });
 
     const { error } = await supabase.auth.signOut();

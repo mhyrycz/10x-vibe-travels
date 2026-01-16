@@ -108,7 +108,7 @@ export const POST: APIRoute = async ({ request, params, locals }) => {
     }
 
     // Step 6: Call service layer
-    const result = await regeneratePlan(supabase, userId, planId, validation.data, locals.runtime?.env);
+    const result = await regeneratePlan(supabase, userId, planId, validation.data);
 
     // Step 7: Handle service errors
     if (!result.success) {

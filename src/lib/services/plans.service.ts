@@ -201,11 +201,10 @@ export async function getUserPlanCount(supabase: SupabaseClient<Database>, userI
 async function generateAIItinerary(
   supabase: SupabaseClient<Database>,
   userId: string,
-  params: CreatePlanDto,
-  env?: { OPENROUTER_API_KEY: string; OPENROUTER_BASE_URL?: string; USE_MOCK_AI?: string }
+  params: CreatePlanDto
 ): Promise<ServiceResult<AIItineraryResponse>> {
   try {
-    const aiItinerary = await generatePlanItinerary(supabase, userId, params, env);
+    const aiItinerary = await generatePlanItinerary(supabase, userId, params);
     return { success: true, data: aiItinerary };
   } catch (error) {
     console.error("AI service error:", error);
@@ -336,8 +335,7 @@ async function insertPlanItineraryData(
 export async function createPlan(
   supabase: SupabaseClient<Database>,
   userId: string,
-  data: CreatePlanDto,
-  env?: { OPENROUTER_API_KEY: string; OPENROUTER_BASE_URL?: string; USE_MOCK_AI?: string }
+  data: CreatePlanDto
 ): Promise<ServiceResult<PlanDto>> {
   try {
     // Step 1: Check rate limit (10 plans per hour, shared with regenerate)
@@ -360,7 +358,7 @@ export async function createPlan(
     const tripLengthDays = calculateTripLengthDays(data.date_start, data.date_end);
 
     // Step 4: Call AI service to generate itinerary
-    const aiResult = await generateAIItinerary(supabase, userId, data, env);
+    const aiResult = await generateAIItinerary(supabase, userId, data);
     if (!aiResult.success) {
       return aiResult;
     }
@@ -823,8 +821,7 @@ export async function regeneratePlan(
   supabase: SupabaseClient<Database>,
   userId: string,
   planId: string,
-  updates: RegeneratePlanDto,
-  env?: { OPENROUTER_API_KEY: string; OPENROUTER_BASE_URL?: string; USE_MOCK_AI?: string }
+  updates: RegeneratePlanDto
 ): Promise<ServiceResult<PlanDto>> {
   try {
     console.log(`Regenerating plan ${planId} for user ${userId}`);
@@ -872,7 +869,7 @@ export async function regeneratePlan(
     });
 
     // Step 5: Generate new itinerary with AI
-    const aiResult = await generateAIItinerary(supabase, userId, mergedParams as CreatePlanDto, env);
+    const aiResult = await generateAIItinerary(supabase, userId, mergedParams as CreatePlanDto);
     if (!aiResult.success) {
       return aiResult;
     }
