@@ -1,17 +1,18 @@
 name = "10x-vibe-travels"
+main = "./dist/_worker.js/index.js"
 compatibility_date = "2026-01-15"
 compatibility_flags = ["nodejs_compat"]
-pages_build_output_dir = "dist"
+
+[assets]
+binding = "ASSETS"
+directory = "./dist"
+
+[observability]
+enabled = true
 
 # Cloudflare Pages configuration
 # Note: Environment variables should be configured in Cloudflare Dashboard
 # Pages → Settings → Environment variables
-
-[env.production]
-name = "10x-vibe-travels-production"
-
-[env.preview]
-name = "10x-vibe-travels-preview"
 
 # Required environment variables (configure in Cloudflare Dashboard):
 # - SUPABASE_URL
