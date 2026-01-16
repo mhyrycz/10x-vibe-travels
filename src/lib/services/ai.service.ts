@@ -277,7 +277,6 @@ Guidelines:
  * @param supabase - Supabase client instance for fetching user preferences
  * @param userId - User ID for fetching preferences
  * @param params - Plan creation parameters
- * @param env - Optional runtime environment variables (for Cloudflare Pages)
  * @returns Structured itinerary data (days with flat activities arrays)
  *
  * Environment Variables:

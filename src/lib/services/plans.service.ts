@@ -195,7 +195,6 @@ export async function getUserPlanCount(supabase: SupabaseClient<Database>, userI
  * @param supabase - Supabase client instance for fetching user preferences
  * @param userId - User ID for fetching preferences
  * @param params - Plan parameters for AI generation
- * @param env - Optional runtime environment variables (for Cloudflare Pages)
  * @returns ServiceResult with AI itinerary or error
  */
 async function generateAIItinerary(
