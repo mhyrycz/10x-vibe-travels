@@ -29,7 +29,7 @@ export default function LoadingOverlay({ isVisible, message }: LoadingOverlayPro
             {message || "Generating your travel plan..."}
           </h2>
           <p id="loading-description" className="text-sm text-muted-foreground">
-            This may take 10-30 seconds. Please don&apos;t close this page.
+            AI is building your trip. 30-day itineraries may take up to 3 minutes. Please don&apos;t close this page.
           </p>
         </div>
       </div>

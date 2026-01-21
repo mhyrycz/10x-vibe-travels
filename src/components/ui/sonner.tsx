@@ -5,7 +5,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
   return (
     <Sonner
       theme="light"
-      position="bottom-right"
+      position="top-center"
       expand={false}
       richColors={false}
       closeButton={false}
