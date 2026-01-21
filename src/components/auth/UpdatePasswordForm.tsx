@@ -1,7 +1,10 @@
 /**
  * UpdatePasswordForm Component
  *
- * Allows users to set a new password after clicking the reset link from their email.
+ * Allows users to:
+ * 1. Set a new password after clicking the reset link from their email (with reset code)
+ * 2. Change password when authenticated in settings page (without reset code)
+ *
  * Validates password strength and confirmation.
  */
 
@@ -11,14 +14,22 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
+import { toast } from "sonner";
 
 interface UpdatePasswordFormData {
+  currentPassword: string;
   password: string;
   confirmPassword: string;
 }
 
-export default function UpdatePasswordForm() {
+interface UpdatePasswordFormProps {
+  /** If true, shows current password field and doesn't require reset code */
+  isAuthenticatedMode?: boolean;
+}
+
+export default function UpdatePasswordForm({ isAuthenticatedMode = false }: UpdatePasswordFormProps) {
   const [formData, setFormData] = useState<UpdatePasswordFormData>({
+    currentPassword: "",
     password: "",
     confirmPassword: "",
   });
@@ -28,17 +39,19 @@ export default function UpdatePasswordForm() {
   const [isSuccess, setIsSuccess] = useState(false);
   const [resetCode, setResetCode] = useState<string | null>(null);
 
-  // Extract code from URL query params
+  // Extract code from URL query params (only for password reset flow)
   useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const code = urlParams.get("code");
+    if (!isAuthenticatedMode) {
+      const urlParams = new URLSearchParams(window.location.search);
+      const code = urlParams.get("code");
 
-    if (!code) {
-      setApiError("Invalid or missing reset code. Please use the link from your email.");
-    } else {
-      setResetCode(code);
+      if (!code) {
+        setApiError("Invalid or missing reset code. Please use the link from your email.");
+      } else {
+        setResetCode(code);
+      }
     }
-  }, []);
+  }, [isAuthenticatedMode]);
 
   // Validate password strength
   const validatePassword = (password: string): { isValid: boolean; errors: string[] } => {
@@ -72,6 +85,11 @@ export default function UpdatePasswordForm() {
   const validateForm = (): boolean => {
     const newErrors: Partial<Record<keyof UpdatePasswordFormData, string>> = {};
 
+    // Validate current password only in authenticated mode
+    if (isAuthenticatedMode && !formData.currentPassword) {
+      newErrors.currentPassword = "Current password is required";
+    }
+
     if (!formData.password) {
       newErrors.password = "Password is required";
     } else {
@@ -96,7 +114,8 @@ export default function UpdatePasswordForm() {
     e.preventDefault();
     setApiError("");
 
-    if (!resetCode) {
+    // Validate reset code only for password reset flow
+    if (!isAuthenticatedMode && !resetCode) {
       setApiError("Reset code is missing. Please use the link from your email.");
       return;
     }
@@ -108,13 +127,24 @@ export default function UpdatePasswordForm() {
     setIsSubmitting(true);
 
     try {
+      const requestBody: Record<string, string> = {
+        password: formData.password,
+      };
+
+      // Add code for password reset flow
+      if (!isAuthenticatedMode && resetCode) {
+        requestBody.code = resetCode;
+      }
+
+      // Add current password for authenticated user flow
+      if (isAuthenticatedMode) {
+        requestBody.currentPassword = formData.currentPassword;
+      }
+
       const response = await fetch("/api/auth/update-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          password: formData.password,
-          code: resetCode,
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       const data = await response.json();
@@ -124,8 +154,18 @@ export default function UpdatePasswordForm() {
         return;
       }
 
-      // Success - show confirmation message
-      setIsSuccess(true);
+      // Success - show toast in authenticated mode, confirmation page in reset mode
+      if (isAuthenticatedMode) {
+        toast.success("Password changed successfully");
+        // Reset form
+        setFormData({
+          currentPassword: "",
+          password: "",
+          confirmPassword: "",
+        });
+      } else {
+        setIsSuccess(true);
+      }
     } catch {
       setApiError("An unexpected error occurred. Please try again.");
     } finally {
@@ -133,7 +173,7 @@ export default function UpdatePasswordForm() {
     }
   };
 
-  // Success state
+  // Success state (only for password reset flow)
   if (isSuccess) {
     return (
       <div className="w-full max-w-md space-y-6">
@@ -158,8 +198,12 @@ export default function UpdatePasswordForm() {
   return (
     <div className="w-full max-w-md space-y-6">
       <div className="space-y-2 text-center">
-        <h1 className="text-3xl font-bold tracking-tight">Set New Password</h1>
-        <p className="text-muted-foreground">Enter your new password below</p>
+        <h1 className="text-3xl font-bold tracking-tight">
+          {isAuthenticatedMode ? "Change Password" : "Set New Password"}
+        </h1>
+        <p className="text-muted-foreground">
+          {isAuthenticatedMode ? "Update your account password" : "Enter your new password below"}
+        </p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -169,6 +213,23 @@ export default function UpdatePasswordForm() {
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>{apiError}</AlertDescription>
           </Alert>
+        )}
+
+        {/* Current Password Field (only in authenticated mode) */}
+        {isAuthenticatedMode && (
+          <div className="space-y-2">
+            <Label htmlFor="currentPassword">Current Password</Label>
+            <Input
+              id="currentPassword"
+              type="password"
+              placeholder="Enter your current password"
+              value={formData.currentPassword}
+              onChange={handleChange("currentPassword")}
+              aria-invalid={!!errors.currentPassword}
+              disabled={isSubmitting}
+            />
+            {errors.currentPassword && <p className="text-sm text-destructive">{errors.currentPassword}</p>}
+          </div>
         )}
 
         {/* Password Field */}
@@ -209,8 +270,10 @@ export default function UpdatePasswordForm() {
           {isSubmitting ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Updating password...
+              {isAuthenticatedMode ? "Changing password..." : "Updating password..."}
             </>
+          ) : isAuthenticatedMode ? (
+            "Change Password"
           ) : (
             "Update Password"
           )}
