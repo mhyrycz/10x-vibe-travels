@@ -26,23 +26,26 @@ export const onRequest = defineMiddleware(async ({ locals, cookies, url, request
   // Make supabase available to all routes
   locals.supabase = supabase;
 
-  // Skip auth check for public paths
-  if (PUBLIC_PATHS.includes(url.pathname)) {
-    return next();
-  }
-
   // IMPORTANT: Always get user session first before any other operations
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
+  // Always populate locals.user if session exists (even for public paths)
   if (user) {
     locals.user = {
       email: user.email,
       id: user.id,
     };
-  } else {
-    // Redirect to login for protected routes
+  }
+
+  // Skip auth requirement for public paths (but locals.user is still set if authenticated)
+  if (PUBLIC_PATHS.includes(url.pathname)) {
+    return next();
+  }
+
+  // Redirect to login for protected routes without authentication
+  if (!user) {
     return redirect("/login");
   }
 
